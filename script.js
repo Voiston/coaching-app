@@ -99,7 +99,7 @@ function showRestDay(dayName) {
     `;
     document.getElementById('progress-bar').style.width = "0%";
 }
-}
+
 
 // Fonction appelée par le <select> HTML
 function switchSession(index) {
