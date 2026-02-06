@@ -4,7 +4,7 @@
   "exercises": [
     {
       "name": "A1. Développé Couché",
-      "superset_type": "start",  <-- AJOUTER CECI
+      "superset_type": "start",  
       "sets": "4",
       "reps": "8",
       "rest": "0s",
@@ -13,7 +13,7 @@
     },
     {
       "name": "A2. Tirage Bûcheron",
-      "superset_type": "end", <-- AJOUTER CECI
+      "superset_type": "end", 
       "sets": "4",
       "reps": "12",
       "rest": "90s",
