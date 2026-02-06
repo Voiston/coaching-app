@@ -1,4 +1,4 @@
-/* --- GARDER LE DÉBUT (IMPORT FONTS & VARIABLES) --- */
+/* --- GARDER LE DÉBUT (FONTS & VARS) --- */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap');
 
 :root {
@@ -17,321 +17,156 @@ body {
     background: var(--bg-gradient);
     color: var(--text-main);
     margin: 0;
-    padding: 60px 0 120px 0; /* Plus d'espace en haut pour la barre de progression */
+    padding: 60px 0 120px 0;
     min-height: 100vh;
 }
 
-/* --- BARRE DE PROGRESSION (NOUVEAU) --- */
+/* --- BARRE DE PROGRESSION --- */
 #progress-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 8px;
-    background: #FFF;
-    z-index: 1000;
+    position: fixed; top: 0; left: 0; width: 100%; height: 6px; background: #FFF; z-index: 1000;
 }
 #progress-bar {
-    height: 100%;
-    background: var(--primary);
-    width: 0%;
-    transition: width 0.5s ease;
-    border-radius: 0 4px 4px 0;
+    height: 100%; background: var(--primary); width: 0%; transition: width 0.5s ease;
     box-shadow: 0 0 10px rgba(183, 110, 121, 0.5);
 }
 
 /* --- EN-TÊTE --- */
-header {
-    background: transparent;
-    padding: 20px 20px 20px;
-    text-align: center;
-}
-.logo-area {
-    font-size: 0.75rem;
-    letter-spacing: 3px;
-    color: var(--primary);
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-}
-h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.8rem;
-    color: var(--text-main);
-    margin: 0;
-    line-height: 1.2;
-}
-.subtitle {
-    font-size: 1rem;
-    color: var(--text-light);
-    margin-top: 5px;
-    font-weight: 300;
-}
+header { padding: 20px; text-align: center; }
+.logo-area { font-size: 0.75rem; letter-spacing: 3px; color: var(--primary); font-weight: 600; text-transform: uppercase; margin-bottom: 10px; }
+h1 { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--text-main); margin: 0; }
+.subtitle { font-size: 1rem; color: var(--text-light); margin-top: 5px; font-weight: 300; }
 
-/* --- CONTENEUR --- */
+/* --- CONTENEUR PRINCIPAL --- */
 main {
-    max-width: 550px;
+    max-width: 800px; /* Plus large pour les supersets côte à côte */
     margin: 0 auto;
     padding: 10px 20px;
 }
 
-/* --- CARTE EXERCICE --- */
+/* --- SECTIONS (Échauffement, etc.) --- */
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--primary);
+    margin: 40px 0 20px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(183, 110, 121, 0.2);
+    text-align: left;
+}
+
+/* --- SUPERSET CONTAINER (Responsive) --- */
+.superset-row {
+    display: flex;
+    flex-direction: column; /* Mobile d'abord : empilé */
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+/* Sur Ordi/Tablette : Côte à côte */
+@media (min-width: 768px) {
+    .superset-row {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    .superset-row .exercise-card {
+        flex: 1; /* Largeur égale */
+        margin-bottom: 0;
+    }
+    /* Petite icône de lien entre les deux */
+    .superset-row::after {
+        content: "🔗";
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 1.5rem;
+        display: none; /* Tu peux l'activer si tu veux */
+    }
+}
+
+/* --- CARTE EXERCICE (ACCORDÉON) --- */
 .exercise-card {
     background: var(--card-bg);
     border-radius: var(--radius);
-    padding: 25px;
-    margin-bottom: 30px;
+    padding: 0; /* Padding géré à l'intérieur pour l'accordéon */
+    margin-bottom: 25px;
     box-shadow: var(--shadow);
     border: 1px solid rgba(255, 255, 255, 0.5);
+    overflow: hidden; /* Pour cacher le contenu */
+    transition: transform 0.2s;
 }
 
+/* En-tête de la carte (Toujours visible) */
 .exercise-header {
+    padding: 20px;
+    cursor: pointer;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 15px;
+    align-items: center;
+    background: #fff;
+    transition: background 0.2s;
 }
+.exercise-header:hover { background: #fcfcfc; }
+
 .exercise-title {
     font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    color: var(--primary-dark);
+    font-size: 1.2rem;
+    color: var(--text-main);
     font-weight: 700;
-    flex: 1;
 }
-.rpe-badge {
-    background: #FFF0F0;
+.toggle-icon {
+    font-size: 1.2rem;
     color: var(--primary);
-    padding: 4px 10px;
-    border-radius: 50px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    white-space: nowrap;
-    margin-left: 10px;
+    transition: transform 0.3s ease;
 }
 
-.exercise-img {
-    width: 100%;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    object-fit: cover;
-    display: none;
+/* Rotation de la flèche quand ouvert */
+.exercise-card.open .toggle-icon { transform: rotate(180deg); }
+.exercise-card.open .exercise-header { border-bottom: 1px solid #f0f0f0; }
+.exercise-card.open { border-left: 5px solid var(--primary); }
+
+/* Contenu Caché (Corps de l'exo) */
+.exercise-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+    background: #fff;
 }
+.exercise-inner { padding: 20px; } /* Pour le padding interne */
+
+/* --- ÉLÉMENTS INTERNES --- */
+.rpe-badge { background: #FFF0F0; color: var(--primary); padding: 4px 10px; border-radius: 50px; font-size: 0.7rem; font-weight: 600; display:inline-block; margin-top:5px;}
+
+.exercise-img { width: 100%; border-radius: 15px; margin-bottom: 20px; object-fit: cover; display: none; }
 .exercise-img.show { display: block; }
 
-/* Détails techniques */
-.details-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-}
-.detail-box {
-    text-align: center;
-    background: #FAFAFA;
-    padding: 10px 5px;
-    border-radius: 12px;
-    border: 1px solid #F0F0F0;
-}
-.detail-label {
-    display: block;
-    font-size: 0.6rem;
-    color: #AAA;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
-.detail-value {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-main);
-}
+.details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.detail-box { text-align: center; background: #FAFAFA; padding: 10px 5px; border-radius: 12px; border: 1px solid #F0F0F0; }
+.detail-label { display: block; font-size: 0.6rem; color: #AAA; text-transform: uppercase; }
+.detail-value { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
 
-/* --- TIMER (NOUVEAU) --- */
-.timer-btn {
-    grid-column: span 3; /* Prend toute la largeur sous les détails */
-    background: #333;
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.9rem;
-    margin-top: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    transition: background 0.3s;
-}
-.timer-btn.active {
-    background: var(--primary); /* Devient rose quand actif */
-}
-.timer-icon { font-size: 1.1rem; }
+.timer-btn { grid-column: span 3; background: #333; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; gap: 10px; margin-top:5px; }
+.timer-btn.active { background: var(--primary); }
 
-/* --- CHECKBOXES SÉRIES (NOUVEAU) --- */
-.sets-container {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin: 20px 0;
-    flex-wrap: wrap;
-}
-.set-checkbox {
-    display: none; /* On cache la vraie checkbox moche */
-}
-.set-label {
-    width: 35px;
-    height: 35px;
-    background: #FFF;
-    border: 2px solid #EEE;
-    border-radius: 50%; /* Cercle parfait */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    color: #CCC;
-    font-weight: 600;
-    font-size: 0.8rem;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-/* Quand c'est coché */
-.set-checkbox:checked + .set-label {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-    transform: scale(1.1);
-}
+.sets-container { display: flex; justify-content: center; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
+.set-checkbox { display: none; }
+.set-label { width: 35px; height: 35px; background: #FFF; border: 2px solid #EEE; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #CCC; font-weight: 600; transition: all 0.2s; }
+.set-checkbox:checked + .set-label { background: var(--primary); border-color: var(--primary); color: white; transform: scale(1.1); }
 
-.coach-note {
-    background: #FFF8F8;
-    border-left: 3px solid var(--primary);
-    padding: 15px;
-    font-size: 0.9rem;
-    border-radius: 0 10px 10px 0;
-    margin-bottom: 20px;
-    color: #666;
-    font-style: italic;
-}
+.coach-note { background: #FFF8F8; border-left: 3px solid var(--primary); padding: 15px; font-size: 0.9rem; border-radius: 0 10px 10px 0; margin-bottom: 20px; color: #666; font-style: italic; }
 
-/* Inputs Cliente */
-.client-input-zone {
-    border-top: 1px dashed #E0E0E0;
-    padding-top: 20px;
-}
-.input-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-input {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #EEE;
-    background: #FCFCFC;
-    border-radius: 10px;
-    font-family: 'Poppins', sans-serif;
-    outline: none;
-    transition: 0.3s;
-}
+.client-input-zone { border-top: 1px dashed #E0E0E0; padding-top: 20px; }
+.input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+input { width: 100%; padding: 12px; border: 1px solid #EEE; background: #FCFCFC; border-radius: 10px; font-family: 'Poppins', sans-serif; outline: none; }
 input:focus { border-color: var(--primary); background: #FFF; }
 
-/* Bouton WhatsApp */
-.whatsapp-sticky {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 85%;
-    max-width: 500px;
-    z-index: 100;
-}
-.whatsapp-sticky button {
-    background: linear-gradient(135deg, #B76E79 0%, #A05560 100%);
-    color: white;
-    width: 100%;
-    padding: 18px;
-    border: none;
-    border-radius: 50px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 10px 25px rgba(183, 110, 121, 0.4);
-}
-/* --- AJOUTS V3 : SUPERSETS & MODALE PRO --- */
+/* --- MODALE & WHATSAPP --- */
+.whatsapp-sticky { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 500px; z-index: 100; }
+.whatsapp-sticky button { background: linear-gradient(135deg, #B76E79 0%, #A05560 100%); color: white; width: 100%; padding: 18px; border: none; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 10px 25px rgba(183, 110, 121, 0.4); }
 
-/* Styles Superset (pour lier les cartes) */
-.exercise-card.superset-start {
-    margin-bottom: 0; /* Collé à celui du dessous */
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border-left: 6px solid var(--primary); /* Bordure épaisse */
-    background: #fffafa; /* Fond très légèrement différent */
-}
-
-.exercise-card.superset-middle {
-    margin-top: 0;
-    margin-bottom: 0;
-    border-radius: 0; /* Carré */
-    border-left: 6px solid var(--primary);
-    border-top: 1px dashed rgba(183, 110, 121, 0.2); /* Séparateur discret */
-    background: #fffafa;
-}
-
-.exercise-card.superset-end {
-    margin-top: 0; /* Collé à celui du dessus */
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    border-left: 6px solid var(--primary);
-    border-top: 1px dashed rgba(183, 110, 121, 0.2);
-    background: #fffafa;
-}
-
-/* Modale de Fin "Premium" */
-.completion-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(74, 74, 74, 0.8); /* Fond sombre transparent */
-    backdrop-filter: blur(5px); /* Effet de flou pro (marche sur iPhone récents) */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.4s ease;
-}
-
-.completion-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-.completion-modal {
-    background: white;
-    padding: 40px;
-    border-radius: 25px;
-    text-align: center;
-    max-width: 80%;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    transform: translateY(20px);
-    transition: all 0.4s ease;
-}
-
-.completion-overlay.active .completion-modal {
-    transform: translateY(0);
-}
-
-.completion-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.8rem;
-    color: var(--primary-dark);
-    margin-bottom: 10px;
-}
-
-.completion-text {
-    color: var(--text-light);
-    margin-bottom: 30px;
-}
-
-/* Cache la barre de progression quand la modale est là */
-body.modal-open #progress-container { opacity: 0; }
+.completion-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(74, 74, 74, 0.8); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+.completion-overlay.active { opacity: 1; visibility: visible; }
+.completion-modal { background: white; padding: 40px; border-radius: 25px; text-align: center; max-width: 80%; box-shadow: 0 20px 40px rgba(0,0,0,0.2); transform: translateY(20px); transition: all 0.4s ease; }
+.completion-overlay.active .completion-modal { transform: translateY(0); }
+.completion-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--primary-dark); margin-bottom: 10px; }
+.video-btn { display: inline-block; margin-top: 10px; color: var(--primary); font-size: 0.8rem; font-weight: 600; text-decoration: none; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 50px; transition: all 0.2s; }
+.video-btn:hover { background: var(--primary); color: white; }
