@@ -12,62 +12,85 @@
     --radius: 20px;
 }
 
-/* --- CALENDRIER SEMAINE --- */
+/* --- CALENDRIER ROULANT (V2) --- */
 .calendar-container {
     display: flex;
-    justify-content: space-between; /* Espacé uniformément */
+    overflow-x: auto;
+    gap: 12px;
     padding: 10px 20px;
     margin-bottom: 20px;
-    background: #fff;
-    border-bottom: 1px solid #eee;
-    overflow-x: auto; /* Scroll si petit écran */
-    -webkit-overflow-scrolling: touch;
-    gap: 10px;
+    background: #ffffff;
+    /* Masquer la barre de scroll disgracieuse */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE/Edge */
 }
+.calendar-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
 .calendar-day {
+    flex: 0 0 auto; /* Ne pas écraser la largeur */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-width: 45px;
-    height: 60px;
-    border-radius: 50px; /* Forme de pilule */
+    width: 60px;
+    height: 75px;
+    border-radius: 18px;
+    background: #f8f9fa;
+    border: 1px solid #eee;
     cursor: pointer;
-    transition: all 0.3s ease;
-    border: 1px solid transparent;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
 }
 
-.day-name {
-    font-size: 0.65rem;
-    color: #aaa;
-    font-weight: 600;
-    text-transform: uppercase;
-    margin-bottom: 4px;
-}
+/* Date (12) et Jour (LUN) */
+.day-name { font-size: 0.65rem; color: #aaa; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+.day-date { font-size: 1.1rem; font-weight: 600; color: #444; }
 
-.day-indicator {
-    width: 8px;
-    height: 8px;
-    background-color: #eee;
+/* --- ÉTATS --- */
+
+/* 1. Jour avec Séance (Highlight) */
+.calendar-day.has-session {
+    border: 1px solid var(--primary);
+    background: #fff0f3; /* Fond très légèrement rosé */
+}
+.calendar-day.has-session .day-date { color: var(--primary); }
+
+/* Petite pastille sous la date pour dire "Il y a un truc" */
+.calendar-day.has-session::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--primary);
     border-radius: 50%;
-    transition: all 0.3s;
+    margin-top: 4px;
 }
 
-/* Si une séance est prévue ce jour-là */
-.calendar-day.has-session .day-indicator {
-    background-color: var(--primary); /* Point rose */
-    transform: scale(1.2);
-}
-
-/* État actif (Jour sélectionné) */
+/* 2. Jour Sélectionné (Actif) */
 .calendar-day.active {
-    background-color: var(--primary);
-    box-shadow: 0 5px 15px rgba(183, 110, 121, 0.4);
+    background: var(--primary) !important;
+    border-color: var(--primary) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(183, 110, 121, 0.3);
 }
+.calendar-day.active .day-name, 
+.calendar-day.active .day-date { color: white !important; }
+.calendar-day.active::after { background: white; }
 
-.calendar-day.active .day-name { color: #fff; }
-.calendar-day.active .day-indicator { background-color: #fff; }
+/* 3. Séance Terminée (Succès) */
+.calendar-day.is-completed {
+    border-color: #4CAF50; /* Vert */
+    background: #E8F5E9;
+}
+/* Le petit 'V' vert */
+.calendar-day.is-completed::before {
+    content: '✓';
+    position: absolute;
+    top: -5px; right: -5px;
+    background: #4CAF50; color: white;
+    font-size: 0.6rem; width: 16px; height: 16px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: bold;
+}
 
 /* Message "Repos" */
 .rest-day-message {

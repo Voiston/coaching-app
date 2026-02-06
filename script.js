@@ -33,56 +33,82 @@ function initApp(data) {
     }
 }
 
-// --- CALENDRIER SEMAINE ---
+// --- CALENDRIER ROULANT AVEC DATES RÉELLES ---
 function renderCalendar(sessions) {
     const calendarContainer = document.getElementById('calendar-strip');
     calendarContainer.innerHTML = "";
     
-    const daysOfWeek = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
-    
-    // Trouver le jour actuel (0 = Lundi pour nous, mais JS : 0 = Dimanche)
-    const todayDate = new Date();
-    let todayIndex = todayDate.getDay() - 1; // JS: Dim=0, Lun=1... Nous on veut Lun=0
-    if (todayIndex === -1) todayIndex = 6; // Si c'est Dimanche (-1), on le met à la fin (6)
+    // On génère les 14 prochains jours
+    const daysToShow = 14; 
+    const today = new Date();
 
-    daysOfWeek.forEach((dayName, index) => {
-        // Chercher si une séance existe pour ce jour
-        const sessionIndex = sessions.findIndex(s => s.day && s.day.toLowerCase() === dayName.toLowerCase());
+    // Mapping jours Anglais (JS) -> Français (JSON)
+    const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+
+    for (let i = 0; i < daysToShow; i++) {
+        // Créer la date (Aujourd'hui + i)
+        const date = new Date();
+        date.setDate(today.getDate() + i);
+
+        const dayIndex = date.getDay(); // 0-6
+        const dayNameFR = dayMap[dayIndex]; // "lundi", "mardi"...
+        const dateNum = date.getDate(); // 12, 13...
+        
+        // Chercher si une séance existe pour ce jour de la semaine
+        const sessionIndex = sessions.findIndex(s => s.day && s.day.toLowerCase() === dayNameFR);
         const hasSession = sessionIndex !== -1;
 
+        // Création de la carte HTML
         const dayEl = document.createElement('div');
-        dayEl.className = `calendar-day ${hasSession ? 'has-session' : ''}`;
         
-        // Abréviation (LUN, MAR...)
-        const shortName = dayName.substring(0, 3);
+        // Classes CSS
+        let classes = "calendar-day";
+        if (hasSession) classes += " has-session";
+        
+        // Vérifier si cette séance spécifique est "Terminée" (Bonus UX)
+        // On regarde si on a déjà un localStorage pour cette séance
+        // (Note: C'est approximatif car basé sur l'ID de séance, mais efficace)
+        if (hasSession) {
+            const sId = sessions[sessionIndex].id || `session_${sessionIndex}`;
+            const savedData = JSON.parse(localStorage.getItem('fitapp_' + clientID) || '{}');
+            // Si on trouve des données pour cette séance, on peut la marquer (optionnel)
+            // Pour l'instant on reste simple.
+        }
+
+        dayEl.className = classes;
+        
+        // Formatage de l'affichage (Jeu 12)
+        const shortName = dayNameFR.substring(0, 3).toUpperCase(); // LUN
         
         dayEl.innerHTML = `
             <span class="day-name">${shortName}</span>
-            <div class="day-indicator"></div>
+            <span class="day-date">${dateNum}</span>
         `;
 
-        // Clic sur le jour
+        // Interaction Clic
         dayEl.onclick = () => {
-            // Gestion visuelle "Actif"
             document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('active'));
             dayEl.classList.add('active');
 
             if (hasSession) {
-                // Charger la séance
+                // On injecte aussi la date réelle dans le titre pour faire pro
+                const fullDate = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                // Petit hack pour mettre à jour le sous-titre si tu veux
+                // document.getElementById('program-title').textContent = fullDate; 
+                
                 renderSession(sessionIndex);
             } else {
-                // Afficher "Repos"
-                showRestDay(dayName);
+                showRestDay(dayNameFR); // On passe le nom complet (Mardi)
             }
         };
 
-        // Auto-sélectionner le jour d'aujourd'hui au chargement
-        if (index === todayIndex) {
-            setTimeout(() => dayEl.click(), 100); 
+        // Auto-sélectionner le PREMIER jour (Aujourd'hui)
+        if (i === 0) {
+            setTimeout(() => dayEl.click(), 50);
         }
 
         calendarContainer.appendChild(dayEl);
-    });
+    }
 }
 
 function showRestDay(dayName) {
