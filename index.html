@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Programme Coaching</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,6 +24,14 @@
         <button onclick="sendToWhatsapp()">
             Terminer & Envoyer au Coach 📤
         </button>
+    </div>
+
+    <div id="completion-overlay" class="completion-overlay">
+        <div class="completion-modal">
+            <div class="completion-title">Excellent travail !</div>
+            <p class="completion-text">Séance terminée. Envoie ton rapport au coach pour valider.</p>
+            <div id="modal-btn-container"></div>
+        </div>
     </div>
 
     <script src="script.js"></script>
