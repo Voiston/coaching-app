@@ -3,22 +3,63 @@
   "programTitle": "Semaine 1 - Hypertrophie",
   "sessions": [
     {
-      "id": "legday",
-      "day": "Lundi", 
+      "id": "seance_lundi",
+      "day": "Lundi",
       "name": "🍑 Jambes & Fessiers",
-      "exercises": [ ... ]
+      "exercises": [
+        {
+          "type": "section",
+          "title": "Échauffement"
+        },
+        {
+          "name": "Squat au poids du corps",
+          "image": "https://i.ytimg.com/vi/U3Hh03kX-2c/hqdefault.jpg",
+          "sets": "3",
+          "reps": "15",
+          "rest": "60s",
+          "rpe_target": "6",
+          "note_coach": "Bien descendre les fesses en arrière."
+        }
+      ]
     },
     {
-      "id": "push",
+      "id": "seance_mercredi",
       "day": "Mercredi",
-      "name": "💪 Push (Épaules/Pecs)",
-      "exercises": [ ... ]
+      "name": "💪 Haut du corps",
+      "exercises": [
+        {
+          "name": "Pompes",
+          "superset_type": "start",
+          "image": "",
+          "sets": "4",
+          "reps": "10",
+          "rest": "90s",
+          "rpe_target": "8"
+        },
+        {
+          "name": "Tirage élastique",
+          "superset_type": "end",
+          "image": "",
+          "sets": "4",
+          "reps": "12",
+          "rest": "90s",
+          "rpe_target": "8"
+        }
+      ]
     },
     {
-      "id": "cardio",
-      "day": "Samedi",
-      "name": "🏃‍♀️ Cardio HIIt",
-      "exercises": [ ... ]
+      "id": "seance_vendredi",
+      "day": "Vendredi",
+      "name": "🔥 Cardio HIIT",
+      "exercises": [
+        {
+          "name": "Burpees",
+          "sets": "5",
+          "reps": "15",
+          "rest": "45s",
+          "rpe_target": "9"
+        }
+      ]
     }
   ]
 }
