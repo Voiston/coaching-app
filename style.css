@@ -335,4 +335,3 @@ input:focus { border-color: var(--primary); background: #FFF; }
 
 /* Cache la barre de progression quand la modale est là */
 body.modal-open #progress-container { opacity: 0; }
-
