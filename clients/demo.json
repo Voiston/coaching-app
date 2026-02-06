@@ -1,32 +1,53 @@
 {
-  "clientName": "Sophie",
-  "programTitle": "Séance avec Superset",
+  "clientName": "Julie",
+  "programTitle": "Leg Day - Focus Fessiers",
   "exercises": [
+    
+    { "type": "section", "title": "1. Échauffement" },
+    
     {
-      "name": "A1. Développé Couché",
-      "superset_type": "start",  
-      "sets": "4",
-      "reps": "8",
+      "name": "Mobilité Cheville",
+      "image": "", 
+      "sets": "1",
+      "reps": "1 min",
       "rest": "0s",
-      "rpe_target": "8",
-      "note_coach": "Enchaîne direct avec A2."
+      "rpe_target": "-",
+      "note_coach": "Sans forcer."
     },
+
+    { "type": "section", "title": "2. Corps de Séance" },
+
     {
-      "name": "A2. Tirage Bûcheron",
-      "superset_type": "end", 
+      "name": "A1. Hip Thrust",
+      "superset_type": "start",
+      "image": "",
       "sets": "4",
-      "reps": "12",
-      "rest": "90s",
+      "reps": "10",
+      "rest": "0s",
       "rpe_target": "9",
-      "note_coach": "Contrôle la descente."
+      "note_coach": "Lourd."
     },
     {
-      "name": "B. Leg Curl",
-      "sets": "3",
-      "reps": "15",
-      "rest": "60s",
-      "rpe_target": "9",
-      "note_coach": ""
+      "name": "A2. Dead Bug",
+      "superset_type": "end",
+      "image": "",
+      "sets": "4",
+      "reps": "30 sec",
+      "rest": "90s",
+      "rpe_target": "-",
+      "note_coach": "Gainage actif."
+    },
+
+    { "type": "section", "title": "3. Finisher" },
+
+    {
+      "name": "Frog Pumps",
+      "image": "",
+      "sets": "2",
+      "reps": "50",
+      "rest": "45s",
+      "rpe_target": "MAX",
+      "note_coach": "Brûlure maximale."
     }
   ]
 }
