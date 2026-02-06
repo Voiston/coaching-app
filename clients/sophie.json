@@ -1,21 +1,24 @@
 {
   "clientName": "Julie",
-  "programTitle": "Programme Hypertrophie",
+  "programTitle": "Semaine 1 - Hypertrophie",
   "sessions": [
     {
-      "id": "seance_a", 
-      "name": "🍑 Séance A : Bas du corps",
-      "exercises": [
-         { "type": "section", "title": "Échauffement" },
-         { "name": "Squat", "sets": "4", "reps": "10", "rest": "90s" }
-      ]
+      "id": "legday",
+      "day": "Lundi", 
+      "name": "🍑 Jambes & Fessiers",
+      "exercises": [ ... ]
     },
     {
-      "id": "seance_b",
-      "name": "💪 Séance B : Haut du corps",
-      "exercises": [
-         { "name": "Développé Couché", "sets": "4", "reps": "10", "rest": "90s" }
-      ]
+      "id": "push",
+      "day": "Mercredi",
+      "name": "💪 Push (Épaules/Pecs)",
+      "exercises": [ ... ]
+    },
+    {
+      "id": "cardio",
+      "day": "Samedi",
+      "name": "🏃‍♀️ Cardio HIIt",
+      "exercises": [ ... ]
     }
   ]
 }
