@@ -182,7 +182,20 @@ input:focus { border-color: var(--primary); background: #FFF; }
     max-width: 450px;
     padding: 30px 20px;
 }
-
+/* Bouton Fermer Modale (Croix) */
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+    line-height: 20px;
+}
+.close-modal:hover {
+    color: var(--primary);
+}
 .feedback-container {
     text-align: left;
     margin-bottom: 25px;

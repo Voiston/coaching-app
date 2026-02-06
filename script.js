@@ -142,23 +142,30 @@ function saveAndProgress() {
     saveData();
 }
 
-// updateProgress avec option "silent" pour ne pas vibrer au démarrage
-function updateProgress(allowVibration = false) {
+// updateProgress modifiée : on ajoute le paramètre 'shouldOpenModal'
+function updateProgress(shouldOpenModal = false) {
     const total = document.querySelectorAll('.set-checkbox').length;
     const checked = document.querySelectorAll('.set-checkbox:checked').length;
     const percent = (total === 0) ? 0 : (checked / total) * 100;
     
     document.getElementById('progress-bar').style.width = percent + "%";
 
-    if (percent === 100) {
+    // ON NE LANCE LA MODALE QUE SI :
+    // 1. On est à 100%
+    // 2. ET que l'action vient d'un clic utilisateur (shouldOpenModal est vrai)
+    if (percent === 100 && shouldOpenModal) {
         document.body.classList.add('modal-open');
         const overlay = document.getElementById('completion-overlay');
         overlay.classList.add('active');
-        const whatsappBtn = document.querySelector('.whatsapp-sticky button');
-        document.getElementById('modal-btn-container').appendChild(whatsappBtn);
         
-        // On ne vibre que si c'est une action utilisateur (pas au chargement)
-        if(allowVibration && "vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+        // Déplacement du bouton
+        const whatsappBtn = document.querySelector('.whatsapp-sticky button');
+        // Vérif de sécurité pour ne pas le déplacer s'il est déjà là
+        if(document.querySelector('.whatsapp-sticky button')) {
+             document.getElementById('modal-btn-container').appendChild(whatsappBtn);
+        }
+
+        if("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
     }
 }
 
@@ -180,7 +187,8 @@ function loadProgress() {
             else el.value = value;
         }
     }
-    updateProgress(false); // False = Mode silencieux au démarrage
+    // ICI : on met FALSE pour dire "N'ouvre pas la modale, c'est juste un chargement"
+    updateProgress(false); 
 }
 
 function startTimer(btn, seconds) {
@@ -199,11 +207,62 @@ function startTimer(btn, seconds) {
         }
     }, 1000);
 }
-
+// Fonction pour fermer la modale manuellement
+function closeModal() {
+    document.body.classList.remove('modal-open');
+    document.getElementById('completion-overlay').classList.remove('active');
+    
+    // On remet le bouton WhatsApp à sa place d'origine (en bas de page)
+    const whatsappBtn = document.querySelector('#modal-btn-container button');
+    if(whatsappBtn) {
+        document.querySelector('.whatsapp-sticky').appendChild(whatsappBtn);
+    }
+}
 // --- FONCTION CORRIGÉE POUR WHATSAPP ---
 function sendToWhatsapp() {
     let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
     msg += `_${document.getElementById('program-title').innerText}_\n\n`;
 
     // CORRECTION : On ne se fie plus à l'index "i" de la boucle, mais au "data-index" stocké
-    document.querySelectorAll('.exercise
+    document.querySelectorAll('.exercise-card').forEach((card) => {
+        const originalIndex = card.dataset.index; // On récupère le VRAI numéro
+        
+        const title = card.querySelector('.exercise-title').innerText;
+        // On utilise originalIndex pour trouver les bons inputs
+        const load = document.getElementById(`charge-${originalIndex}`).value;
+        const rpe = document.getElementById(`rpe-${originalIndex}`).value;
+        const note = document.getElementById(`comment-${originalIndex}`).value;
+        
+        if(load || rpe || note) {
+            msg += `🔹 *${title}*\n`;
+            if(load) msg += `   ⚖️ ${load}kg\n`;
+            if(rpe)  msg += `   🔥 RPE ${rpe}\n`;
+            if(note) msg += `   📝 ${note}\n`;
+        }
+    });
+
+    // BILAN DE SÉANCE
+    const sMuscle = document.getElementById('score-muscle').value;
+    const cMuscle = document.getElementById('com-muscle').value;
+    const sCardio = document.getElementById('score-cardio').value;
+    const cCardio = document.getElementById('com-cardio').value;
+    const sFatigue = document.getElementById('score-fatigue').value;
+    const cFatigue = document.getElementById('com-fatigue').value;
+    const sSleep = document.getElementById('score-sleep').value;
+    const cSleep = document.getElementById('com-sleep').value;
+
+    if (sMuscle || sCardio || sFatigue || sSleep) {
+        msg += `\n📊 *BILAN GLOBAL*\n`;
+        if(sMuscle) msg += `💪 Muscle: ${sMuscle}/10 ${cMuscle ? '('+cMuscle+')' : ''}\n`;
+        if(sCardio) msg += `🫀 Cardio: ${sCardio}/10 ${cCardio ? '('+cCardio+')' : ''}\n`;
+        if(sFatigue) msg += `😫 Fatigue: ${sFatigue}/10 ${cFatigue ? '('+cFatigue+')' : ''}\n`;
+        if(sSleep)  msg += `💤 Sommeil: ${sSleep}/10 ${cSleep ? '('+cSleep+')' : ''}\n`;
+    }
+
+    msg += `\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
+
+    if(confirm("Confirmer l'envoi et vider les données ?")) {
+        localStorage.removeItem('fitapp_' + clientID);
+    }
+    window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+}
