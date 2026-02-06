@@ -19,7 +19,6 @@ fetch(`./clients/${clientID.toLowerCase()}.json`)
     })
     .catch(() => document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px'>Programme introuvable</h2>");
 
-// Remplace tout ton initApp par ça :
 function initApp(data) {
     document.getElementById('client-name').textContent = `Bonjour ${data.clientName} !`;
     document.getElementById('program-title').textContent = data.programTitle;
@@ -34,7 +33,7 @@ function initApp(data) {
     }
 }
 
-// --- NOUVELLE FONCTION CALENDRIER ---
+// --- CALENDRIER SEMAINE ---
 function renderCalendar(sessions) {
     const calendarContainer = document.getElementById('calendar-strip');
     calendarContainer.innerHTML = "";
@@ -48,7 +47,6 @@ function renderCalendar(sessions) {
 
     daysOfWeek.forEach((dayName, index) => {
         // Chercher si une séance existe pour ce jour
-        // On normalise (minuscules) pour éviter les erreurs de saisie
         const sessionIndex = sessions.findIndex(s => s.day && s.day.toLowerCase() === dayName.toLowerCase());
         const hasSession = sessionIndex !== -1;
 
@@ -80,7 +78,7 @@ function renderCalendar(sessions) {
 
         // Auto-sélectionner le jour d'aujourd'hui au chargement
         if (index === todayIndex) {
-            setTimeout(() => dayEl.click(), 100); // Petit délai pour l'animation
+            setTimeout(() => dayEl.click(), 100); 
         }
 
         calendarContainer.appendChild(dayEl);
@@ -100,18 +98,56 @@ function showRestDay(dayName) {
     document.getElementById('progress-bar').style.width = "0%";
 }
 
+// --- MOTEUR D'AFFICHAGE DE SÉANCE (CELUI QUI MANQUAIT !) ---
+function renderSession(sessionIndex) {
+    const session = globalData.sessions[sessionIndex];
+    const container = document.getElementById('workout-container');
+    
+    // Définir l'ID unique de la séance actuelle pour la sauvegarde
+    currentSessionId = session.id || `session_${sessionIndex}`;
 
-// Fonction appelée par le <select> HTML
-function switchSession(index) {
-    if(confirm("Changer de séance ? (Les cases cochées seront remises à zéro, mais tes charges sont sauvegardées)")) {
-        renderSession(index);
-    } else {
-        // Si l'utilisateur annule, on pourrait remettre le select sur l'ancienne valeur
-        // Mais pour l'instant, on laisse simple.
-    }
+    // Reset de l'interface
+    container.innerHTML = ""; 
+    document.getElementById('progress-bar').style.width = "0%";
+
+    let currentSupersetContainer = null;
+
+    session.exercises.forEach((exo, index) => {
+        if (exo.type === "section") {
+            if (currentSupersetContainer) { container.appendChild(currentSupersetContainer); currentSupersetContainer = null; }
+            container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
+            return; 
+        }
+
+        if (exo.superset_type === "start") {
+            currentSupersetContainer = document.createElement('div');
+            currentSupersetContainer.className = "superset-row";
+        }
+
+        const cardHtml = createExerciseCard(exo, index, currentSessionId);
+        
+        if (currentSupersetContainer) {
+            currentSupersetContainer.innerHTML += cardHtml;
+            if (exo.superset_type === "end") {
+                container.appendChild(currentSupersetContainer);
+                currentSupersetContainer = null;
+            }
+        } else {
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        }
+    });
+    if (currentSupersetContainer) container.appendChild(currentSupersetContainer);
+
+    // Initialisation des hauteurs pour l'animation accordéon
+    setTimeout(() => {
+        document.querySelectorAll('.exercise-card.open .exercise-content').forEach(content => {
+            content.style.maxHeight = content.scrollHeight + "px";
+        });
+    }, 100);
+
+    // CHARGEMENT DES DONNÉES SAUVEGARDÉES
+    loadProgress();
 }
-
-
 
 function createExerciseCard(exo, index, sessionId) {
     let mediaHtml = '';
@@ -137,7 +173,7 @@ function createExerciseCard(exo, index, sessionId) {
     }
     checkboxesHtml += '</div>';
 
-    // CONSTRUCTION DES IDs UNIQUES (Ex: charge-seanceA-0)
+    // CONSTRUCTION DES IDs UNIQUES
     const idCharge = `charge-${sessionId}-${index}`;
     const idRpe = `rpe-${sessionId}-${index}`;
     const idCom = `comment-${sessionId}-${index}`;
@@ -179,8 +215,6 @@ function createExerciseCard(exo, index, sessionId) {
 
 function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
     updateProgress(true); 
-    
-    // On sauvegarde aussi quand on coche (au cas où on quitte juste après)
     saveData(); 
 
     if (checkbox.checked && setNumber === totalSets) {
@@ -206,7 +240,6 @@ function toggleCard(header) {
     }
 }
 
-// Wrapper simple pour sauvegarder lors de la frappe
 function saveAndProgress() {
     saveData();
 }
@@ -232,17 +265,12 @@ function updateProgress(shouldOpenModal = false) {
 
 function saveData() {
     const dataToSave = {};
-    // On sauvegarde TOUS les inputs présents sur la page (Texte et Nombre)
-    // Grâce aux IDs uniques (avec sessionId), pas de conflit !
     document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
-        // On ne sauvegarde pas les inputs du bilan final ici (ils ont leurs propres IDs fixes)
-        // Mais on s'assure de ne pas sauvegarder n'importe quoi
         if(input.id && !input.id.startsWith('score-') && !input.id.startsWith('com-')) {
             dataToSave[input.id] = input.value;
         }
     });
 
-    // On fusionne avec ce qui existe déjà dans le localStorage pour ne pas écraser les autres séances
     const existingData = JSON.parse(localStorage.getItem('fitapp_' + clientID) || '{}');
     const newData = { ...existingData, ...dataToSave };
 
@@ -256,7 +284,6 @@ function loadProgress() {
     
     for (const [id, value] of Object.entries(data)) {
         const el = document.getElementById(id);
-        // Si l'élément existe sur la page actuelle (donc dans la bonne séance), on le remplit
         if (el && el.type !== 'checkbox') {
             el.value = value;
         }
@@ -284,13 +311,12 @@ function startTimer(btn, seconds) {
 function sendToWhatsapp() {
     let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
     
-    // Récupérer le nom de la séance active dans le selecteur (si dispo)
-    const select = document.getElementById('session-select');
-    let sessionName = "";
-    if(select && select.options.length > 0) {
-        sessionName = select.options[select.selectedIndex].text;
-    } else {
-        sessionName = document.getElementById('program-title').innerText;
+    // Récupérer le nom de la séance active (depuis le JSON via l'ID global)
+    // On doit retrouver la séance actuelle dans globalData
+    let sessionName = "Séance";
+    if (globalData && globalData.sessions) {
+        const currentSession = globalData.sessions.find(s => (s.id === currentSessionId) || (`session_${globalData.sessions.indexOf(s)}` === currentSessionId));
+        if (currentSession) sessionName = currentSession.name;
     }
 
     msg += `📂 *${sessionName}*\n\n`;
@@ -299,12 +325,10 @@ function sendToWhatsapp() {
         const originalIndex = card.dataset.index;
         const title = card.querySelector('.exercise-title').innerText;
         
-        // RECONSTRUCTION DES IDs pour récupérer les valeurs
         const idCharge = `charge-${currentSessionId}-${originalIndex}`;
         const idRpe = `rpe-${currentSessionId}-${originalIndex}`;
         const idCom = `comment-${currentSessionId}-${originalIndex}`;
 
-        // On utilise getElementById car on connait l'ID exact
         const load = document.getElementById(idCharge)?.value;
         const rpe = document.getElementById(idRpe)?.value;
         const note = document.getElementById(idCom)?.value;
@@ -317,7 +341,6 @@ function sendToWhatsapp() {
         }
     });
 
-    // Ajout du bilan global (Formulaire de fin)
     const sMuscle = document.getElementById('score-muscle').value;
     const cMuscle = document.getElementById('com-muscle').value;
     const sCardio = document.getElementById('score-cardio').value;
@@ -336,9 +359,6 @@ function sendToWhatsapp() {
     }
 
     msg += `\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
-
-    // Pas de suppression du localStorage ici pour garder l'historique des charges
-    // On pourrait optionnellement vider juste les cases "note" si voulu
     
     window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
