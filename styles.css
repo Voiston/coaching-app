@@ -1,0 +1,190 @@
+/* --- Esthétique Rose Gold & Minimaliste --- */
+:root {
+    --bg-color: #fdfbfb;       /* Blanc cassé très léger */
+    --text-main: #333333;      /* Anthracite pour la lecture */
+    --rose-gold: #c58c85;      /* Couleur principale chic */
+    --rose-light: #fbeee6;     /* Fond des cartes */
+    --white: #ffffff;
+    --shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+body {
+    font-family: 'Lato', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    margin: 0;
+    padding: 0 0 100px 0; /* Espace pour le bouton en bas */
+}
+
+/* Header */
+header {
+    background: var(--white);
+    padding: 20px;
+    text-align: center;
+    border-bottom: 3px solid var(--rose-light);
+}
+
+.logo-area {
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: var(--rose-gold);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+h1 {
+    font-family: 'Montserrat', sans-serif;
+    margin: 10px 0 5px 0;
+    color: var(--text-main);
+}
+
+.subtitle {
+    color: #888;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Conteneur principal */
+main {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 15px;
+}
+
+/* Carte Exercice */
+.exercise-card {
+    background: var(--white);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow);
+    border-left: 5px solid var(--rose-gold);
+}
+
+.exercise-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.exercise-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.rpe-badge {
+    background: var(--rose-light);
+    color: var(--rose-gold);
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+/* Image de l'exercice */
+.exercise-img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    display: none; /* Caché par défaut si pas d'image */
+}
+.exercise-img.show {
+    display: block;
+}
+
+/* Détails techniques (Sets/Reps) */
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.detail-box {
+    background: #fafafa;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.detail-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+.detail-value {
+    font-weight: bold;
+    color: var(--rose-gold);
+}
+
+.coach-note {
+    background: #fff8f0;
+    padding: 10px;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-style: italic;
+    color: #555;
+}
+
+/* Zone Cliente (Input) */
+.client-input-zone {
+    border-top: 1px dashed #eee;
+    padding-top: 15px;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    font-family: 'Lato', sans-serif;
+    outline: none;
+    transition: 0.3s;
+}
+
+input:focus {
+    border-color: var(--rose-gold);
+    background: #fffdfd;
+}
+
+/* Bouton WhatsApp Flottant */
+.whatsapp-sticky {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 580px;
+    text-align: center;
+    z-index: 100;
+}
+
+.whatsapp-sticky button {
+    background: var(--text-main);
+    color: var(--white);
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+}
+
+.whatsapp-sticky button:active {
+    transform: scale(0.98);
+}
