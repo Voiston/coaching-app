@@ -1,5 +1,5 @@
 // --- CONFIGURATION ---
-const COACH_PHONE_NUMBER = "33600000000"; // TON NUMÉRO ICI
+const COACH_PHONE_NUMBER = "33600000000"; // REMET TON NUMÉRO ICI
 
 const urlParams = new URLSearchParams(window.location.search);
 const clientID = urlParams.get('client') || 'demo';
@@ -24,12 +24,14 @@ function displayProgram(data) {
     let currentSupersetContainer = null;
 
     data.exercises.forEach((exo, index) => {
+        // GESTION SECTION
         if (exo.type === "section") {
             if (currentSupersetContainer) { container.appendChild(currentSupersetContainer); currentSupersetContainer = null; }
             container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
             return; 
         }
 
+        // GESTION SUPERSET
         if (exo.superset_type === "start") {
             currentSupersetContainer = document.createElement('div');
             currentSupersetContainer.className = "superset-row";
@@ -49,7 +51,7 @@ function displayProgram(data) {
     });
     if (currentSupersetContainer) container.appendChild(currentSupersetContainer);
 
-    // --- NOUVEAU : On initialise la hauteur des cartes ouvertes par défaut ---
+    // Initialisation hauteur accordéon
     setTimeout(() => {
         document.querySelectorAll('.exercise-card.open .exercise-content').forEach(content => {
             content.style.maxHeight = content.scrollHeight + "px";
@@ -68,8 +70,6 @@ function createExerciseCard(exo, index) {
     let setsCount = parseInt(exo.sets) || 3;
     let checkboxesHtml = '<div class="sets-container">';
     for(let i=1; i<=setsCount; i++) {
-        // NOUVEAU : On appelle checkSetAndCollapse au lieu de juste saveAndProgress
-        // On passe l'index de la carte (index), le numéro de la série (i) et le total (setsCount)
         checkboxesHtml += `<div>
             <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" onchange="checkSetAndCollapse(this, ${index}, ${i}, ${setsCount})">
             <label for="set-${index}-${i}" class="set-label">${i}</label>
@@ -77,9 +77,9 @@ function createExerciseCard(exo, index) {
     }
     checkboxesHtml += '</div>';
 
-    // NOUVEAU : Ajout de la classe "open" par défaut dans la div principale
+    // IMPORTANT : On ajoute data-index="${index}" pour retrouver le bon ID plus tard
     return `
-    <div class="exercise-card open" id="card-${index}">
+    <div class="exercise-card open" id="card-${index}" data-index="${index}">
         <div class="exercise-header" onclick="toggleCard(this)">
             <div>
                 <div class="exercise-title">${exo.name}</div>
@@ -113,20 +113,13 @@ function createExerciseCard(exo, index) {
     </div>`;
 }
 
-// --- NOUVEAU : FONCTION DE REPLI AUTOMATIQUE ---
+// Fonction de repli
 function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
-    // 1. Sauvegarde et mise à jour barre de progression
-    saveAndProgress();
-
-    // 2. Si c'est coché ET que c'est la dernière série
+    saveAndProgress(); // Sauvegarde standard
     if (checkbox.checked && setNumber === totalSets) {
         const card = document.getElementById(`card-${cardIndex}`);
-        // On ferme la carte doucement
         if (card.classList.contains('open')) {
-            // Petit délai pour que l'utilisateur voit qu'il a coché avant que ça ferme
-            setTimeout(() => {
-                toggleCard(card.querySelector('.exercise-header'));
-            }, 300); // 300ms de délai
+            setTimeout(() => { toggleCard(card.querySelector('.exercise-header')); }, 300);
         }
     }
 }
@@ -145,11 +138,12 @@ function toggleCard(header) {
 }
 
 function saveAndProgress() {
-    updateProgress();
+    updateProgress(true); // True = Autoriser la vibration
     saveData();
 }
 
-function updateProgress() {
+// updateProgress avec option "silent" pour ne pas vibrer au démarrage
+function updateProgress(allowVibration = false) {
     const total = document.querySelectorAll('.set-checkbox').length;
     const checked = document.querySelectorAll('.set-checkbox:checked').length;
     const percent = (total === 0) ? 0 : (checked / total) * 100;
@@ -162,7 +156,9 @@ function updateProgress() {
         overlay.classList.add('active');
         const whatsappBtn = document.querySelector('.whatsapp-sticky button');
         document.getElementById('modal-btn-container').appendChild(whatsappBtn);
-        if("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+        
+        // On ne vibre que si c'est une action utilisateur (pas au chargement)
+        if(allowVibration && "vibrate" in navigator) navigator.vibrate([100, 50, 100]);
     }
 }
 
@@ -180,15 +176,11 @@ function loadProgress() {
     for (const [id, value] of Object.entries(data)) {
         const el = document.getElementById(id);
         if (el) {
-            if (el.type === 'checkbox') {
-                el.checked = value;
-                // Optionnel : Si on recharge et que la dernière série est faite, on ferme la carte ?
-                // Pour l'instant on laisse ouvert pour qu'elle puisse voir ce qu'elle a fait.
-            }
+            if (el.type === 'checkbox') el.checked = value;
             else el.value = value;
         }
     }
-    updateProgress();
+    updateProgress(false); // False = Mode silencieux au démarrage
 }
 
 function startTimer(btn, seconds) {
@@ -208,54 +200,10 @@ function startTimer(btn, seconds) {
     }, 1000);
 }
 
+// --- FONCTION CORRIGÉE POUR WHATSAPP ---
 function sendToWhatsapp() {
-    // 1. Entête du message
     let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
     msg += `_${document.getElementById('program-title').innerText}_\n\n`;
 
-    // 2. Les Exercices
-    document.querySelectorAll('.exercise-card').forEach((card, i) => {
-        const title = card.querySelector('.exercise-title').innerText;
-        const load = document.getElementById(`charge-${i}`).value;
-        const rpe = document.getElementById(`rpe-${i}`).value;
-        const note = document.getElementById(`comment-${i}`).value;
-        
-        // On n'envoie que si quelque chose est rempli
-        if(load || rpe || note) {
-            msg += `🔹 *${title}*\n`;
-            if(load) msg += `   ⚖️ ${load}kg\n`;
-            if(rpe)  msg += `   🔥 RPE ${rpe}\n`;
-            if(note) msg += `   📝 ${note}\n`;
-        }
-    });
-
-    // 3. LE NOUVEAU BILAN DE SÉANCE
-    const sMuscle = document.getElementById('score-muscle').value;
-    const cMuscle = document.getElementById('com-muscle').value;
-    
-    const sCardio = document.getElementById('score-cardio').value;
-    const cCardio = document.getElementById('com-cardio').value;
-    
-    const sFatigue = document.getElementById('score-fatigue').value;
-    const cFatigue = document.getElementById('com-fatigue').value;
-    
-    const sSleep = document.getElementById('score-sleep').value;
-    const cSleep = document.getElementById('com-sleep').value;
-
-    // Si au moins une note est remplie, on ajoute la section
-    if (sMuscle || sCardio || sFatigue || sSleep) {
-        msg += `\n📊 *BILAN GLOBAL*\n`;
-        if(sMuscle) msg += `💪 Muscle: ${sMuscle}/10 ${cMuscle ? '('+cMuscle+')' : ''}\n`;
-        if(sCardio) msg += `🫀 Cardio: ${sCardio}/10 ${cCardio ? '('+cCardio+')' : ''}\n`;
-        if(sFatigue) msg += `😫 Fatigue: ${sFatigue}/10 ${cFatigue ? '('+cFatigue+')' : ''}\n`;
-        if(sSleep)  msg += `💤 Sommeil: ${sSleep}/10 ${cSleep ? '('+cSleep+')' : ''}\n`;
-    }
-
-    msg += `\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
-
-    // 4. Nettoyage et Envoi
-    if(confirm("Confirmer l'envoi et vider les données ?")) {
-        localStorage.removeItem('fitapp_' + clientID);
-    }
-    window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-}
+    // CORRECTION : On ne se fie plus à l'index "i" de la boucle, mais au "data-index" stocké
+    document.querySelectorAll('.exercise
