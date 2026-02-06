@@ -39,7 +39,7 @@ function renderCalendar(sessions) {
     calendarContainer.innerHTML = "";
     
     // On génère les 14 prochains jours
-    const daysToShow = 14; 
+    const daysToShow = 21; 
     const today = new Date();
 
     // Mapping jours Anglais (JS) -> Français (JSON)

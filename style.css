@@ -12,94 +12,141 @@
     --radius: 20px;
 }
 
-/* --- CALENDRIER ROULANT (V2) --- */
+/* --- CALENDRIER ROULANT (V3 - PREMIUM) --- */
 .calendar-container {
     display: flex;
     overflow-x: auto;
-    gap: 12px;
-    padding: 10px 20px;
-    margin-bottom: 20px;
+    gap: 12px; /* Espacement aéré */
+    padding: 15px 20px 25px 20px; /* Padding bas plus grand pour l'ombre */
     background: #ffffff;
-    /* Masquer la barre de scroll disgracieuse */
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE/Edge */
+    
+    /* Scroll fluide et "magnétique" */
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    
+    /* Cacher la scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    
+    /* Petit fondu sur les bords (optionnel mais chic) */
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
 }
-.calendar-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+.calendar-container::-webkit-scrollbar { display: none; }
 
 .calendar-day {
-    flex: 0 0 auto; /* Ne pas écraser la largeur */
+    flex: 0 0 auto;
+    scroll-snap-align: start; /* Magnétisme */
+    
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 60px;
-    height: 75px;
-    border-radius: 18px;
-    background: #f8f9fa;
-    border: 1px solid #eee;
+    
+    width: 58px;
+    height: 78px;
+    border-radius: 20px; /* Arrondi moderne */
+    
+    background: #ffffff;
+    /* Ombre portée douce (Neumorphism light) */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0,0,0,0.02);
+    
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
+    z-index: 1;
 }
 
-/* Date (12) et Jour (LUN) */
-.day-name { font-size: 0.65rem; color: #aaa; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
-.day-date { font-size: 1.1rem; font-weight: 600; color: #444; }
+/* Typographie */
+.day-name { 
+    font-size: 0.6rem; 
+    color: #999; 
+    font-weight: 700; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; /* Espacement lettres "Luxe" */
+    margin-bottom: 4px;
+}
+.day-date { 
+    font-size: 1.2rem; 
+    font-family: 'Playfair Display', serif; /* Font titre */
+    font-weight: 700; 
+    color: var(--text-main); 
+}
 
-/* --- ÉTATS --- */
-
-/* 1. Jour avec Séance (Highlight) */
+/* --- ÉTAT 1 : JOUR AVEC SÉANCE (Subtil) --- */
 .calendar-day.has-session {
-    border: 1px solid var(--primary);
-    background: #fff0f3; /* Fond très légèrement rosé */
+    background: #FFFBFB; /* Rose très pâle */
+    border: 1px solid rgba(183, 110, 121, 0.15);
 }
-.calendar-day.has-session .day-date { color: var(--primary); }
-
-/* Petite pastille sous la date pour dire "Il y a un truc" */
+.calendar-day.has-session .day-date {
+    color: var(--primary);
+}
+/* Indicateur "point" plus élégant */
 .calendar-day.has-session::after {
     content: '';
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     background: var(--primary);
     border-radius: 50%;
-    margin-top: 4px;
+    margin-top: 6px;
+    box-shadow: 0 2px 5px rgba(183, 110, 121, 0.4); /* Petit éclat */
 }
 
-/* 2. Jour Sélectionné (Actif) */
+/* --- ÉTAT 2 : SÉLECTIONNÉ (Highlight) --- */
 .calendar-day.active {
-    background: var(--primary) !important;
-    border-color: var(--primary) !important;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 15px rgba(183, 110, 121, 0.3);
+    /* Gradient Rose Gold */
+    background: linear-gradient(135deg, #B76E79 0%, #A05560 100%);
+    border-color: transparent;
+    transform: translateY(-5px) scale(1.02); /* Pop-up */
+    
+    /* Ombre colorée brillante (Glow) */
+    box-shadow: 0 10px 25px rgba(183, 110, 121, 0.4);
+    z-index: 2;
 }
-.calendar-day.active .day-name, 
-.calendar-day.active .day-date { color: white !important; }
-.calendar-day.active::after { background: white; }
+.calendar-day.active .day-name { color: rgba(255,255,255, 0.8) !important; }
+.calendar-day.active .day-date { color: #ffffff !important; }
+.calendar-day.active::after { background: #fff; box-shadow: none; }
 
-/* 3. Séance Terminée (Succès) */
+/* --- ÉTAT 3 : TERMINÉ (Badge Pro) --- */
 .calendar-day.is-completed {
-    border-color: #4CAF50; /* Vert */
-    background: #E8F5E9;
+    border-color: #4CAF50;
 }
-/* Le petit 'V' vert */
 .calendar-day.is-completed::before {
     content: '✓';
     position: absolute;
-    top: -5px; right: -5px;
-    background: #4CAF50; color: white;
-    font-size: 0.6rem; width: 16px; height: 16px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-weight: bold;
+    top: -6px; right: -6px;
+    background: #4CAF50;
+    color: white;
+    font-size: 0.6rem;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid #fff; /* Contour blanc pour détacher */
+    box-shadow: 0 2px 5px rgba(76, 175, 80, 0.3);
 }
 
-/* Message "Repos" */
+/* --- SECTION REPOS --- */
 .rest-day-message {
+    background: white;
+    margin: 20px;
+    padding: 40px 20px;
+    border-radius: 20px;
     text-align: center;
-    padding: 50px 20px;
-    color: #888;
-    animation: fadeIn 0.5s;
+    box-shadow: var(--shadow);
+    border: 1px solid #f0f0f0;
 }
-.rest-icon { font-size: 3rem; display: block; margin-bottom: 10px; }
+.rest-icon { 
+    font-size: 3.5rem; 
+    display: inline-block; 
+    margin-bottom: 15px; 
+    animation: float 3s ease-in-out infinite; /* Animation flottante */
+}
+@keyframes float { 
+    0% { transform: translateY(0px); } 
+    50% { transform: translateY(-10px); } 
+    100% { transform: translateY(0px); } 
+}
 
 @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
