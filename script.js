@@ -19,46 +19,86 @@ fetch(`./clients/${clientID.toLowerCase()}.json`)
     })
     .catch(() => document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px'>Programme introuvable</h2>");
 
+// Remplace tout ton initApp par ça :
 function initApp(data) {
     document.getElementById('client-name').textContent = `Bonjour ${data.clientName} !`;
     document.getElementById('program-title').textContent = data.programTitle;
 
-    // Détection : Nouveau format (sessions) ou Ancien format (exercises) ?
+    // Si on a des sessions, on lance le calendrier
     if (data.sessions && data.sessions.length > 0) {
-        // --- MODE MULTI-SÉANCES ---
-        const selectorContainer = document.getElementById('session-selector-container');
-        const selector = document.getElementById('session-select');
-        
-        // Afficher le sélecteur
-        if (selectorContainer) selectorContainer.style.display = "block";
-        
-        if (selector) {
-            selector.innerHTML = ""; // Vider les options
-            data.sessions.forEach((session, index) => {
-                let option = document.createElement("option");
-                option.value = index; // On utilise l'index pour retrouver la séance
-                option.text = session.name;
-                selector.appendChild(option);
-            });
-        }
-        // Charger la première séance par défaut
-        renderSession(0);
-
+        renderCalendar(data.sessions);
     } else if (data.exercises) {
-        // --- ANCIEN MODE (Rétro-compatibilité) ---
-        // On convertit à la volée l'ancien format en une séance unique
-        globalData.sessions = [{ 
-            id: "unique", 
-            name: "Séance Unique", 
-            exercises: data.exercises 
-        }];
-        
-        // On cache le sélecteur s'il existe
-        const selectorContainer = document.getElementById('session-selector-container');
-        if (selectorContainer) selectorContainer.style.display = "none";
-
-        renderSession(0);
+        // Rétro-compatibilité (Ancien format sans calendrier)
+        globalData.sessions = [{ id: "unique", name: "Séance Unique", exercises: data.exercises }];
+        renderSession(0); // On charge direct
     }
+}
+
+// --- NOUVELLE FONCTION CALENDRIER ---
+function renderCalendar(sessions) {
+    const calendarContainer = document.getElementById('calendar-strip');
+    calendarContainer.innerHTML = "";
+    
+    const daysOfWeek = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+    
+    // Trouver le jour actuel (0 = Lundi pour nous, mais JS : 0 = Dimanche)
+    const todayDate = new Date();
+    let todayIndex = todayDate.getDay() - 1; // JS: Dim=0, Lun=1... Nous on veut Lun=0
+    if (todayIndex === -1) todayIndex = 6; // Si c'est Dimanche (-1), on le met à la fin (6)
+
+    daysOfWeek.forEach((dayName, index) => {
+        // Chercher si une séance existe pour ce jour
+        // On normalise (minuscules) pour éviter les erreurs de saisie
+        const sessionIndex = sessions.findIndex(s => s.day && s.day.toLowerCase() === dayName.toLowerCase());
+        const hasSession = sessionIndex !== -1;
+
+        const dayEl = document.createElement('div');
+        dayEl.className = `calendar-day ${hasSession ? 'has-session' : ''}`;
+        
+        // Abréviation (LUN, MAR...)
+        const shortName = dayName.substring(0, 3);
+        
+        dayEl.innerHTML = `
+            <span class="day-name">${shortName}</span>
+            <div class="day-indicator"></div>
+        `;
+
+        // Clic sur le jour
+        dayEl.onclick = () => {
+            // Gestion visuelle "Actif"
+            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('active'));
+            dayEl.classList.add('active');
+
+            if (hasSession) {
+                // Charger la séance
+                renderSession(sessionIndex);
+            } else {
+                // Afficher "Repos"
+                showRestDay(dayName);
+            }
+        };
+
+        // Auto-sélectionner le jour d'aujourd'hui au chargement
+        if (index === todayIndex) {
+            setTimeout(() => dayEl.click(), 100); // Petit délai pour l'animation
+        }
+
+        calendarContainer.appendChild(dayEl);
+    });
+}
+
+function showRestDay(dayName) {
+    const container = document.getElementById('workout-container');
+    container.innerHTML = `
+        <div class="rest-day-message">
+            <span class="rest-icon">🧘‍♀️</span>
+            <h2>Repos ce ${dayName}</h2>
+            <p>Profite-en pour récupérer, bien manger et dormir.</p>
+            <p style="font-size:0.9rem; margin-top:20px; color:var(--primary)">Patience, la prochaine séance arrive !</p>
+        </div>
+    `;
+    document.getElementById('progress-bar').style.width = "0%";
+}
 }
 
 // Fonction appelée par le <select> HTML
@@ -71,57 +111,7 @@ function switchSession(index) {
     }
 }
 
-function renderSession(sessionIndex) {
-    const session = globalData.sessions[sessionIndex];
-    const container = document.getElementById('workout-container');
-    
-    // Définir l'ID unique de la séance actuelle pour la sauvegarde
-    // Si l'ID n'est pas dans le JSON, on en crée un basé sur l'index
-    currentSessionId = session.id || `session_${sessionIndex}`;
 
-    // Reset de l'interface
-    container.innerHTML = ""; 
-    document.getElementById('progress-bar').style.width = "0%";
-
-    let currentSupersetContainer = null;
-
-    session.exercises.forEach((exo, index) => {
-        if (exo.type === "section") {
-            if (currentSupersetContainer) { container.appendChild(currentSupersetContainer); currentSupersetContainer = null; }
-            container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
-            return; 
-        }
-
-        if (exo.superset_type === "start") {
-            currentSupersetContainer = document.createElement('div');
-            currentSupersetContainer.className = "superset-row";
-        }
-
-        // ON PASSE currentSessionId à la création de la carte
-        const cardHtml = createExerciseCard(exo, index, currentSessionId);
-        
-        if (currentSupersetContainer) {
-            currentSupersetContainer.innerHTML += cardHtml;
-            if (exo.superset_type === "end") {
-                container.appendChild(currentSupersetContainer);
-                currentSupersetContainer = null;
-            }
-        } else {
-            container.insertAdjacentHTML('beforeend', cardHtml);
-        }
-    });
-    if (currentSupersetContainer) container.appendChild(currentSupersetContainer);
-
-    // Initialisation des hauteurs pour l'animation accordéon
-    setTimeout(() => {
-        document.querySelectorAll('.exercise-card.open .exercise-content').forEach(content => {
-            content.style.maxHeight = content.scrollHeight + "px";
-        });
-    }, 100);
-
-    // CHARGEMENT DES DONNÉES SAUVEGARDÉES (Specifique à cette séance grâce aux IDs)
-    loadProgress();
-}
 
 function createExerciseCard(exo, index, sessionId) {
     let mediaHtml = '';
