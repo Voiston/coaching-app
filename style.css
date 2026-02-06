@@ -1,14 +1,14 @@
-/* --- IMPORTATION DES POLICES --- */
+/* --- GARDER LE DÉBUT (IMPORT FONTS & VARIABLES) --- */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap');
 
 :root {
-    --primary: #B76E79;        /* Vrai Rose Gold */
-    --primary-dark: #965A62;   /* Rose Gold foncé pour le texte */
+    --primary: #B76E79;
+    --primary-dark: #965A62;
     --bg-gradient: linear-gradient(135deg, #FFF0F0 0%, #FFFCFC 100%);
     --card-bg: #ffffff;
     --text-main: #4A4A4A;
     --text-light: #888888;
-    --shadow: 0 10px 30px rgba(183, 110, 121, 0.15); /* Ombre rosée */
+    --shadow: 0 10px 30px rgba(183, 110, 121, 0.15);
     --radius: 20px;
 }
 
@@ -17,17 +17,35 @@ body {
     background: var(--bg-gradient);
     color: var(--text-main);
     margin: 0;
-    padding: 0 0 120px 0; /* Espace pour le bouton en bas */
+    padding: 60px 0 120px 0; /* Plus d'espace en haut pour la barre de progression */
     min-height: 100vh;
+}
+
+/* --- BARRE DE PROGRESSION (NOUVEAU) --- */
+#progress-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: #FFF;
+    z-index: 1000;
+}
+#progress-bar {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.5s ease;
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 10px rgba(183, 110, 121, 0.5);
 }
 
 /* --- EN-TÊTE --- */
 header {
     background: transparent;
-    padding: 40px 20px 20px;
+    padding: 20px 20px 20px;
     text-align: center;
 }
-
 .logo-area {
     font-size: 0.75rem;
     letter-spacing: 3px;
@@ -36,15 +54,13 @@ header {
     text-transform: uppercase;
     margin-bottom: 10px;
 }
-
 h1 {
     font-family: 'Playfair Display', serif;
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: var(--text-main);
     margin: 0;
     line-height: 1.2;
 }
-
 .subtitle {
     font-size: 1rem;
     color: var(--text-light);
@@ -66,145 +82,108 @@ main {
     padding: 25px;
     margin-bottom: 30px;
     box-shadow: var(--shadow);
-    transition: transform 0.2s;
     border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.exercise-card:hover {
-    transform: translateY(-3px);
 }
 
 .exercise-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
-
 .exercise-title {
     font-family: 'Playfair Display', serif;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     color: var(--primary-dark);
     font-weight: 700;
     flex: 1;
 }
-
 .rpe-badge {
     background: #FFF0F0;
     color: var(--primary);
-    padding: 6px 12px;
+    padding: 4px 10px;
     border-radius: 50px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     white-space: nowrap;
     margin-left: 10px;
 }
 
-/* Image */
 .exercise-img {
     width: 100%;
     border-radius: 15px;
     margin-bottom: 20px;
     object-fit: cover;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     display: none;
 }
 .exercise-img.show { display: block; }
 
-/* Grid Details */
+/* Détails techniques */
 .details-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 20px;
 }
-
 .detail-box {
     text-align: center;
     background: #FAFAFA;
-    padding: 12px 5px;
+    padding: 10px 5px;
     border-radius: 12px;
     border: 1px solid #F0F0F0;
 }
-
 .detail-label {
     display: block;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: #AAA;
     text-transform: uppercase;
-    letter-spacing: 1px;
     margin-bottom: 4px;
 }
-
 .detail-value {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-main);
 }
 
-/* Note Coach */
-.coach-note {
-    background: #FFF8F8;
-    border-left: 3px solid var(--primary);
-    padding: 15px;
-    font-size: 0.9rem;
-    border-radius: 0 10px 10px 0;
-    margin-bottom: 25px;
-    color: #666;
-    line-height: 1.5;
-}
-
-/* --- INPUTS CLIENTE --- */
-.client-input-zone {
-    border-top: 1px dashed #E0E0E0;
-    padding-top: 20px;
-}
-
-.input-row {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-input {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #EEE;
-    background: #FCFCFC;
-    border-radius: 12px;
+/* --- TIMER (NOUVEAU) --- */
+.timer-btn {
+    grid-column: span 3; /* Prend toute la largeur sous les détails */
+    background: #333;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
     font-family: 'Poppins', sans-serif;
     font-size: 0.9rem;
-    color: #333;
-    outline: none;
-    transition: all 0.3s ease;
+    margin-top: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.3s;
 }
+.timer-btn.active {
+    background: var(--primary); /* Devient rose quand actif */
+}
+.timer-icon { font-size: 1.1rem; }
 
-input:focus {
-    border-color: var(--primary);
+/* --- CHECKBOXES SÉRIES (NOUVEAU) --- */
+.sets-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+.set-checkbox {
+    display: none; /* On cache la vraie checkbox moche */
+}
+.set-label {
+    width: 35px;
+    height: 35px;
     background: #FFF;
-    box-shadow: 0 0 0 3px rgba(183, 110, 121, 0.1);
-}
-
-::placeholder { color: #BBB; }
-
-/* --- BOUTON WHATSAPP --- */
-.whatsapp-sticky {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 85%;
-    max-width: 500px;
-    z-index: 100;
-}
-
-.whatsapp-sticky button {
-    background: linear-gradient(135deg, #B76E79 0%, #A05560 100%);
-    color: white;
-    width: 100%;
-    padding: 18px;
-    border: none;
-    border-radius: 50px;
-    font-size: 1rem;
-    font-weight: 600;
-    font-family:
+    border: 2px solid #EEE;
+    border-radius: 50%; /* Cercle parfait */
+    display: flex;
+    justify-content:
