@@ -4,24 +4,88 @@ const COACH_PHONE_NUMBER = "33600000000"; // TON NUMÉRO
 const urlParams = new URLSearchParams(window.location.search);
 const clientID = urlParams.get('client') || 'demo';
 
+// Variables Globales pour le multi-séances
+let globalData = null;
+let currentSessionId = "default"; 
+
 document.body.insertAdjacentHTML('afterbegin', '<div id="progress-container"><div id="progress-bar"></div></div>');
 
+// --- CHARGEMENT INITIAL ---
 fetch(`./clients/${clientID.toLowerCase()}.json`)
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(data => {
-        displayProgram(data);
-        loadProgress(); 
+        globalData = data;
+        initApp(data);
     })
     .catch(() => document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px'>Programme introuvable</h2>");
 
-function displayProgram(data) {
+function initApp(data) {
     document.getElementById('client-name').textContent = `Bonjour ${data.clientName} !`;
     document.getElementById('program-title').textContent = data.programTitle;
+
+    // Détection : Nouveau format (sessions) ou Ancien format (exercises) ?
+    if (data.sessions && data.sessions.length > 0) {
+        // --- MODE MULTI-SÉANCES ---
+        const selectorContainer = document.getElementById('session-selector-container');
+        const selector = document.getElementById('session-select');
+        
+        // Afficher le sélecteur
+        if (selectorContainer) selectorContainer.style.display = "block";
+        
+        if (selector) {
+            selector.innerHTML = ""; // Vider les options
+            data.sessions.forEach((session, index) => {
+                let option = document.createElement("option");
+                option.value = index; // On utilise l'index pour retrouver la séance
+                option.text = session.name;
+                selector.appendChild(option);
+            });
+        }
+        // Charger la première séance par défaut
+        renderSession(0);
+
+    } else if (data.exercises) {
+        // --- ANCIEN MODE (Rétro-compatibilité) ---
+        // On convertit à la volée l'ancien format en une séance unique
+        globalData.sessions = [{ 
+            id: "unique", 
+            name: "Séance Unique", 
+            exercises: data.exercises 
+        }];
+        
+        // On cache le sélecteur s'il existe
+        const selectorContainer = document.getElementById('session-selector-container');
+        if (selectorContainer) selectorContainer.style.display = "none";
+
+        renderSession(0);
+    }
+}
+
+// Fonction appelée par le <select> HTML
+function switchSession(index) {
+    if(confirm("Changer de séance ? (Les cases cochées seront remises à zéro, mais tes charges sont sauvegardées)")) {
+        renderSession(index);
+    } else {
+        // Si l'utilisateur annule, on pourrait remettre le select sur l'ancienne valeur
+        // Mais pour l'instant, on laisse simple.
+    }
+}
+
+function renderSession(sessionIndex) {
+    const session = globalData.sessions[sessionIndex];
     const container = document.getElementById('workout-container');
+    
+    // Définir l'ID unique de la séance actuelle pour la sauvegarde
+    // Si l'ID n'est pas dans le JSON, on en crée un basé sur l'index
+    currentSessionId = session.id || `session_${sessionIndex}`;
+
+    // Reset de l'interface
+    container.innerHTML = ""; 
+    document.getElementById('progress-bar').style.width = "0%";
 
     let currentSupersetContainer = null;
 
-    data.exercises.forEach((exo, index) => {
+    session.exercises.forEach((exo, index) => {
         if (exo.type === "section") {
             if (currentSupersetContainer) { container.appendChild(currentSupersetContainer); currentSupersetContainer = null; }
             container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
@@ -33,7 +97,8 @@ function displayProgram(data) {
             currentSupersetContainer.className = "superset-row";
         }
 
-        const cardHtml = createExerciseCard(exo, index);
+        // ON PASSE currentSessionId à la création de la carte
+        const cardHtml = createExerciseCard(exo, index, currentSessionId);
         
         if (currentSupersetContainer) {
             currentSupersetContainer.innerHTML += cardHtml;
@@ -47,14 +112,18 @@ function displayProgram(data) {
     });
     if (currentSupersetContainer) container.appendChild(currentSupersetContainer);
 
+    // Initialisation des hauteurs pour l'animation accordéon
     setTimeout(() => {
         document.querySelectorAll('.exercise-card.open .exercise-content').forEach(content => {
             content.style.maxHeight = content.scrollHeight + "px";
         });
     }, 100);
+
+    // CHARGEMENT DES DONNÉES SAUVEGARDÉES (Specifique à cette séance grâce aux IDs)
+    loadProgress();
 }
 
-function createExerciseCard(exo, index) {
+function createExerciseCard(exo, index, sessionId) {
     let mediaHtml = '';
     if (exo.image && (exo.image.includes('youtube') || exo.image.includes('youtu.be'))) {
         mediaHtml = `<a href="${exo.image}" target="_blank" class="video-btn">▶ Voir la démo vidéo</a>`;
@@ -65,7 +134,6 @@ function createExerciseCard(exo, index) {
     let setsCount = parseInt(exo.sets) || 3;
     let checkboxesHtml = '<div class="sets-container">';
     
-    // ICI : J'ai ajouté ton SVG à l'intérieur du label
     const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>`;
 
     for(let i=1; i<=setsCount; i++) {
@@ -79,12 +147,17 @@ function createExerciseCard(exo, index) {
     }
     checkboxesHtml += '</div>';
 
+    // CONSTRUCTION DES IDs UNIQUES (Ex: charge-seanceA-0)
+    const idCharge = `charge-${sessionId}-${index}`;
+    const idRpe = `rpe-${sessionId}-${index}`;
+    const idCom = `comment-${sessionId}-${index}`;
+
     return `
     <div class="exercise-card open" id="card-${index}" data-index="${index}">
         <div class="exercise-header" onclick="toggleCard(this)">
             <div>
                 <div class="exercise-title">${exo.name}</div>
-                <div class="rpe-badge">RPE: ${exo.rpe_target}</div>
+                <div class="rpe-badge">RPE: ${exo.rpe_target || '-'}</div>
             </div>
             <div class="toggle-icon">▼</div>
         </div>
@@ -104,10 +177,10 @@ function createExerciseCard(exo, index) {
                 ${exo.note_coach ? `<div class="coach-note">💡 "${exo.note_coach}"</div>` : ''}
                 <div class="client-input-zone">
                     <div class="input-row">
-                        <input type="text" id="charge-${index}" placeholder="Charge (kg)" oninput="saveAndProgress()">
-                        <input type="number" id="rpe-${index}" placeholder="RPE" oninput="saveAndProgress()">
+                        <input type="text" id="${idCharge}" placeholder="Charge (kg)" oninput="saveAndProgress()">
+                        <input type="number" id="${idRpe}" placeholder="RPE" oninput="saveAndProgress()">
                     </div>
-                    <input type="text" id="comment-${index}" placeholder="Note..." oninput="saveAndProgress()">
+                    <input type="text" id="${idCom}" placeholder="Note..." oninput="saveAndProgress()">
                 </div>
             </div>
         </div>
@@ -115,16 +188,18 @@ function createExerciseCard(exo, index) {
 }
 
 function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
-    // On ne sauvegarde PLUS l'état des checkbox ici, mais on met à jour la barre
     updateProgress(true); 
     
-    // On sauvegarde quand même les inputs (si l'utilisateur a rempli charge avant de cocher)
+    // On sauvegarde aussi quand on coche (au cas où on quitte juste après)
     saveData(); 
 
     if (checkbox.checked && setNumber === totalSets) {
         const card = document.getElementById(`card-${cardIndex}`);
-        if (card.classList.contains('open')) {
-            setTimeout(() => { toggleCard(card.querySelector('.exercise-header')); }, 300);
+        if (card && card.classList.contains('open')) {
+            setTimeout(() => { 
+                const header = card.querySelector('.exercise-header');
+                if(header) toggleCard(header); 
+            }, 300);
         }
     }
 }
@@ -139,6 +214,11 @@ function toggleCard(header) {
         card.classList.add('open');
         content.style.maxHeight = content.scrollHeight + "px";
     }
+}
+
+// Wrapper simple pour sauvegarder lors de la frappe
+function saveAndProgress() {
+    saveData();
 }
 
 function updateProgress(shouldOpenModal = false) {
@@ -160,28 +240,35 @@ function updateProgress(shouldOpenModal = false) {
     }
 }
 
-// --- MODIFICATION : On ne sauvegarde QUE les inputs (Texte et Nombre) ---
 function saveData() {
     const dataToSave = {};
-    // On ne sélectionne plus .set-checkbox ici !
+    // On sauvegarde TOUS les inputs présents sur la page (Texte et Nombre)
+    // Grâce aux IDs uniques (avec sessionId), pas de conflit !
     document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
-        dataToSave[input.id] = input.value;
+        // On ne sauvegarde pas les inputs du bilan final ici (ils ont leurs propres IDs fixes)
+        // Mais on s'assure de ne pas sauvegarder n'importe quoi
+        if(input.id && !input.id.startsWith('score-') && !input.id.startsWith('com-')) {
+            dataToSave[input.id] = input.value;
+        }
     });
-    localStorage.setItem('fitapp_' + clientID, JSON.stringify(dataToSave));
+
+    // On fusionne avec ce qui existe déjà dans le localStorage pour ne pas écraser les autres séances
+    const existingData = JSON.parse(localStorage.getItem('fitapp_' + clientID) || '{}');
+    const newData = { ...existingData, ...dataToSave };
+
+    localStorage.setItem('fitapp_' + clientID, JSON.stringify(newData));
 }
 
-// --- MODIFICATION : On ne charge QUE les inputs ---
 function loadProgress() {
     const saved = localStorage.getItem('fitapp_' + clientID);
     if (!saved) return;
     const data = JSON.parse(saved);
+    
     for (const [id, value] of Object.entries(data)) {
         const el = document.getElementById(id);
-        if (el) {
-            // Sécurité : on ignore si jamais c'est une checkbox qui traine en mémoire
-            if (el.type !== 'checkbox') {
-                el.value = value;
-            }
+        // Si l'élément existe sur la page actuelle (donc dans la bonne séance), on le remplit
+        if (el && el.type !== 'checkbox') {
+            el.value = value;
         }
     }
     updateProgress(false);
@@ -206,14 +293,31 @@ function startTimer(btn, seconds) {
 
 function sendToWhatsapp() {
     let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
-    msg += `_${document.getElementById('program-title').innerText}_\n\n`;
+    
+    // Récupérer le nom de la séance active dans le selecteur (si dispo)
+    const select = document.getElementById('session-select');
+    let sessionName = "";
+    if(select && select.options.length > 0) {
+        sessionName = select.options[select.selectedIndex].text;
+    } else {
+        sessionName = document.getElementById('program-title').innerText;
+    }
+
+    msg += `📂 *${sessionName}*\n\n`;
 
     document.querySelectorAll('.exercise-card').forEach((card) => {
         const originalIndex = card.dataset.index;
         const title = card.querySelector('.exercise-title').innerText;
-        const load = document.getElementById(`charge-${originalIndex}`).value;
-        const rpe = document.getElementById(`rpe-${originalIndex}`).value;
-        const note = document.getElementById(`comment-${originalIndex}`).value;
+        
+        // RECONSTRUCTION DES IDs pour récupérer les valeurs
+        const idCharge = `charge-${currentSessionId}-${originalIndex}`;
+        const idRpe = `rpe-${currentSessionId}-${originalIndex}`;
+        const idCom = `comment-${currentSessionId}-${originalIndex}`;
+
+        // On utilise getElementById car on connait l'ID exact
+        const load = document.getElementById(idCharge)?.value;
+        const rpe = document.getElementById(idRpe)?.value;
+        const note = document.getElementById(idCom)?.value;
         
         if(load || rpe || note) {
             msg += `🔹 *${title}*\n`;
@@ -223,6 +327,7 @@ function sendToWhatsapp() {
         }
     });
 
+    // Ajout du bilan global (Formulaire de fin)
     const sMuscle = document.getElementById('score-muscle').value;
     const cMuscle = document.getElementById('com-muscle').value;
     const sCardio = document.getElementById('score-cardio').value;
@@ -242,9 +347,9 @@ function sendToWhatsapp() {
 
     msg += `\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
 
-    if(confirm("Confirmer l'envoi et vider les données ?")) {
-        localStorage.removeItem('fitapp_' + clientID);
-    }
+    // Pas de suppression du localStorage ici pour garder l'historique des charges
+    // On pourrait optionnellement vider juste les cases "note" si voulu
+    
     window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
