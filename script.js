@@ -209,16 +209,52 @@ function startTimer(btn, seconds) {
 }
 
 function sendToWhatsapp() {
-    let msg = `*Fin de Séance - ${document.getElementById('client-name').innerText}*\n_${document.getElementById('program-title').innerText}_\n\n`;
+    // 1. Entête du message
+    let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
+    msg += `_${document.getElementById('program-title').innerText}_\n\n`;
+
+    // 2. Les Exercices
     document.querySelectorAll('.exercise-card').forEach((card, i) => {
         const title = card.querySelector('.exercise-title').innerText;
         const load = document.getElementById(`charge-${i}`).value;
         const rpe = document.getElementById(`rpe-${i}`).value;
         const note = document.getElementById(`comment-${i}`).value;
-        if(load || rpe || note) msg += `🔹 *${title}*\n${load ? '⚖️ '+load+'kg ' : ''}${rpe ? '🔥 '+rpe+' ' : ''}\n${note ? '📝 '+note+'\n' : ''}\n`;
+        
+        // On n'envoie que si quelque chose est rempli
+        if(load || rpe || note) {
+            msg += `🔹 *${title}*\n`;
+            if(load) msg += `   ⚖️ ${load}kg\n`;
+            if(rpe)  msg += `   🔥 RPE ${rpe}\n`;
+            if(note) msg += `   📝 ${note}\n`;
+        }
     });
+
+    // 3. LE NOUVEAU BILAN DE SÉANCE
+    const sMuscle = document.getElementById('score-muscle').value;
+    const cMuscle = document.getElementById('com-muscle').value;
+    
+    const sCardio = document.getElementById('score-cardio').value;
+    const cCardio = document.getElementById('com-cardio').value;
+    
+    const sFatigue = document.getElementById('score-fatigue').value;
+    const cFatigue = document.getElementById('com-fatigue').value;
+    
+    const sSleep = document.getElementById('score-sleep').value;
+    const cSleep = document.getElementById('com-sleep').value;
+
+    // Si au moins une note est remplie, on ajoute la section
+    if (sMuscle || sCardio || sFatigue || sSleep) {
+        msg += `\n📊 *BILAN GLOBAL*\n`;
+        if(sMuscle) msg += `💪 Muscle: ${sMuscle}/10 ${cMuscle ? '('+cMuscle+')' : ''}\n`;
+        if(sCardio) msg += `🫀 Cardio: ${sCardio}/10 ${cCardio ? '('+cCardio+')' : ''}\n`;
+        if(sFatigue) msg += `😫 Fatigue: ${sFatigue}/10 ${cFatigue ? '('+cFatigue+')' : ''}\n`;
+        if(sSleep)  msg += `💤 Sommeil: ${sSleep}/10 ${cSleep ? '('+cSleep+')' : ''}\n`;
+    }
+
     msg += `\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
-    if(confirm("Veux-tu vider les données pour la prochaine fois ?")) {
+
+    // 4. Nettoyage et Envoi
+    if(confirm("Confirmer l'envoi et vider les données ?")) {
         localStorage.removeItem('fitapp_' + clientID);
     }
     window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');

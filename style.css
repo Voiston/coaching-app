@@ -170,3 +170,63 @@ input:focus { border-color: var(--primary); background: #FFF; }
 .completion-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--primary-dark); margin-bottom: 10px; }
 .video-btn { display: inline-block; margin-top: 10px; color: var(--primary); font-size: 0.8rem; font-weight: 600; text-decoration: none; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 50px; transition: all 0.2s; }
 .video-btn:hover { background: var(--primary); color: white; }
+
+
+/* --- STYLES DU BILAN DE FIN --- */
+
+/* Permet de scroller dans la modale si le clavier du téléphone cache l'écran */
+.completion-modal {
+    max-height: 85vh; /* Hauteur max de l'écran */
+    overflow-y: auto; /* Scroll si ça dépasse */
+    width: 90%;
+    max-width: 450px;
+    padding: 30px 20px;
+}
+
+.feedback-container {
+    text-align: left;
+    margin-bottom: 25px;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 15px;
+    border: 1px solid #eee;
+}
+
+.feedback-item {
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #e0e0e0;
+    padding-bottom: 10px;
+}
+.feedback-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.feedback-item label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+    display: block;
+    margin-bottom: 5px;
+}
+
+.feedback-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+/* La petite case note */
+.score-input {
+    width: 50px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--primary);
+    padding: 8px;
+}
+
+/* La grande case commentaire */
+.com-input {
+    flex: 1; /* Prend le reste de la place */
+    font-size: 0.85rem;
+    padding: 8px;
+}

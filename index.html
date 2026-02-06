@@ -28,8 +28,45 @@
 
     <div id="completion-overlay" class="completion-overlay">
         <div class="completion-modal">
-            <div class="completion-title">Excellent travail !</div>
-            <p class="completion-text">Séance terminée. Envoie ton rapport au coach pour valider.</p>
+            <div class="completion-title">Séance Terminée ! 🏆</div>
+            <p class="completion-text">Prends une minute pour noter ton ressenti.</p>
+            
+            <div class="feedback-container">
+                
+                <div class="feedback-item">
+                    <label>💪 Difficulté Musculaire /10</label>
+                    <div class="feedback-inputs">
+                        <input type="number" id="score-muscle" class="score-input" min="0" max="10" placeholder="5">
+                        <input type="text" id="com-muscle" class="com-input" placeholder="Détails (ex: Cuisses HS...)">
+                    </div>
+                </div>
+
+                <div class="feedback-item">
+                    <label>🫀 Difficulté Cardio /10</label>
+                    <div class="feedback-inputs">
+                        <input type="number" id="score-cardio" class="score-input" min="0" max="10" placeholder="5">
+                        <input type="text" id="com-cardio" class="com-input" placeholder="Détails...">
+                    </div>
+                </div>
+
+                <div class="feedback-item">
+                    <label>😫 Fatigue après séance /10</label>
+                    <div class="feedback-inputs">
+                        <input type="number" id="score-fatigue" class="score-input" min="0" max="10" placeholder="5">
+                        <input type="text" id="com-fatigue" class="com-input" placeholder="Détails...">
+                    </div>
+                </div>
+
+                <div class="feedback-item">
+                    <label>💤 Sommeil (48h) /10</label>
+                    <div class="feedback-inputs">
+                        <input type="number" id="score-sleep" class="score-input" min="0" max="10" placeholder="5">
+                        <input type="text" id="com-sleep" class="com-input" placeholder="Heures, réveils...">
+                    </div>
+                </div>
+
+            </div>
+
             <div id="modal-btn-container"></div>
         </div>
     </div>
