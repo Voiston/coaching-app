@@ -1,21 +1,29 @@
 {
-  "clientName": "Sophie",
-  "programTitle": "Séance Test - Full Body",
+  "clientName": "Athlète Pro",
+  "programTitle": "Séance avec Superset",
   "exercises": [
     {
-      "name": "Goblet Squat",
-      "image": "", 
-      "sets": "3",
-      "reps": "12",
-      "rest": "90s",
+      "name": "A1. Développé Couché",
+      "superset_type": "start",  <-- AJOUTER CECI
+      "sets": "4",
+      "reps": "8",
+      "rest": "0s",
       "rpe_target": "8",
-      "note_coach": "Garde le dos bien droit et les abdos serrés."
+      "note_coach": "Enchaîne direct avec A2."
     },
     {
-      "name": "Pompes sur genoux",
-      "image": "",
+      "name": "A2. Tirage Bûcheron",
+      "superset_type": "end", <-- AJOUTER CECI
+      "sets": "4",
+      "reps": "12",
+      "rest": "90s",
+      "rpe_target": "9",
+      "note_coach": "Contrôle la descente."
+    },
+    {
+      "name": "B. Leg Curl",
       "sets": "3",
-      "reps": "Max",
+      "reps": "15",
       "rest": "60s",
       "rpe_target": "9",
       "note_coach": ""
