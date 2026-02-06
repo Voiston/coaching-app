@@ -186,4 +186,74 @@ main {
     border: 2px solid #EEE;
     border-radius: 50%; /* Cercle parfait */
     display: flex;
-    justify-content:
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: #CCC;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+/* Quand c'est coché */
+.set-checkbox:checked + .set-label {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.coach-note {
+    background: #FFF8F8;
+    border-left: 3px solid var(--primary);
+    padding: 15px;
+    font-size: 0.9rem;
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Inputs Cliente */
+.client-input-zone {
+    border-top: 1px dashed #E0E0E0;
+    padding-top: 20px;
+}
+.input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #EEE;
+    background: #FCFCFC;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+    transition: 0.3s;
+}
+input:focus { border-color: var(--primary); background: #FFF; }
+
+/* Bouton WhatsApp */
+.whatsapp-sticky {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    max-width: 500px;
+    z-index: 100;
+}
+.whatsapp-sticky button {
+    background: linear-gradient(135deg, #B76E79 0%, #A05560 100%);
+    color: white;
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(183, 110, 121, 0.4);
+}
