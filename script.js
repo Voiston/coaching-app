@@ -1,13 +1,11 @@
 // --- CONFIGURATION ---
-const COACH_PHONE_NUMBER = "33600000000"; // REMET TON NUMÉRO ICI
+const COACH_PHONE_NUMBER = "33600000000"; // TON NUMÉRO
 
 const urlParams = new URLSearchParams(window.location.search);
 const clientID = urlParams.get('client') || 'demo';
 
-// Barre de progression
 document.body.insertAdjacentHTML('afterbegin', '<div id="progress-container"><div id="progress-bar"></div></div>');
 
-// Chargement des données
 fetch(`./clients/${clientID.toLowerCase()}.json`)
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(data => {
@@ -24,14 +22,12 @@ function displayProgram(data) {
     let currentSupersetContainer = null;
 
     data.exercises.forEach((exo, index) => {
-        // GESTION SECTION
         if (exo.type === "section") {
             if (currentSupersetContainer) { container.appendChild(currentSupersetContainer); currentSupersetContainer = null; }
             container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
             return; 
         }
 
-        // GESTION SUPERSET
         if (exo.superset_type === "start") {
             currentSupersetContainer = document.createElement('div');
             currentSupersetContainer.className = "superset-row";
@@ -51,7 +47,6 @@ function displayProgram(data) {
     });
     if (currentSupersetContainer) container.appendChild(currentSupersetContainer);
 
-    // Initialisation hauteur accordéon
     setTimeout(() => {
         document.querySelectorAll('.exercise-card.open .exercise-content').forEach(content => {
             content.style.maxHeight = content.scrollHeight + "px";
@@ -69,15 +64,21 @@ function createExerciseCard(exo, index) {
 
     let setsCount = parseInt(exo.sets) || 3;
     let checkboxesHtml = '<div class="sets-container">';
+    
+    // ICI : J'ai ajouté ton SVG à l'intérieur du label
+    const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>`;
+
     for(let i=1; i<=setsCount; i++) {
         checkboxesHtml += `<div>
             <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" onchange="checkSetAndCollapse(this, ${index}, ${i}, ${setsCount})">
-            <label for="set-${index}-${i}" class="set-label">${i}</label>
+            <label for="set-${index}-${i}" class="set-label">
+                ${i}
+                ${checkIcon}
+            </label>
         </div>`;
     }
     checkboxesHtml += '</div>';
 
-    // IMPORTANT : On ajoute data-index="${index}" pour retrouver le bon ID plus tard
     return `
     <div class="exercise-card open" id="card-${index}" data-index="${index}">
         <div class="exercise-header" onclick="toggleCard(this)">
@@ -113,9 +114,13 @@ function createExerciseCard(exo, index) {
     </div>`;
 }
 
-// Fonction de repli
 function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
-    saveAndProgress(); // Sauvegarde standard
+    // On ne sauvegarde PLUS l'état des checkbox ici, mais on met à jour la barre
+    updateProgress(true); 
+    
+    // On sauvegarde quand même les inputs (si l'utilisateur a rempli charge avant de cocher)
+    saveData(); 
+
     if (checkbox.checked && setNumber === totalSets) {
         const card = document.getElementById(`card-${cardIndex}`);
         if (card.classList.contains('open')) {
@@ -127,7 +132,6 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
 function toggleCard(header) {
     const card = header.parentElement;
     const content = card.querySelector('.exercise-content');
-    
     if (card.classList.contains('open')) {
         card.classList.remove('open');
         content.style.maxHeight = null;
@@ -137,12 +141,6 @@ function toggleCard(header) {
     }
 }
 
-function saveAndProgress() {
-    updateProgress(true); // True = Autoriser la vibration
-    saveData();
-}
-
-// updateProgress modifiée : on ajoute le paramètre 'shouldOpenModal'
 function updateProgress(shouldOpenModal = false) {
     const total = document.querySelectorAll('.set-checkbox').length;
     const checked = document.querySelectorAll('.set-checkbox:checked').length;
@@ -150,32 +148,29 @@ function updateProgress(shouldOpenModal = false) {
     
     document.getElementById('progress-bar').style.width = percent + "%";
 
-    // ON NE LANCE LA MODALE QUE SI :
-    // 1. On est à 100%
-    // 2. ET que l'action vient d'un clic utilisateur (shouldOpenModal est vrai)
     if (percent === 100 && shouldOpenModal) {
         document.body.classList.add('modal-open');
         const overlay = document.getElementById('completion-overlay');
         overlay.classList.add('active');
-        
-        // Déplacement du bouton
         const whatsappBtn = document.querySelector('.whatsapp-sticky button');
-        // Vérif de sécurité pour ne pas le déplacer s'il est déjà là
         if(document.querySelector('.whatsapp-sticky button')) {
              document.getElementById('modal-btn-container').appendChild(whatsappBtn);
         }
-
         if("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
     }
 }
 
+// --- MODIFICATION : On ne sauvegarde QUE les inputs (Texte et Nombre) ---
 function saveData() {
     const dataToSave = {};
-    document.querySelectorAll('.set-checkbox').forEach(box => { dataToSave[box.id] = box.checked; });
-    document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => { dataToSave[input.id] = input.value; });
+    // On ne sélectionne plus .set-checkbox ici !
+    document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
+        dataToSave[input.id] = input.value;
+    });
     localStorage.setItem('fitapp_' + clientID, JSON.stringify(dataToSave));
 }
 
+// --- MODIFICATION : On ne charge QUE les inputs ---
 function loadProgress() {
     const saved = localStorage.getItem('fitapp_' + clientID);
     if (!saved) return;
@@ -183,12 +178,13 @@ function loadProgress() {
     for (const [id, value] of Object.entries(data)) {
         const el = document.getElementById(id);
         if (el) {
-            if (el.type === 'checkbox') el.checked = value;
-            else el.value = value;
+            // Sécurité : on ignore si jamais c'est une checkbox qui traine en mémoire
+            if (el.type !== 'checkbox') {
+                el.value = value;
+            }
         }
     }
-    // ICI : on met FALSE pour dire "N'ouvre pas la modale, c'est juste un chargement"
-    updateProgress(false); 
+    updateProgress(false);
 }
 
 function startTimer(btn, seconds) {
@@ -207,28 +203,14 @@ function startTimer(btn, seconds) {
         }
     }, 1000);
 }
-// Fonction pour fermer la modale manuellement
-function closeModal() {
-    document.body.classList.remove('modal-open');
-    document.getElementById('completion-overlay').classList.remove('active');
-    
-    // On remet le bouton WhatsApp à sa place d'origine (en bas de page)
-    const whatsappBtn = document.querySelector('#modal-btn-container button');
-    if(whatsappBtn) {
-        document.querySelector('.whatsapp-sticky').appendChild(whatsappBtn);
-    }
-}
-// --- FONCTION CORRIGÉE POUR WHATSAPP ---
+
 function sendToWhatsapp() {
     let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
     msg += `_${document.getElementById('program-title').innerText}_\n\n`;
 
-    // CORRECTION : On ne se fie plus à l'index "i" de la boucle, mais au "data-index" stocké
     document.querySelectorAll('.exercise-card').forEach((card) => {
-        const originalIndex = card.dataset.index; // On récupère le VRAI numéro
-        
+        const originalIndex = card.dataset.index;
         const title = card.querySelector('.exercise-title').innerText;
-        // On utilise originalIndex pour trouver les bons inputs
         const load = document.getElementById(`charge-${originalIndex}`).value;
         const rpe = document.getElementById(`rpe-${originalIndex}`).value;
         const note = document.getElementById(`comment-${originalIndex}`).value;
@@ -241,7 +223,6 @@ function sendToWhatsapp() {
         }
     });
 
-    // BILAN DE SÉANCE
     const sMuscle = document.getElementById('score-muscle').value;
     const cMuscle = document.getElementById('com-muscle').value;
     const sCardio = document.getElementById('score-cardio').value;
@@ -265,4 +246,13 @@ function sendToWhatsapp() {
         localStorage.removeItem('fitapp_' + clientID);
     }
     window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function closeModal() {
+    document.body.classList.remove('modal-open');
+    document.getElementById('completion-overlay').classList.remove('active');
+    const whatsappBtn = document.querySelector('#modal-btn-container button');
+    if(whatsappBtn) {
+        document.querySelector('.whatsapp-sticky').appendChild(whatsappBtn);
+    }
 }

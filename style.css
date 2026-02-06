@@ -147,11 +147,54 @@ main {
 .timer-btn { grid-column: span 3; background: #333; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; gap: 10px; margin-top:5px; }
 .timer-btn.active { background: var(--primary); }
 
-.sets-container { display: flex; justify-content: center; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
+/* --- CHECKBOXES SÉRIES (Design SVG) --- */
+.sets-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
 .set-checkbox { display: none; }
-.set-label { width: 35px; height: 35px; background: #FFF; border: 2px solid #EEE; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #CCC; font-weight: 600; transition: all 0.2s; }
-.set-checkbox:checked + .set-label { background: var(--primary); border-color: var(--primary); color: white; transform: scale(1.1); }
 
+.set-label {
+    width: 35px;
+    height: 35px;
+    background: #FFF;
+    border: 2px solid #EEE;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: #CCC;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative; /* Pour positionner l'icone */
+}
+
+/* L'icône SVG (Cachée par défaut) */
+.set-label svg {
+    display: none;
+    width: 20px;
+    height: 20px;
+}
+
+/* Quand c'est coché */
+.set-checkbox:checked + .set-label {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: transparent; /* On cache le chiffre */
+    transform: scale(1.1);
+}
+
+/* On affiche l'icône quand c'est coché */
+.set-checkbox:checked + .set-label svg {
+    display: block;
+    stroke: white; /* On force la couleur blanche */
+}
+
+/* --- NOTES & INPUTS --- */
 .coach-note { background: #FFF8F8; border-left: 3px solid var(--primary); padding: 15px; font-size: 0.9rem; border-radius: 0 10px 10px 0; margin-bottom: 20px; color: #666; font-style: italic; }
 
 .client-input-zone { border-top: 1px dashed #E0E0E0; padding-top: 20px; }
@@ -165,24 +208,26 @@ input:focus { border-color: var(--primary); background: #FFF; }
 
 .completion-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(74, 74, 74, 0.8); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
 .completion-overlay.active { opacity: 1; visibility: visible; }
-.completion-modal { background: white; padding: 40px; border-radius: 25px; text-align: center; max-width: 80%; box-shadow: 0 20px 40px rgba(0,0,0,0.2); transform: translateY(20px); transition: all 0.4s ease; }
+.completion-modal { 
+    background: white; 
+    padding: 30px 20px; 
+    border-radius: 25px; 
+    text-align: center; 
+    max-width: 450px; 
+    width: 90%; 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+    transform: translateY(20px); 
+    transition: all 0.4s ease;
+    max-height: 85vh; /* Hauteur max */
+    overflow-y: auto; /* Scroll si besoin */
+    position: relative; /* Pour la croix */
+}
 .completion-overlay.active .completion-modal { transform: translateY(0); }
 .completion-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--primary-dark); margin-bottom: 10px; }
 .video-btn { display: inline-block; margin-top: 10px; color: var(--primary); font-size: 0.8rem; font-weight: 600; text-decoration: none; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 50px; transition: all 0.2s; }
 .video-btn:hover { background: var(--primary); color: white; }
 
-
-/* --- STYLES DU BILAN DE FIN --- */
-
-/* Permet de scroller dans la modale si le clavier du téléphone cache l'écran */
-.completion-modal {
-    max-height: 85vh; /* Hauteur max de l'écran */
-    overflow-y: auto; /* Scroll si ça dépasse */
-    width: 90%;
-    max-width: 450px;
-    padding: 30px 20px;
-}
-/* Bouton Fermer Modale (Croix) */
+/* --- BOUTON FERMER MODALE (CROIX) --- */
 .close-modal {
     position: absolute;
     top: 15px;
@@ -196,6 +241,8 @@ input:focus { border-color: var(--primary); background: #FFF; }
 .close-modal:hover {
     color: var(--primary);
 }
+
+/* --- STYLES DU BILAN DE FIN --- */
 .feedback-container {
     text-align: left;
     margin-bottom: 25px;
