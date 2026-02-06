@@ -12,7 +12,7 @@ fetch(`./clients/${clientID.toLowerCase()}.json`)
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(data => {
         displayProgram(data);
-        loadProgress(); // Restaure les données sauvegardées
+        loadProgress(); 
     })
     .catch(() => document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px'>Programme introuvable</h2>");
 
@@ -24,47 +24,40 @@ function displayProgram(data) {
     let currentSupersetContainer = null;
 
     data.exercises.forEach((exo, index) => {
-        
-        // 1. GESTION DES SECTIONS
         if (exo.type === "section") {
-            // Si on était dans un superset, on le ferme
             if (currentSupersetContainer) { container.appendChild(currentSupersetContainer); currentSupersetContainer = null; }
-            
-            const sectionHtml = `<h2 class="section-title">${exo.title}</h2>`;
-            container.insertAdjacentHTML('beforeend', sectionHtml);
-            return; // On passe à l'élément suivant, ce n'est pas un exercice
+            container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
+            return; 
         }
 
-        // 2. GESTION DES SUPERSETS (Grouping)
-        // Si c'est le début d'un superset, on crée un conteneur "Row"
         if (exo.superset_type === "start") {
             currentSupersetContainer = document.createElement('div');
             currentSupersetContainer.className = "superset-row";
         }
 
-        // --- CRÉATION DE LA CARTE ---
         const cardHtml = createExerciseCard(exo, index);
         
-        // On injecte la carte soit dans le container principal, soit dans le container superset
         if (currentSupersetContainer) {
             currentSupersetContainer.innerHTML += cardHtml;
-            // Si c'est la fin du superset, on ajoute le container entier au site et on le vide
             if (exo.superset_type === "end") {
                 container.appendChild(currentSupersetContainer);
                 currentSupersetContainer = null;
             }
         } else {
-            // Exercice normal
             container.insertAdjacentHTML('beforeend', cardHtml);
         }
     });
-
-    // Sécurité : si un superset a été commencé mais jamais fini dans le JSON
     if (currentSupersetContainer) container.appendChild(currentSupersetContainer);
+
+    // --- NOUVEAU : On initialise la hauteur des cartes ouvertes par défaut ---
+    setTimeout(() => {
+        document.querySelectorAll('.exercise-card.open .exercise-content').forEach(content => {
+            content.style.maxHeight = content.scrollHeight + "px";
+        });
+    }, 100);
 }
 
 function createExerciseCard(exo, index) {
-    // Gestion Vidéo/Image
     let mediaHtml = '';
     if (exo.image && (exo.image.includes('youtube') || exo.image.includes('youtu.be'))) {
         mediaHtml = `<a href="${exo.image}" target="_blank" class="video-btn">▶ Voir la démo vidéo</a>`;
@@ -72,20 +65,21 @@ function createExerciseCard(exo, index) {
         mediaHtml = `<img src="${exo.image}" class="exercise-img show" loading="lazy">`;
     }
 
-    // Checkboxes
     let setsCount = parseInt(exo.sets) || 3;
     let checkboxesHtml = '<div class="sets-container">';
     for(let i=1; i<=setsCount; i++) {
+        // NOUVEAU : On appelle checkSetAndCollapse au lieu de juste saveAndProgress
+        // On passe l'index de la carte (index), le numéro de la série (i) et le total (setsCount)
         checkboxesHtml += `<div>
-            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" onchange="saveAndProgress()">
+            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" onchange="checkSetAndCollapse(this, ${index}, ${i}, ${setsCount})">
             <label for="set-${index}-${i}" class="set-label">${i}</label>
         </div>`;
     }
     checkboxesHtml += '</div>';
 
-    // HTML Structure (Accordéon)
+    // NOUVEAU : Ajout de la classe "open" par défaut dans la div principale
     return `
-    <div class="exercise-card" id="card-${index}">
+    <div class="exercise-card open" id="card-${index}">
         <div class="exercise-header" onclick="toggleCard(this)">
             <div>
                 <div class="exercise-title">${exo.name}</div>
@@ -119,28 +113,37 @@ function createExerciseCard(exo, index) {
     </div>`;
 }
 
-// --- LOGIQUE ACCORDÉON ---
+// --- NOUVEAU : FONCTION DE REPLI AUTOMATIQUE ---
+function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
+    // 1. Sauvegarde et mise à jour barre de progression
+    saveAndProgress();
+
+    // 2. Si c'est coché ET que c'est la dernière série
+    if (checkbox.checked && setNumber === totalSets) {
+        const card = document.getElementById(`card-${cardIndex}`);
+        // On ferme la carte doucement
+        if (card.classList.contains('open')) {
+            // Petit délai pour que l'utilisateur voit qu'il a coché avant que ça ferme
+            setTimeout(() => {
+                toggleCard(card.querySelector('.exercise-header'));
+            }, 300); // 300ms de délai
+        }
+    }
+}
+
 function toggleCard(header) {
     const card = header.parentElement;
     const content = card.querySelector('.exercise-content');
     
-    // Si déjà ouvert, on ferme
     if (card.classList.contains('open')) {
         card.classList.remove('open');
         content.style.maxHeight = null;
     } else {
-        // Optionnel : Fermer les autres cartes pour le "Focus Mode" strict
-        // document.querySelectorAll('.exercise-card.open').forEach(c => {
-        //     c.classList.remove('open');
-        //     c.querySelector('.exercise-content').style.maxHeight = null;
-        // });
-
         card.classList.add('open');
         content.style.maxHeight = content.scrollHeight + "px";
     }
 }
 
-// --- MÉMOIRE & PROGRESSION ---
 function saveAndProgress() {
     updateProgress();
     saveData();
@@ -160,44 +163,34 @@ function updateProgress() {
         const whatsappBtn = document.querySelector('.whatsapp-sticky button');
         document.getElementById('modal-btn-container').appendChild(whatsappBtn);
         if("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
-        // Reset storage après complétion ? Non, on laisse l'utilisateur décider.
     }
 }
 
-// Sauvegarder dans le téléphone
 function saveData() {
     const dataToSave = {};
-    // Sauve checkboxes
-    document.querySelectorAll('.set-checkbox').forEach(box => {
-        dataToSave[box.id] = box.checked;
-    });
-    // Sauve inputs
-    document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
-        dataToSave[input.id] = input.value;
-    });
-    
+    document.querySelectorAll('.set-checkbox').forEach(box => { dataToSave[box.id] = box.checked; });
+    document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => { dataToSave[input.id] = input.value; });
     localStorage.setItem('fitapp_' + clientID, JSON.stringify(dataToSave));
 }
 
-// Recharger les données au démarrage
 function loadProgress() {
     const saved = localStorage.getItem('fitapp_' + clientID);
     if (!saved) return;
-
     const data = JSON.parse(saved);
-    
-    // Restaurer Checkboxes
     for (const [id, value] of Object.entries(data)) {
         const el = document.getElementById(id);
         if (el) {
-            if (el.type === 'checkbox') el.checked = value;
+            if (el.type === 'checkbox') {
+                el.checked = value;
+                // Optionnel : Si on recharge et que la dernière série est faite, on ferme la carte ?
+                // Pour l'instant on laisse ouvert pour qu'elle puisse voir ce qu'elle a fait.
+            }
             else el.value = value;
         }
     }
-    updateProgress(); // Mettre à jour la barre
+    updateProgress();
 }
 
-// --- TIMER & WHATSAPP (Inchangés) ---
 function startTimer(btn, seconds) {
     if(btn.classList.contains('active')) return;
     let timeLeft = seconds;
@@ -225,7 +218,6 @@ function sendToWhatsapp() {
         if(load || rpe || note) msg += `🔹 *${title}*\n${load ? '⚖️ '+load+'kg ' : ''}${rpe ? '🔥 '+rpe+' ' : ''}\n${note ? '📝 '+note+'\n' : ''}\n`;
     });
     msg += `\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
-    // On vide la mémoire après l'envoi pour la prochaine séance
     if(confirm("Veux-tu vider les données pour la prochaine fois ?")) {
         localStorage.removeItem('fitapp_' + clientID);
     }

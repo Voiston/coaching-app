@@ -128,7 +128,7 @@ main {
 .exercise-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.4s ease-out;
+    transition: max-height 0.5s ease-out; 
     background: #fff;
 }
 .exercise-inner { padding: 20px; } /* Pour le padding interne */
