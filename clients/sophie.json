@@ -1,53 +1,21 @@
 {
   "clientName": "Julie",
-  "programTitle": "Leg Day - Focus Fessiers",
-  "exercises": [
-    
-    { "type": "section", "title": "1. Échauffement" },
-    
+  "programTitle": "Programme Hypertrophie",
+  "sessions": [
     {
-      "name": "Mobilité Cheville",
-      "image": "", 
-      "sets": "1",
-      "reps": "1 min",
-      "rest": "0s",
-      "rpe_target": "-",
-      "note_coach": "Sans forcer."
-    },
-
-    { "type": "section", "title": "2. Corps de Séance" },
-
-    {
-      "name": "A1. Hip Thrust",
-      "superset_type": "start",
-      "image": "",
-      "sets": "4",
-      "reps": "10",
-      "rest": "0s",
-      "rpe_target": "9",
-      "note_coach": "Lourd."
+      "id": "seance_a", 
+      "name": "🍑 Séance A : Bas du corps",
+      "exercises": [
+         { "type": "section", "title": "Échauffement" },
+         { "name": "Squat", "sets": "4", "reps": "10", "rest": "90s" }
+      ]
     },
     {
-      "name": "A2. Dead Bug",
-      "superset_type": "end",
-      "image": "",
-      "sets": "4",
-      "reps": "30 sec",
-      "rest": "90s",
-      "rpe_target": "-",
-      "note_coach": "Gainage actif."
-    },
-
-    { "type": "section", "title": "3. Finisher" },
-
-    {
-      "name": "Frog Pumps",
-      "image": "",
-      "sets": "2",
-      "reps": "50",
-      "rest": "45s",
-      "rpe_target": "MAX",
-      "note_coach": "Brûlure maximale."
+      "id": "seance_b",
+      "name": "💪 Séance B : Haut du corps",
+      "exercises": [
+         { "name": "Développé Couché", "sets": "4", "reps": "10", "rest": "90s" }
+      ]
     }
   ]
 }
