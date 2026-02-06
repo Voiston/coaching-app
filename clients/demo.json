@@ -1,63 +1,123 @@
 {
-  "clientName": "Julie",
-  "programTitle": "Semaine 1 - Hypertrophie",
+  "clientName": "Thomas",
+  "programTitle": "Objectif : Athlète Complet 🚀",
   "sessions": [
     {
-      "id": "seance_lundi",
-      "day": "Lundi",
-      "name": "🍑 Jambes & Fessiers",
+      "id": "s1_legs_power",
+      "date": "2026-02-07",
+      "name": "🦵 Séance 1 : Jambes Puissance",
       "exercises": [
         {
           "type": "section",
-          "title": "Échauffement"
+          "title": "Échauffement Articulaire"
         },
         {
-          "name": "Squat au poids du corps",
-          "image": "https://i.ytimg.com/vi/U3Hh03kX-2c/hqdefault.jpg",
+          "name": "Squat Arrière (Barre)",
+          "image": "https://i.ytimg.com/vi/UltWqbVsKKs/hqdefault.jpg",
+          "sets": "4",
+          "reps": "6-8",
+          "rest": "120s",
+          "rpe_target": "8",
+          "note_coach": "Descends bien sous la parallèle. Garde le dos droit."
+        },
+        {
+          "name": "Fentes Bulgares",
+          "image": "",
+          "sets": "3",
+          "reps": "10/jambe",
+          "rest": "90s",
+          "rpe_target": "8",
+          "note_coach": "Contrôle la descente sur 3 secondes."
+        },
+        {
+          "type": "section",
+          "title": "Finisher : Mollets & Ischios"
+        },
+        {
+          "name": "Leg Curl Assis",
+          "superset_type": "start",
           "sets": "3",
           "reps": "15",
           "rest": "60s",
-          "rpe_target": "6",
-          "note_coach": "Bien descendre les fesses en arrière."
+          "rpe_target": "9"
+        },
+        {
+          "name": "Extension Mollets Debout",
+          "superset_type": "end",
+          "sets": "3",
+          "reps": "20",
+          "rest": "60s",
+          "rpe_target": "9"
         }
       ]
     },
     {
-      "id": "seance_mercredi",
-      "day": "Mercredi",
-      "name": "💪 Haut du corps",
+      "id": "s2_push_strength",
+      "date": "2026-02-09",
+      "name": "💪 Séance 2 : Push (Pecs/Épaules)",
       "exercises": [
         {
-          "name": "Pompes",
-          "superset_type": "start",
-          "image": "",
-          "sets": "4",
-          "reps": "10",
+          "name": "Développé Couché",
+          "image": "https://i.ytimg.com/vi/vcBig73ojpE/hqdefault.jpg",
+          "sets": "5",
+          "reps": "5",
+          "rest": "180s",
+          "rpe_target": "9",
+          "note_coach": "Travail de force. Assure-toi d'avoir un pareur."
+        },
+        {
+          "name": "Développé Militaire Haltères",
+          "sets": "3",
+          "reps": "8-10",
           "rest": "90s",
           "rpe_target": "8"
         },
         {
-          "name": "Tirage élastique",
-          "superset_type": "end",
-          "image": "",
-          "sets": "4",
-          "reps": "12",
+          "name": "Dips",
+          "sets": "3",
+          "reps": "max",
           "rest": "90s",
-          "rpe_target": "8"
+          "rpe_target": "10",
+          "note_coach": "Ajoute du leste si tu fais +15 reps."
         }
       ]
     },
     {
-      "id": "seance_vendredi",
-      "day": "Vendredi",
-      "name": "🔥 Cardio HIIT",
+      "id": "s3_cardio_abs",
+      "date": "2026-02-11",
+      "name": "🔥 Séance 3 : Cardio & Core",
       "exercises": [
         {
+          "type": "section",
+          "title": "Circuit Haute Intensité (3 tours)"
+        },
+        {
           "name": "Burpees",
-          "sets": "5",
+          "image": "",
+          "sets": "3",
           "reps": "15",
-          "rest": "45s",
-          "rpe_target": "9"
+          "rest": "30s",
+          "rpe_target": "8"
+        },
+        {
+          "name": "Mountain Climbers",
+          "image": "",
+          "sets": "3",
+          "reps": "40sec",
+          "rest": "30s",
+          "rpe_target": "7"
+        },
+        {
+          "type": "section",
+          "title": "Gainage"
+        },
+        {
+          "name": "Planche Abdominale",
+          "sets": "3",
+          "reps": "60sec",
+          "rest": "60s",
+          "rpe_target": "7",
+          "note_coach": "Rentre le ventre, serre les fessiers."
         }
       ]
     }
