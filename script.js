@@ -619,64 +619,84 @@ function stopTimer(btn) {
     if (timerText) timerText.textContent = "Lancer le repos";
 }
 
-function sendToWhatsapp() {
-    let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
-    
-    // Récupérer le nom de la séance active (depuis le JSON via l'ID global)
-    // On doit retrouver la séance actuelle dans globalData
+function buildSessionReport() {
+    const clientNameEl = document.getElementById('client-name');
+    const clientName = clientNameEl ? clientNameEl.innerText.replace(/^Bonjour\s+|\s*!$/g, '').trim() : '';
     let sessionName = "Séance";
     if (globalData && globalData.sessions) {
-        const currentSession = globalData.sessions.find(s => (s.id === currentSessionId) || (`session_${globalData.sessions.indexOf(s)}` === currentSessionId));
-        if (currentSession) sessionName = currentSession.name;
+        const s = globalData.sessions.find(x => (x.id === currentSessionId) || (`session_${globalData.sessions.indexOf(x)}` === currentSessionId));
+        if (s) sessionName = s.name || sessionName;
     }
 
-    msg += `📂 *${sessionName}*\n\n`;
-
+    const exercises = [];
     document.querySelectorAll('.exercise-card').forEach((card) => {
         const originalIndex = card.dataset.index;
-        const title = card.querySelector('.exercise-title').innerText;
-        
+        const title = card.querySelector('.exercise-title')?.innerText || '';
+        const checkboxes = card.querySelectorAll('.set-checkbox');
+        const setsTotal = checkboxes.length;
+        const setsCompleted = card.querySelectorAll('.set-checkbox:checked').length;
         const idCharge = `charge-${currentSessionId}-${originalIndex}`;
         const idRpe = `rpe-${currentSessionId}-${originalIndex}`;
         const idCom = `comment-${currentSessionId}-${originalIndex}`;
-
-        const load = document.getElementById(idCharge)?.value;
-        const rpe = document.getElementById(idRpe)?.value;
-        const note = document.getElementById(idCom)?.value;
-        
-        if(load || rpe || note) {
-            msg += `🔹 *${title}*\n`;
-            if(load) msg += `   ⚖️ ${load}kg\n`;
-            if(rpe)  msg += `   🔥 RPE ${rpe}\n`;
-            if(note) msg += `   📝 ${note}\n`;
-        }
+        exercises.push({
+            name: title,
+            setsTotal,
+            setsCompleted,
+            charge: document.getElementById(idCharge)?.value?.trim() || null,
+            rpe: document.getElementById(idRpe)?.value?.trim() || null,
+            note: document.getElementById(idCom)?.value?.trim() || null
+        });
     });
 
-    const sMuscle = document.getElementById('score-muscle').value; // range ou number
-    const cMuscle = document.getElementById('com-muscle').value;
-    const sCardio = document.getElementById('score-cardio').value;
-    const cCardio = document.getElementById('com-cardio').value;
-    const sFatigue = document.getElementById('score-fatigue').value;
-    const cFatigue = document.getElementById('com-fatigue').value;
-    const sSleep = document.getElementById('score-sleep').value;
-    const cSleep = document.getElementById('com-sleep').value;
+    const report = {
+        client: clientName,
+        sessionId: currentSessionId,
+        sessionName,
+        date: currentSessionDate || new Date().toISOString().slice(0, 10),
+        exercises,
+        bilan: {
+            muscle: document.getElementById('score-muscle')?.value || null,
+            muscleCom: document.getElementById('com-muscle')?.value?.trim() || null,
+            cardio: document.getElementById('score-cardio')?.value || null,
+            cardioCom: document.getElementById('com-cardio')?.value?.trim() || null,
+            fatigue: document.getElementById('score-fatigue')?.value || null,
+            fatigueCom: document.getElementById('com-fatigue')?.value?.trim() || null,
+            sommeil: document.getElementById('score-sleep')?.value || null,
+            sommeilCom: document.getElementById('com-sleep')?.value?.trim() || null
+        },
+        coachNote: document.getElementById('coach-note-free')?.value?.trim() || null
+    };
+    return report;
+}
 
-    if (sMuscle || sCardio || sFatigue || sSleep) {
+function sendToWhatsapp() {
+    const report = buildSessionReport();
+    let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
+    msg += `📂 *${report.sessionName}*\n\n`;
+
+    report.exercises.forEach((ex) => {
+        msg += `🔹 *${ex.name}*\n`;
+        msg += `   Séries : ${ex.setsCompleted}/${ex.setsTotal}\n`;
+        if (ex.charge) msg += `   ⚖️ ${ex.charge}kg\n`;
+        if (ex.rpe) msg += `   🔥 RPE ${ex.rpe}\n`;
+        if (ex.note) msg += `   📝 ${ex.note}\n`;
+    });
+
+    const b = report.bilan;
+    if (b.muscle || b.cardio || b.fatigue || b.sommeil) {
         msg += `\n📊 *BILAN GLOBAL*\n`;
-        if(sMuscle) msg += `💪 Muscle: ${sMuscle}/10 ${cMuscle ? '('+cMuscle+')' : ''}\n`;
-        if(sCardio) msg += `🫀 Cardio: ${sCardio}/10 ${cCardio ? '('+cCardio+')' : ''}\n`;
-        if(sFatigue) msg += `😫 Fatigue: ${sFatigue}/10 ${cFatigue ? '('+cFatigue+')' : ''}\n`;
-        if(sSleep)  msg += `💤 Sommeil: ${sSleep}/10 ${cSleep ? '('+cSleep+')' : ''}\n`;
+        if (b.muscle) msg += `💪 Muscle: ${b.muscle}/10${b.muscleCom ? ' (' + b.muscleCom + ')' : ''}\n`;
+        if (b.cardio) msg += `🫀 Cardio: ${b.cardio}/10${b.cardioCom ? ' (' + b.cardioCom + ')' : ''}\n`;
+        if (b.fatigue) msg += `😫 Fatigue: ${b.fatigue}/10${b.fatigueCom ? ' (' + b.fatigueCom + ')' : ''}\n`;
+        if (b.sommeil) msg += `💤 Sommeil: ${b.sommeil}/10${b.sommeilCom ? ' (' + b.sommeilCom + ')' : ''}\n`;
+    }
+    if (report.coachNote) {
+        setCoachNote(report.coachNote);
+        msg += `\n💬 *Message pour toi:*\n${report.coachNote}\n`;
     }
 
-    const coachNoteFree = document.getElementById('coach-note-free');
-    if (coachNoteFree && coachNoteFree.value.trim()) {
-        setCoachNote(coachNoteFree.value.trim());
-        msg += `\n💬 *Message pour toi:*\n${coachNoteFree.value.trim()}\n`;
-    }
+    msg += `\n--- BILAN JSON ---\n${JSON.stringify(report, null, 2)}\n---\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
 
-    msg += `\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
-    
     window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
