@@ -64,8 +64,7 @@ function renderCalendar(sessions) {
         // --- RECHERCHE INTELLIGENTE ---
         // On cherche une séance qui matche la DATE PRÉCISE (Priorité 1)
         // OU une séance qui matche le JOUR SEMAINE (Priorité 2 - Rétrocompatibilité)
-		const dateString = `${year}-${month}-${day}`; 
-
+		
 // --- AJOUTER CECI POUR DÉBUGGER ---
 if (i === 0) {
     console.log("Date Système (J+0):", dateString);
