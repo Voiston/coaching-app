@@ -387,6 +387,7 @@ function renderSession(sessionIndex, dateStr) {
     loadProgress();
     renderProgressionPanel();
     updateSupersetHighlight();
+    updateAllExerciseDetails();
 }
 
 function createExerciseCard(exo, index, sessionId) {
@@ -399,13 +400,18 @@ function createExerciseCard(exo, index, sessionId) {
 
     let setsCount = parseInt(exo.sets) || 3;
     const warmupSets = parseInt(exo.warmup_sets) || 0;
+    const repsArr = Array.isArray(exo.reps) ? exo.reps : (typeof exo.reps === 'string' && exo.reps.includes(',') ? exo.reps.split(',').map(s => s.trim()) : null);
+    const restArr = Array.isArray(exo.rest) ? exo.rest : (typeof exo.rest === 'string' && exo.rest.includes(',') ? exo.rest.split(',').map(s => s.trim()) : null);
+    const repsData = repsArr ? JSON.stringify(repsArr) : JSON.stringify([String(exo.reps || '-')]);
+    const restData = restArr ? JSON.stringify(restArr) : JSON.stringify([String(exo.rest || '60s')]);
     let checkboxesHtml = '<div class="sets-container">';
-    
     const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>`;
 
     for (let i = 1; i <= setsCount; i++) {
-        const setClass = i <= warmupSets ? ' set-label-warmup' : ' set-label-work';
-        checkboxesHtml += `<div>
+        const isWarmup = i <= warmupSets;
+        const setClass = isWarmup ? ' set-label-warmup' : ' set-label-work';
+        const wrapperClass = isWarmup ? ' set-wrapper-warmup' : ' set-wrapper-work';
+        checkboxesHtml += `<div class="set-wrapper${wrapperClass}">
             <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="Série ${i} sur ${setsCount}">
             <label for="set-${index}-${i}" class="set-label${setClass}">
                 ${i}
@@ -420,7 +426,8 @@ function createExerciseCard(exo, index, sessionId) {
         const idRpe = `rpe-${sessionId}-${index}`;
         const idCom = `comment-${sessionId}-${index}`;
 
-    const repsDisplay = (exo.until_failure || exo.failure) ? 'Jusqu\'à échec' : (exo.reps || '-');
+    const repsDisplayInit = (exo.until_failure || exo.failure) ? 'Jusqu\'à échec' : (repsArr && repsArr[0] ? repsArr[0] : (exo.reps || '-'));
+    const restDisplayInit = restArr && restArr[0] ? restArr[0] : (exo.rest || '60s');
     const isTimeBased = /^\d+\s*(s|sec|min|mn)/i.test(String(exo.reps || ''));
     const timeMatch = String(exo.reps || '').match(/(\d+)\s*(s|sec|min|mn)/i);
     const targetSeconds = timeMatch ? (timeMatch[2].toLowerCase().startsWith('min') ? parseInt(timeMatch[1], 10) * 60 : parseInt(timeMatch[1], 10)) : 45;
@@ -458,7 +465,7 @@ function createExerciseCard(exo, index, sessionId) {
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
                 <div class="exercise-title-row"><span class="exercise-title">${exo.name}</span>${altBtnHtml}</div>
-                <div class="rpe-badge" title="RPE = Rate of Perceived Exertion : échelle 1-10 de l'effort ressenti (1=très facile, 10=maximum)">RPE: ${exo.rpe_target || '-'}</div>
+                <div class="rpe-badge-wrap"><span class="rpe-badge" title="RPE = Rate of Perceived Exertion : échelle 1-10 de l'effort ressenti (1=très facile, 10=maximum)">RPE: ${exo.rpe_target || '-'}</span><button type="button" class="btn-rpe-badge" aria-label="Aide échelle RPE">?</button></div>
             </div>
             <div class="toggle-icon">▼</div>
         </div>
@@ -467,10 +474,10 @@ function createExerciseCard(exo, index, sessionId) {
             <div class="exercise-inner">
                 ${mediaHtml}
                 ${variationHtml}
-                <div class="${gridClass}">
-                    <div class="detail-box"><span class="detail-label">Séries</span><span class="detail-value">${exo.sets}</span></div>
-                    <div class="detail-box"><span class="detail-label">Reps</span><span class="detail-value">${repsDisplay}</span></div>
-                    <div class="detail-box"><span class="detail-label">Repos</span><span class="detail-value">${exo.rest}</span></div>
+                <div class="${gridClass} details-dynamic" data-card-index="${index}" data-reps="${repsData.replace(/"/g, '&quot;')}" data-rest="${restData.replace(/"/g, '&quot;')}" data-failure="${!!(exo.until_failure || exo.failure)}">
+                    <div class="detail-box"><span class="detail-label">Série</span><span class="detail-value detail-serie-num">1/${exo.sets}</span></div>
+                    <div class="detail-box"><span class="detail-label">Reps</span><span class="detail-value detail-reps">${repsDisplayInit}</span></div>
+                    <div class="detail-box"><span class="detail-label">Repos</span><span class="detail-value detail-rest">${restDisplayInit}</span></div>
                     ${tempoHtml}
                     <button type="button" class="timer-btn" data-rest="${restSec}" aria-label="Lancer le chronomètre de repos de ${exo.rest}">
                         <span class="timer-icon">⏱️</span><span class="timer-text">Lancer le repos</span>
@@ -482,7 +489,7 @@ function createExerciseCard(exo, index, sessionId) {
                 ${exo.note_coach ? `<div class="coach-note">💡 "${exo.note_coach}"</div>` : ''}
                 <div class="client-input-zone">
                     <div class="input-row">
-                        <span class="input-with-btn"><input type="text" id="${idCharge}" placeholder="Charge (kg)" aria-label="Charge en kg">${warmupBtnHtml}</span>
+                        <span class="input-with-btn"><input type="text" id="${idCharge}" placeholder="Charge (kg)" value="${(exo.charge || exo.default_charge || '').toString().replace(/"/g, '&quot;')}" aria-label="Charge en kg">${warmupBtnHtml}</span>
                         <span class="input-with-btn"><input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti" title="Échelle 1-10 de l'effort ressenti (1=facile, 10=maximum)">${rpeTooltipHtml}</span>
                     </div>
                     <input type="text" id="${idCom}" placeholder="Note..." aria-label="Note personnelle">
@@ -491,6 +498,48 @@ function createExerciseCard(exo, index, sessionId) {
             </div>
         </div>
     </div>`;
+}
+
+function updateExerciseDetails(card) {
+    const grid = card?.querySelector('.details-dynamic');
+    if (!grid) return;
+    const repsData = grid.dataset.reps;
+    const restData = grid.dataset.rest;
+    const isFailure = grid.dataset.failure === 'true';
+    const checkboxes = card.querySelectorAll('.set-checkbox');
+    let currentSetIndex = 0;
+    for (let i = 0; i < checkboxes.length; i++) {
+        if (!checkboxes[i].checked) { currentSetIndex = i; break; }
+        currentSetIndex = i + 1;
+    }
+    const total = checkboxes.length;
+    const serieNum = grid.querySelector('.detail-serie-num');
+    const repsEl = grid.querySelector('.detail-reps');
+    const restEl = grid.querySelector('.detail-rest');
+    if (serieNum) serieNum.textContent = currentSetIndex < total ? `${currentSetIndex + 1}/${total}` : `${total}/${total}`;
+    if (currentSetIndex >= total && repsEl) repsEl.textContent = isFailure ? "Jusqu'à échec" : '-';
+    else if (repsEl && repsData) {
+        try {
+            const arr = JSON.parse(repsData);
+            repsEl.textContent = isFailure ? "Jusqu'à échec" : (arr[currentSetIndex] || arr[arr.length - 1] || '-');
+        } catch (_) { repsEl.textContent = '-'; }
+    }
+    let restDisplay = '60s';
+    if (currentSetIndex >= total) { if (restEl) restEl.textContent = '-'; }
+    else if (restData) {
+        try {
+            const arr = JSON.parse(restData);
+            restDisplay = arr[currentSetIndex] || arr[arr.length - 1] || '60s';
+            if (restEl) restEl.textContent = restDisplay;
+        } catch (_) { if (restEl) restEl.textContent = '60s'; }
+    }
+    const restSec = parseInt(String(restDisplay).replace(/\D/g, ''), 10) || 60;
+    const timerBtn = card.querySelector('.timer-btn');
+    if (timerBtn) timerBtn.dataset.rest = restSec;
+}
+
+function updateAllExerciseDetails() {
+    document.querySelectorAll('.exercise-card').forEach(card => updateExerciseDetails(card));
 }
 
 function updateSupersetHighlight() {
@@ -515,6 +564,8 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
     updateProgress(true); 
     saveData(); 
     updateSupersetHighlight();
+    const card = document.getElementById(`card-${cardIndex}`);
+    if (card) updateExerciseDetails(card);
 
     if (checkbox.checked && setNumber === totalSets) {
         const card = document.getElementById(`card-${cardIndex}`);
@@ -731,19 +782,25 @@ function showRpeTooltip(btn) {
     pop.id = 'rpe-tooltip-popover';
     pop.className = 'rpe-tooltip-popover';
     pop.innerHTML = `
-        <div class="rpe-scale-item rpe-green">🟢 RPE 5-6 : Échauffement / Facile</div>
-        <div class="rpe-scale-item rpe-yellow">🟡 RPE 7-8 : Difficile (reste 2-3 reps)</div>
-        <div class="rpe-scale-item rpe-red">🔴 RPE 9-10 : Échec ou limite</div>
+        <div class="rpe-scale-title">Échelle RPE (effort ressenti)</div>
+        <div class="rpe-scale-bar"><span class="rpe-seg rpe-seg-low"></span><span class="rpe-seg rpe-seg-mid"></span><span class="rpe-seg rpe-seg-high"></span></div>
+        <div class="rpe-scale-labels"><span>1-4</span><span>5-6</span><span>7-8</span><span>9-10</span></div>
+        <div class="rpe-scale-items">
+            <div class="rpe-scale-item rpe-green"><span class="rpe-dot rpe-dot-green"></span>RPE 5-6 : Échauffement / Facile</div>
+            <div class="rpe-scale-item rpe-yellow"><span class="rpe-dot rpe-dot-yellow"></span>RPE 7-8 : Difficile (reste 2-3 reps)</div>
+            <div class="rpe-scale-item rpe-red"><span class="rpe-dot rpe-dot-red"></span>RPE 9-10 : Échec ou limite</div>
+        </div>
         <button type="button" class="rpe-tooltip-close">Fermer</button>
     `;
     const rect = btn.getBoundingClientRect();
-    pop.style.left = rect.left + 'px';
+    const vw = window.innerWidth;
+    pop.style.left = Math.min(rect.left, vw - 320) + 'px';
     pop.style.top = (rect.bottom + 8) + 'px';
     document.body.appendChild(pop);
-    const close = () => { pop.remove(); document.removeEventListener('click', closeOut); };
+    const close = () => { pop.remove(); document.removeEventListener('click', closeOut); document.removeEventListener('touchstart', closeOut); };
     const closeOut = (e) => { if (!pop.contains(e.target) && e.target !== btn) close(); };
-    setTimeout(() => document.addEventListener('click', closeOut), 10);
-    pop.querySelector('.rpe-tooltip-close').onclick = close;
+    setTimeout(() => { document.addEventListener('click', closeOut); document.addEventListener('touchstart', closeOut); }, 50);
+    pop.querySelector('.rpe-tooltip-close').onclick = (e) => { e.stopPropagation(); close(); };
 }
 
 function swapExerciseAlternative(btn) {
@@ -1170,7 +1227,7 @@ document.body.addEventListener('click', (e) => {
     if (altBtn) { e.stopPropagation(); swapExerciseAlternative(altBtn); return; }
     const warmupBtn = e.target.closest('.btn-warmup-gen');
     if (warmupBtn) { e.stopPropagation(); showWarmupGenerator(warmupBtn.dataset.chargeId, warmupBtn.dataset.exoName || 'cet exercice'); return; }
-    const rpeBtn = e.target.closest('.btn-rpe-help');
+    const rpeBtn = e.target.closest('.btn-rpe-help, .btn-rpe-badge');
     if (rpeBtn) { e.stopPropagation(); showRpeTooltip(rpeBtn); return; }
     const activeTimerBtn = e.target.closest('.active-timer-btn');
     if (activeTimerBtn) { e.stopPropagation(); startActiveTimer(activeTimerBtn); return; }
