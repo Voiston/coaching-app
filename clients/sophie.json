@@ -1,123 +1,59 @@
 {
-  "clientName": "Sophie",
-  "programTitle": "Objectif : Athlète Complet 🚀",
+  "clientName": "Testeuse",
+  "programTitle": "Demo : Check Technique 📹",
   "sessions": [
     {
-      "id": "s1_legs_power",
+      "id": "s_test_tech_1",
       "date": "2026-02-07",
-      "name": "🦵 Séance 1 : Jambes Puissance",
+      "name": "🧪 Séance Test : Technique",
       "exercises": [
         {
           "type": "section",
-          "title": "Échauffement Articulaire"
+          "title": "Mouvements Techniques"
         },
         {
           "name": "Squat Arrière (Barre)",
-          "image": "https://i.ytimg.com/vi/UltWqbVsKKs/hqdefault.jpg",
           "sets": "4",
           "reps": "6-8",
           "rest": "120s",
           "rpe_target": "8",
-          "note_coach": "Descends bien sous la parallèle. Garde le dos droit."
+          "check_technique": true,
+          "note_coach": "Filme-toi de 3/4 face pour que je vois la profondeur."
         },
         {
-          "name": "Fentes Bulgares",
-          "image": "",
+          "name": "Pendlay Rowing",
           "sets": "3",
-          "reps": "10/jambe",
+          "reps": "8",
           "rest": "90s",
           "rpe_target": "8",
-          "note_coach": "Contrôle la descente sur 3 secondes."
+          "check_technique": true,
+          "note_coach": "Garde le dos bien parallèle au sol."
         },
         {
           "type": "section",
-          "title": "Finisher : Mollets & Ischios"
+          "title": "Volume Musculaire"
         },
         {
-          "name": "Leg Curl Assis",
-          "superset_type": "start",
+          "name": "Presse à cuisses",
+          "sets": "3",
+          "reps": "12-15",
+          "rest": "90s",
+          "check_technique": false,
+          "note_coach": "Pas besoin de vidéo ici, focus sur la brûlure."
+        },
+        {
+          "name": "Leg Extension",
           "sets": "3",
           "reps": "15",
           "rest": "60s",
-          "rpe_target": "9"
+          "superset_type": "start"
         },
         {
-          "name": "Extension Mollets Debout",
-          "superset_type": "end",
-          "sets": "3",
-          "reps": "20",
-          "rest": "60s",
-          "rpe_target": "9"
-        }
-      ]
-    },
-    {
-      "id": "s2_push_strength",
-      "date": "2026-02-09",
-      "name": "💪 Séance 2 : Push (Pecs/Épaules)",
-      "exercises": [
-        {
-          "name": "Développé Couché",
-          "image": "https://i.ytimg.com/vi/vcBig73ojpE/hqdefault.jpg",
-          "sets": "5",
-          "reps": "5",
-          "rest": "180s",
-          "rpe_target": "9",
-          "note_coach": "Travail de force. Assure-toi d'avoir un pareur."
-        },
-        {
-          "name": "Développé Militaire Haltères",
-          "sets": "3",
-          "reps": "8-10",
-          "rest": "90s",
-          "rpe_target": "8"
-        },
-        {
-          "name": "Dips",
-          "sets": "3",
-          "reps": "max",
-          "rest": "90s",
-          "rpe_target": "10",
-          "note_coach": "Ajoute du leste si tu fais +15 reps."
-        }
-      ]
-    },
-    {
-      "id": "s3_cardio_abs",
-      "date": "2026-02-11",
-      "name": "🔥 Séance 3 : Cardio & Core",
-      "exercises": [
-        {
-          "type": "section",
-          "title": "Circuit Haute Intensité (3 tours)"
-        },
-        {
-          "name": "Burpees",
-          "image": "",
+          "name": "Leg Curl",
           "sets": "3",
           "reps": "15",
-          "rest": "30s",
-          "rpe_target": "8"
-        },
-        {
-          "name": "Mountain Climbers",
-          "image": "",
-          "sets": "3",
-          "reps": "40sec",
-          "rest": "30s",
-          "rpe_target": "7"
-        },
-        {
-          "type": "section",
-          "title": "Gainage"
-        },
-        {
-          "name": "Planche Abdominale",
-          "sets": "3",
-          "reps": "60sec",
           "rest": "60s",
-          "rpe_target": "7",
-          "note_coach": "Rentre le ventre, serre les fessiers."
+          "superset_type": "end"
         }
       ]
     }
