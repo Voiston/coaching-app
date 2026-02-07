@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Programme Coaching</title>
-    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#B76E79">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,53 +22,47 @@
         </main>
 
     <div class="whatsapp-sticky">
-        <button onclick="sendToWhatsapp()">
+        <button type="button" aria-label="Terminer la séance et envoyer le rapport au coach par WhatsApp">
             Terminer & Envoyer au Coach 📤
         </button>
     </div>
 
-    <div id="completion-overlay" class="completion-overlay">
+    <div id="completion-overlay" class="completion-overlay" role="dialog" aria-modal="true" aria-labelledby="completion-title" aria-hidden="true">
         <div class="completion-modal">
+            <span class="close-modal" tabindex="0" role="button" aria-label="Fermer la fenêtre">&times;</span>
             
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            
-            <div class="completion-title">Séance Terminée ! 🏆</div>
+            <div id="completion-title" class="completion-title">Séance Terminée ! 🏆</div>
             <p class="completion-text">Prends une minute pour noter ton ressenti.</p>
             
             <div class="feedback-container">
-                
                 <div class="feedback-item">
-                    <label>💪 Difficulté Musculaire /10</label>
+                    <label for="score-muscle">💪 Difficulté Musculaire <span class="score-value" data-for="score-muscle">5</span>/10</label>
                     <div class="feedback-inputs">
-                        <input type="number" id="score-muscle" class="score-input" min="0" max="10" placeholder="5">
+                        <input type="range" id="score-muscle" class="score-slider" min="0" max="10" value="5" aria-label="Difficulté musculaire de 0 à 10">
                         <input type="text" id="com-muscle" class="com-input" placeholder="Détails (ex: Cuisses HS...)">
                     </div>
                 </div>
-
                 <div class="feedback-item">
-                    <label>🫀 Difficulté Cardio /10</label>
+                    <label for="score-cardio">🫀 Difficulté Cardio <span class="score-value" data-for="score-cardio">5</span>/10</label>
                     <div class="feedback-inputs">
-                        <input type="number" id="score-cardio" class="score-input" min="0" max="10" placeholder="5">
+                        <input type="range" id="score-cardio" class="score-slider" min="0" max="10" value="5" aria-label="Difficulté cardio de 0 à 10">
                         <input type="text" id="com-cardio" class="com-input" placeholder="Détails...">
                     </div>
                 </div>
-
                 <div class="feedback-item">
-                    <label>😫 Fatigue après séance /10</label>
+                    <label for="score-fatigue">😫 Fatigue après séance <span class="score-value" data-for="score-fatigue">5</span>/10</label>
                     <div class="feedback-inputs">
-                        <input type="number" id="score-fatigue" class="score-input" min="0" max="10" placeholder="5">
+                        <input type="range" id="score-fatigue" class="score-slider" min="0" max="10" value="5" aria-label="Fatigue de 0 à 10">
                         <input type="text" id="com-fatigue" class="com-input" placeholder="Détails...">
                     </div>
                 </div>
-
                 <div class="feedback-item">
-                    <label>💤 Sommeil (48h) /10</label>
+                    <label for="score-sleep">💤 Sommeil (48h) <span class="score-value" data-for="score-sleep">5</span>/10</label>
                     <div class="feedback-inputs">
-                        <input type="number" id="score-sleep" class="score-input" min="0" max="10" placeholder="5">
+                        <input type="range" id="score-sleep" class="score-slider" min="0" max="10" value="5" aria-label="Qualité du sommeil de 0 à 10">
                         <input type="text" id="com-sleep" class="com-input" placeholder="Heures, réveils...">
                     </div>
                 </div>
-
             </div>
 
             <div id="modal-btn-container"></div>
@@ -76,5 +70,12 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('./sw.js').catch(function () {});
+        });
+      }
+    </script>
 </body>
 </html>

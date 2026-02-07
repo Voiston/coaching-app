@@ -1,23 +1,71 @@
 // --- CONFIGURATION ---
 const COACH_PHONE_NUMBER = "33600000000"; // TON NUMÉRO
+const PAST_DAYS = 3;   // Jours passés affichés dans le calendrier
+const DAYS_AHEAD = 21; // Jours à venir affichés
 
 const urlParams = new URLSearchParams(window.location.search);
 const clientID = urlParams.get('client') || 'demo';
 
 // Variables Globales pour le multi-séances
 let globalData = null;
-let currentSessionId = "default"; 
+let currentSessionId = "default";
+let currentSessionDate = ""; // Date AAAA-MM-JJ de la séance affichée (pour "terminée")
 
 document.body.insertAdjacentHTML('afterbegin', '<div id="progress-container"><div id="progress-bar"></div></div>');
 
+// --- VALIDATION JSON ---
+function validateProgram(data) {
+    if (!data || typeof data !== 'object') return { ok: false, error: "Fichier programme invalide." };
+    if (data.sessions && !Array.isArray(data.sessions)) return { ok: false, error: "Le champ 'sessions' doit être un tableau." };
+    const sessions = data.sessions || (data.exercises ? [{ exercises: data.exercises }] : []);
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    for (let i = 0; i < sessions.length; i++) {
+        const s = sessions[i];
+        if (s.date && !dateRegex.test(s.date)) return { ok: false, error: `Date invalide dans la séance ${i + 1} : "${s.date}". Utilise le format AAAA-MM-JJ.` };
+    }
+    return { ok: true };
+}
+
+// --- SÉANCES TERMINÉES (localStorage) ---
+const COMPLETED_KEY = 'fitapp_completed_' + clientID;
+function getCompletedSessions() {
+    try {
+        return JSON.parse(localStorage.getItem(COMPLETED_KEY) || '[]');
+    } catch { return []; }
+}
+function markSessionCompleted(sessionId, dateStr) {
+    const list = getCompletedSessions();
+    if (list.some(e => e.sessionId === sessionId && e.date === dateStr)) return;
+    list.push({ sessionId, date: dateStr });
+    localStorage.setItem(COMPLETED_KEY, JSON.stringify(list));
+}
+function isSessionCompleted(sessionId, dateStr) {
+    return getCompletedSessions().some(e => e.sessionId === sessionId && e.date === dateStr);
+}
+
 // --- CHARGEMENT INITIAL ---
 fetch(`./clients/${clientID.toLowerCase()}.json`)
-    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(r => r.ok ? r.json() : Promise.reject(new Error(r.status === 404 ? 'notfound' : 'fetch')))
     .then(data => {
+        const validation = validateProgram(data);
+        if (!validation.ok) {
+            showLoadError(validation.error);
+            return;
+        }
         globalData = data;
         initApp(data);
     })
-    .catch(() => document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px'>Programme introuvable</h2>");
+    .catch(err => {
+        const msg = err.message === 'notfound' ? "Programme introuvable. Vérifie l'URL (?client=nom)." : "Impossible de charger le programme. Vérifie ta connexion.";
+        showLoadError(msg);
+    });
+
+function showLoadError(message) {
+    document.getElementById('client-name').textContent = "Erreur de chargement";
+    document.getElementById('program-title').textContent = "";
+    document.getElementById('workout-container').innerHTML = `<div class="error-message" role="alert"><p>${message}</p></div>`;
+    document.getElementById('calendar-strip').innerHTML = "";
+}
 
 function initApp(data) {
     document.getElementById('client-name').textContent = `Bonjour ${data.clientName} !`;
@@ -37,87 +85,62 @@ function initApp(data) {
 function renderCalendar(sessions) {
     const calendarContainer = document.getElementById('calendar-strip');
     calendarContainer.innerHTML = "";
-    
-    // On génère les 14 prochains jours
-    const daysToShow = 21; 
+
     const today = new Date();
-
     const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    let todayEl = null;
 
-    for (let i = 0; i < daysToShow; i++) {
-        // Créer la date (Aujourd'hui + i)
+    for (let i = -PAST_DAYS; i <= DAYS_AHEAD; i++) {
         const date = new Date();
         date.setDate(today.getDate() + i);
 
-        // 1. Format pour affichage (Jeu 12)
-        const dayIndex = date.getDay(); 
-        const dayNameFR = dayMap[dayIndex]; 
+        const dayIndex = date.getDay();
+        const dayNameFR = dayMap[dayIndex];
         const dateNum = date.getDate();
-        
-        // 2. Format pour comparaison JSON (AAAA-MM-JJ)
-        // Astuce pour avoir le format local sans problème de timezone
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-        const dateString = `${year}-${month}-${day}`; // Ex: "2023-10-27"
+        const dateString = `${year}-${month}-${day}`;
 
-        // --- RECHERCHE INTELLIGENTE ---
-        // On cherche une séance qui matche la DATE PRÉCISE (Priorité 1)
-        // OU une séance qui matche le JOUR SEMAINE (Priorité 2 - Rétrocompatibilité)
-		
-// --- AJOUTER CECI POUR DÉBUGGER ---
-if (i === 0) {
-    console.log("Date Système (J+0):", dateString);
-    console.log("Date cherchée dans le JSON:", sessions[0].date);
-    console.log("Est-ce que ça match ?", sessions[0].date === dateString);
-}
         const sessionIndex = sessions.findIndex(s => {
-            if (s.date) return s.date === dateString; // Match par date (Nouveau)
-            if (s.day) return s.day.toLowerCase() === dayNameFR; // Match par jour (Ancien)
+            if (s.date) return s.date === dateString;
+            if (s.day) return s.day.toLowerCase() === dayNameFR;
             return false;
         });
 
         const hasSession = sessionIndex !== -1;
+        const sId = hasSession ? (sessions[sessionIndex].id || `session_${sessionIndex}`) : null;
+        const completed = hasSession && isSessionCompleted(sId, dateString);
 
-        // Création HTML
         const dayEl = document.createElement('div');
         let classes = "calendar-day";
         if (hasSession) classes += " has-session";
-        
-        // Vérification "Terminé" (Simulée via localStorage)
-        if (hasSession) {
-             const sId = sessions[sessionIndex].id || `session_${sessionIndex}`;
-             // Ici tu pourrais check le localStorage pour ajouter la classe .is-completed
-        }
-
+        if (completed) classes += " is-completed";
         dayEl.className = classes;
-        
-        const shortName = dayNameFR.substring(0, 3).toUpperCase();
-        
+        dayEl.setAttribute('role', 'button');
+        dayEl.setAttribute('aria-label', hasSession ? `Séance du ${dayNameFR} ${dateNum}` : `Repos le ${dayNameFR} ${dateNum}`);
+        dayEl.dataset.sessionIndex = hasSession ? String(sessionIndex) : '';
+        dayEl.dataset.dateString = dateString;
+        dayEl.dataset.dayName = dayNameFR + " " + dateNum;
+        dayEl.dataset.isToday = (i === 0) ? '1' : '0';
+
         dayEl.innerHTML = `
-            <span class="day-name">${shortName}</span>
+            <span class="day-name">${dayNameFR.substring(0, 3).toUpperCase()}</span>
             <span class="day-date">${dateNum}</span>
         `;
 
-        // Clic
-        dayEl.onclick = () => {
+        dayEl.addEventListener('click', () => {
             document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('active'));
             dayEl.classList.add('active');
+            if (hasSession) renderSession(sessionIndex, dateString);
+            else showRestDay(dayNameFR + " " + dateNum);
+        });
 
-            if (hasSession) {
-                renderSession(sessionIndex);
-            } else {
-                showRestDay(dayNameFR + " " + dateNum);
-            }
-        };
-
-        // Auto-sélectionner Aujourd'hui (i=0)
-        if (i === 0) {
-            setTimeout(() => dayEl.click(), 50);
-        }
-
+        if (i === 0) todayEl = dayEl;
         calendarContainer.appendChild(dayEl);
     }
+
+    if (todayEl) setTimeout(() => todayEl.click(), 50);
 }
 
 function showRestDay(dayName) {
@@ -133,17 +156,24 @@ function showRestDay(dayName) {
     document.getElementById('progress-bar').style.width = "0%";
 }
 
-// --- MOTEUR D'AFFICHAGE DE SÉANCE (CELUI QUI MANQUAIT !) ---
-function renderSession(sessionIndex) {
+// --- MOTEUR D'AFFICHAGE DE SÉANCE ---
+function renderSession(sessionIndex, dateStr) {
     const session = globalData.sessions[sessionIndex];
     const container = document.getElementById('workout-container');
-    
-    // Définir l'ID unique de la séance actuelle pour la sauvegarde
-    currentSessionId = session.id || `session_${sessionIndex}`;
 
-    // Reset de l'interface
-    container.innerHTML = ""; 
+    currentSessionId = session.id || `session_${sessionIndex}`;
+    currentSessionDate = dateStr || (session.date || "");
+
+    container.innerHTML = "";
     document.getElementById('progress-bar').style.width = "0%";
+
+    const resetBtn = document.createElement('button');
+    resetBtn.type = 'button';
+    resetBtn.className = 'reset-session-btn';
+    resetBtn.setAttribute('data-reset-session', '1');
+    resetBtn.setAttribute('aria-label', 'Recommencer la séance et décocher toutes les séries');
+    resetBtn.textContent = "↺ Recommencer la séance";
+    container.appendChild(resetBtn);
 
     let currentSupersetContainer = null;
 
@@ -197,9 +227,9 @@ function createExerciseCard(exo, index, sessionId) {
     
     const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>`;
 
-    for(let i=1; i<=setsCount; i++) {
+    for (let i = 1; i <= setsCount; i++) {
         checkboxesHtml += `<div>
-            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" onchange="checkSetAndCollapse(this, ${index}, ${i}, ${setsCount})">
+            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="Série ${i} sur ${setsCount}">
             <label for="set-${index}-${i}" class="set-label">
                 ${i}
                 ${checkIcon}
@@ -213,9 +243,10 @@ function createExerciseCard(exo, index, sessionId) {
     const idRpe = `rpe-${sessionId}-${index}`;
     const idCom = `comment-${sessionId}-${index}`;
 
+    const restSec = parseInt(String(exo.rest).replace(/\D/g, ''), 10) || 60;
     return `
     <div class="exercise-card open" id="card-${index}" data-index="${index}">
-        <div class="exercise-header" onclick="toggleCard(this)">
+        <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
                 <div class="exercise-title">${exo.name}</div>
                 <div class="rpe-badge">RPE: ${exo.rpe_target || '-'}</div>
@@ -230,7 +261,7 @@ function createExerciseCard(exo, index, sessionId) {
                     <div class="detail-box"><span class="detail-label">Séries</span><span class="detail-value">${exo.sets}</span></div>
                     <div class="detail-box"><span class="detail-label">Reps</span><span class="detail-value">${exo.reps}</span></div>
                     <div class="detail-box"><span class="detail-label">Repos</span><span class="detail-value">${exo.rest}</span></div>
-                    <button class="timer-btn" onclick="startTimer(this, ${parseInt(exo.rest)||60})">
+                    <button type="button" class="timer-btn" data-rest="${restSec}" aria-label="Lancer le chronomètre de repos de ${exo.rest}">
                         <span class="timer-icon">⏱️</span><span class="timer-text">Lancer le repos</span>
                     </button>
                 </div>
@@ -238,10 +269,10 @@ function createExerciseCard(exo, index, sessionId) {
                 ${exo.note_coach ? `<div class="coach-note">💡 "${exo.note_coach}"</div>` : ''}
                 <div class="client-input-zone">
                     <div class="input-row">
-                        <input type="text" id="${idCharge}" placeholder="Charge (kg)" oninput="saveAndProgress()">
-                        <input type="number" id="${idRpe}" placeholder="RPE" oninput="saveAndProgress()">
+                        <input type="text" id="${idCharge}" placeholder="Charge (kg)" aria-label="Charge en kg">
+                        <input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti">
                     </div>
-                    <input type="text" id="${idCom}" placeholder="Note..." oninput="saveAndProgress()">
+                    <input type="text" id="${idCom}" placeholder="Note..." aria-label="Note personnelle">
                 </div>
             </div>
         </div>
@@ -287,14 +318,16 @@ function updateProgress(shouldOpenModal = false) {
     document.getElementById('progress-bar').style.width = percent + "%";
 
     if (percent === 100 && shouldOpenModal) {
+        if (currentSessionDate) markSessionCompleted(currentSessionId, currentSessionDate);
         document.body.classList.add('modal-open');
         const overlay = document.getElementById('completion-overlay');
         overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
         const whatsappBtn = document.querySelector('.whatsapp-sticky button');
-        if(document.querySelector('.whatsapp-sticky button')) {
-             document.getElementById('modal-btn-container').appendChild(whatsappBtn);
-        }
-        if("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+        if (whatsappBtn) document.getElementById('modal-btn-container').appendChild(whatsappBtn);
+        if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+        setupModalFocusTrap();
+        document.addEventListener('keydown', handleModalEscape);
     }
 }
 
@@ -326,19 +359,37 @@ function loadProgress() {
     updateProgress(false);
 }
 
+function playBeep() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 800;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+    } catch (_) {}
+}
+
 function startTimer(btn, seconds) {
-    if(btn.classList.contains('active')) return;
+    if (btn.classList.contains('active')) return;
     let timeLeft = seconds;
     btn.classList.add('active');
-    btn.querySelector('.timer-text').textContent = `Repos : ${timeLeft}s`;
+    const timerText = btn.querySelector('.timer-text');
+    timerText.textContent = `Repos : ${timeLeft}s`;
     const interval = setInterval(() => {
         timeLeft--;
-        btn.querySelector('.timer-text').textContent = `Repos : ${timeLeft}s`;
+        timerText.textContent = `Repos : ${timeLeft}s`;
         if (timeLeft <= 0) {
             clearInterval(interval);
             btn.classList.remove('active');
-            btn.querySelector('.timer-text').textContent = "Terminé !";
-            if("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+            timerText.textContent = "Terminé !";
+            playBeep();
+            if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
         }
     }, 1000);
 }
@@ -376,7 +427,7 @@ function sendToWhatsapp() {
         }
     });
 
-    const sMuscle = document.getElementById('score-muscle').value;
+    const sMuscle = document.getElementById('score-muscle').value; // range ou number
     const cMuscle = document.getElementById('com-muscle').value;
     const sCardio = document.getElementById('score-cardio').value;
     const cCardio = document.getElementById('com-cardio').value;
@@ -398,11 +449,107 @@ function sendToWhatsapp() {
     window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-function closeModal() {
-    document.body.classList.remove('modal-open');
-    document.getElementById('completion-overlay').classList.remove('active');
-    const whatsappBtn = document.querySelector('#modal-btn-container button');
-    if(whatsappBtn) {
-        document.querySelector('.whatsapp-sticky').appendChild(whatsappBtn);
+let modalPreviousFocus = null;
+
+function setupModalFocusTrap() {
+    const modal = document.querySelector('.completion-modal');
+    if (!modal) return;
+    modalPreviousFocus = document.activeElement;
+    const focusables = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const first = focusables[0];
+    if (first) first.focus();
+    modal.addEventListener('keydown', trapTab);
+    function trapTab(e) {
+        if (e.key !== 'Tab') return;
+        const f = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        const firstEl = f[0], lastEl = f[f.length - 1];
+        if (e.shiftKey) {
+            if (document.activeElement === firstEl) { e.preventDefault(); lastEl.focus(); }
+        } else {
+            if (document.activeElement === lastEl) { e.preventDefault(); firstEl.focus(); }
+        }
+    }
+    modal._trapTab = trapTab;
+}
+
+function handleModalEscape(e) {
+    if (e.key === 'Escape') {
+        closeModal();
+        document.removeEventListener('keydown', handleModalEscape);
     }
 }
+
+function refreshCalendarCompletedState() {
+    if (!globalData || !globalData.sessions) return;
+    document.querySelectorAll('.calendar-day.has-session').forEach(dayEl => {
+        const sessionIndex = parseInt(dayEl.dataset.sessionIndex, 10);
+        const dateString = dayEl.dataset.dateString;
+        if (isNaN(sessionIndex) || !dateString) return;
+        const s = globalData.sessions[sessionIndex];
+        const sId = s ? (s.id || `session_${sessionIndex}`) : null;
+        if (sId && isSessionCompleted(sId, dateString)) dayEl.classList.add('is-completed');
+        else dayEl.classList.remove('is-completed');
+    });
+}
+
+function closeModal() {
+    document.body.classList.remove('modal-open');
+    const overlay = document.getElementById('completion-overlay');
+    overlay.classList.remove('active');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.removeEventListener('keydown', handleModalEscape);
+    const modal = document.querySelector('.completion-modal');
+    if (modal && modal._trapTab) modal.removeEventListener('keydown', modal._trapTab);
+    const whatsappBtn = document.querySelector('#modal-btn-container button');
+    if (whatsappBtn) document.querySelector('.whatsapp-sticky').appendChild(whatsappBtn);
+    if (modalPreviousFocus && typeof modalPreviousFocus.focus === 'function') modalPreviousFocus.focus();
+    refreshCalendarCompletedState();
+}
+
+function resetCurrentSession() {
+    const container = document.getElementById('workout-container');
+    if (!container) return;
+    container.querySelectorAll('.set-checkbox').forEach(cb => { cb.checked = false; });
+    document.getElementById('progress-bar').style.width = "0%";
+}
+
+// --- DÉLÉGATION D'ÉVÉNEMENTS (remplace les onclick inline) ---
+document.body.addEventListener('click', (e) => {
+    if (e.target.closest('.close-modal')) { closeModal(); return; }
+    if (e.target.closest('.whatsapp-sticky button')) { sendToWhatsapp(); return; }
+    if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }
+    const header = e.target.closest('.exercise-header');
+    if (header) { toggleCard(header); return; }
+    const timerBtn = e.target.closest('.timer-btn');
+    if (timerBtn && timerBtn.dataset.rest !== undefined) {
+        startTimer(timerBtn, parseInt(timerBtn.dataset.rest, 10) || 60);
+    }
+});
+document.body.addEventListener('keydown', (e) => {
+    if (e.target.closest('.close-modal') && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        closeModal();
+        return;
+    }
+    const header = e.target.closest('.exercise-header');
+    if (header && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        toggleCard(header);
+    }
+});
+document.getElementById('workout-container').addEventListener('change', (e) => {
+    if (!e.target.classList.contains('set-checkbox')) return;
+    const cardIndex = parseInt(e.target.dataset.cardIndex, 10);
+    const setNum = parseInt(e.target.dataset.setNum, 10);
+    const totalSets = parseInt(e.target.dataset.totalSets, 10);
+    checkSetAndCollapse(e.target, cardIndex, setNum, totalSets);
+});
+document.getElementById('workout-container').addEventListener('input', (e) => {
+    if (e.target.matches('input[id^="charge-"], input[id^="rpe-"], input[id^="comment-"]')) saveAndProgress();
+});
+document.body.addEventListener('input', (e) => {
+    if (e.target.classList.contains('score-slider')) {
+        const span = document.querySelector('.score-value[data-for="' + e.target.id + '"]');
+        if (span) span.textContent = e.target.value;
+    }
+});
