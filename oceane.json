@@ -5,7 +5,7 @@
   "sessions": [
     {
       "id": "s_1",
-      "date": "Séance 1",
+      "date": "2026/02/10",
       "name": "Hypertrophie: Courbes & Galbe",
       "nutrition_tip": "Consomme des protéines dans les 2h après la séance pour la récupération.",
       "exercises": [
@@ -79,7 +79,7 @@
     },
     {
       "id": "s_2",
-      "date": "Séance 2",
+      "date": "2026/02/12",
       "name": "Hybride: Posture & Force",
       
       "exercises": [
@@ -141,7 +141,7 @@
     },
     {
       "id": "s_3",
-      "date": "Séance 3",
+      "date": "2026/02/14",
       "name": "Cardio: Metabolic Fat Burner",
       "nutrition_tip": "N'oublie pas de bien boire, tu peux même utiliser une boisson d'effort où ajouter une pincer de sel à ton eau.",
       "exercises": [
