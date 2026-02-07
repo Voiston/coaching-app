@@ -33,7 +33,7 @@ function initApp(data) {
     }
 }
 
-// --- CALENDRIER ROULANT AVEC DATES RÉELLES ---
+// --- CALENDRIER HYBRIDE (DATES RÉELLES & JOURS SEMAINE) ---
 function renderCalendar(sessions) {
     const calendarContainer = document.getElementById('calendar-strip');
     calendarContainer.innerHTML = "";
@@ -42,7 +42,6 @@ function renderCalendar(sessions) {
     const daysToShow = 21; 
     const today = new Date();
 
-    // Mapping jours Anglais (JS) -> Français (JSON)
     const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 
     for (let i = 0; i < daysToShow; i++) {
@@ -50,59 +49,70 @@ function renderCalendar(sessions) {
         const date = new Date();
         date.setDate(today.getDate() + i);
 
-        const dayIndex = date.getDay(); // 0-6
-        const dayNameFR = dayMap[dayIndex]; // "lundi", "mardi"...
-        const dateNum = date.getDate(); // 12, 13...
+        // 1. Format pour affichage (Jeu 12)
+        const dayIndex = date.getDay(); 
+        const dayNameFR = dayMap[dayIndex]; 
+        const dateNum = date.getDate();
         
-        // Chercher si une séance existe pour ce jour de la semaine
-        const sessionIndex = sessions.findIndex(s => s.day && s.day.toLowerCase() === dayNameFR);
+        // 2. Format pour comparaison JSON (AAAA-MM-JJ)
+        // Astuce pour avoir le format local sans problème de timezone
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`; // Ex: "2023-10-27"
+
+        // --- RECHERCHE INTELLIGENTE ---
+        // On cherche une séance qui matche la DATE PRÉCISE (Priorité 1)
+        // OU une séance qui matche le JOUR SEMAINE (Priorité 2 - Rétrocompatibilité)
+		const dateString = `${year}-${month}-${day}`; 
+
+// --- AJOUTER CECI POUR DÉBUGGER ---
+if (i === 0) {
+    console.log("Date Système (J+0):", dateString);
+    console.log("Date cherchée dans le JSON:", sessions[0].date);
+    console.log("Est-ce que ça match ?", sessions[0].date === dateString);
+}
+        const sessionIndex = sessions.findIndex(s => {
+            if (s.date) return s.date === dateString; // Match par date (Nouveau)
+            if (s.day) return s.day.toLowerCase() === dayNameFR; // Match par jour (Ancien)
+            return false;
+        });
+
         const hasSession = sessionIndex !== -1;
 
-        // Création de la carte HTML
+        // Création HTML
         const dayEl = document.createElement('div');
-        
-        // Classes CSS
         let classes = "calendar-day";
         if (hasSession) classes += " has-session";
         
-        // Vérifier si cette séance spécifique est "Terminée" (Bonus UX)
-        // On regarde si on a déjà un localStorage pour cette séance
-        // (Note: C'est approximatif car basé sur l'ID de séance, mais efficace)
+        // Vérification "Terminé" (Simulée via localStorage)
         if (hasSession) {
-            const sId = sessions[sessionIndex].id || `session_${sessionIndex}`;
-            const savedData = JSON.parse(localStorage.getItem('fitapp_' + clientID) || '{}');
-            // Si on trouve des données pour cette séance, on peut la marquer (optionnel)
-            // Pour l'instant on reste simple.
+             const sId = sessions[sessionIndex].id || `session_${sessionIndex}`;
+             // Ici tu pourrais check le localStorage pour ajouter la classe .is-completed
         }
 
         dayEl.className = classes;
         
-        // Formatage de l'affichage (Jeu 12)
-        const shortName = dayNameFR.substring(0, 3).toUpperCase(); // LUN
+        const shortName = dayNameFR.substring(0, 3).toUpperCase();
         
         dayEl.innerHTML = `
             <span class="day-name">${shortName}</span>
             <span class="day-date">${dateNum}</span>
         `;
 
-        // Interaction Clic
+        // Clic
         dayEl.onclick = () => {
             document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('active'));
             dayEl.classList.add('active');
 
             if (hasSession) {
-                // On injecte aussi la date réelle dans le titre pour faire pro
-                const fullDate = date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-                // Petit hack pour mettre à jour le sous-titre si tu veux
-                // document.getElementById('program-title').textContent = fullDate; 
-                
                 renderSession(sessionIndex);
             } else {
-                showRestDay(dayNameFR); // On passe le nom complet (Mardi)
+                showRestDay(dayNameFR + " " + dateNum);
             }
         };
 
-        // Auto-sélectionner le PREMIER jour (Aujourd'hui)
+        // Auto-sélectionner Aujourd'hui (i=0)
         if (i === 0) {
             setTimeout(() => dayEl.click(), 50);
         }
