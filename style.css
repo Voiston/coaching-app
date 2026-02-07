@@ -739,6 +739,61 @@ main {
 
 .client-input-zone { border-top: 1px dashed #E0E0E0; padding-top: 20px; }
 .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+
+/* --- Check Ma Technique (lien WhatsApp vidéo) --- */
+.check-technique-wrap {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px dashed rgba(183, 110, 121, 0.2);
+}
+.btn-check-technique {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    padding: 14px 20px;
+    background: var(--card-bg);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-sm);
+    color: var(--primary-dark);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--transition), background var(--transition), border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+    box-shadow: 0 2px 8px rgba(183, 110, 121, 0.08);
+}
+.btn-check-technique-icon {
+    display: inline-flex;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+.btn-check-technique:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary-dark);
+    color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(183, 110, 121, 0.2);
+}
+.btn-check-technique:active {
+    transform: translateY(0);
+}
+.btn-check-technique:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--primary-soft);
+}
+[data-theme="dark"] .btn-check-technique {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+[data-theme="dark"] .btn-check-technique:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--text-main);
+}
 input { width: 100%; padding: 12px; border: 1px solid rgba(0,0,0,0.1); background: var(--card-bg); border-radius: var(--radius-sm); font-family: 'Poppins', sans-serif; outline: none; }
 input:focus { border-color: var(--primary); }
 input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); }
@@ -910,7 +965,7 @@ button:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--prim
     body { background: #fff; padding: 0; }
     #progress-container, #offline-banner, .whatsapp-sticky, .btn-copy-link, .btn-dark-mode, .btn-focus-mode, .btn-settings,
     .reset-session-btn, .btn-progression-toggle, .progression-panel, .btn-print-session,
-    .completion-overlay, .settings-overlay, .toast, .timer-btn, .confetti { display: none !important; }
+    .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti { display: none !important; }
     .calendar-wrap.collapsed { max-height: none; opacity: 1; pointer-events: auto; }
     .header-top { margin-bottom: 8px; }
     .calendar-container { flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; overflow: visible; mask: none; -webkit-mask: none; }

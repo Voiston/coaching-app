@@ -395,6 +395,22 @@ function createExerciseCard(exo, index, sessionId) {
     const variationHtml = exo.variation ? `<div class="exercise-variation">Variante : ${exo.variation}</div>` : '';
     const gridClass = exo.tempo ? 'details-grid has-tempo' : 'details-grid';
 
+    const checkTechniqueHtml = (exo.check_technique === true)
+        ? (() => {
+            const msg = `Hello Coach ! 📹 Voici ma vidéo pour vérifier ma technique sur : ${exo.name || 'cet exercice'}`;
+            const url = `https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
+            return `
+                <div class="check-technique-wrap">
+                    <a href="${url}" target="_blank" rel="noopener noreferrer" class="btn-check-technique" aria-label="Envoyer ma vidéo au coach pour vérifier ma technique sur ${(exo.name || '').replace(/"/g, '&quot;')}">
+                        <span class="btn-check-technique-icon" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        </span>
+                        <span>Check ma technique</span>
+                    </a>
+                </div>`;
+        })()
+        : '';
+
     const restSec = parseInt(String(exo.rest).replace(/\D/g, ''), 10) || 60;
     return `
     <div class="exercise-card open" id="card-${index}" data-index="${index}">
@@ -428,6 +444,7 @@ function createExerciseCard(exo, index, sessionId) {
                     </div>
                     <input type="text" id="${idCom}" placeholder="Note..." aria-label="Note personnelle">
                 </div>
+                ${checkTechniqueHtml}
             </div>
         </div>
     </div>`;
