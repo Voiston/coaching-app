@@ -1,0 +1,73 @@
+{
+  "clientName": "Testeuse",
+  "programTitle": "Demo : Check Technique 📹",
+  "recovery_url": "https://www.youtube.com/watch?v=4BOTvaRaDjI",
+  "sessions": [
+    {
+      "id": "s_test_tech_1",
+      "date": "2026-02-07",
+      "name": "🧪 Séance Test : Technique",
+      "nutrition_tip": "Dans les 30 min post-workout, mange des protéines + glucides (ex: banane + shaker) pour optimiser la récupération musculaire. 💪",
+      "exercises": [
+        {
+          "type": "section",
+          "title": "Mouvements Techniques"
+        },
+        {
+          "name": "Gainage planche",
+          "sets": "3",
+          "reps": "45s",
+          "rest": "60s",
+          "rpe_target": "7"
+        },
+        {
+          "name": "Squat Arrière (Barre)",
+          "sets": "4",
+          "reps": ["10", "8", "6", "6"],
+          "rest": ["60s", "90s", "120s", "120s"],
+          "charge": "60",
+          "rpe_target": "8",
+          "check_technique": true,
+          "note_coach": "Filme-toi de 3/4 face pour que je vois la profondeur."
+        },
+        {
+          "name": "Pendlay Rowing",
+          "sets": "3",
+          "reps": "8",
+          "rest": "90s",
+          "rpe_target": "8",
+          "check_technique": true,
+          "note_coach": "Garde le dos bien parallèle au sol."
+        },
+        {
+          "type": "section",
+          "title": "Volume Musculaire"
+        },
+        {
+          "name": "Presse à cuisses",
+          "sets": "3",
+          "reps": "12-15",
+          "rest": "90s",
+          "check_technique": false,
+          "note_coach": "Pas besoin de vidéo ici, focus sur la brûlure.",
+          "alternative": "Goblet Squat",
+          "warmup_sets": 1
+        },
+        {
+          "name": "Leg Extension",
+          "sets": "3",
+          "reps": "15",
+          "rest": "60s",
+          "superset_type": "start"
+        },
+        {
+          "name": "Leg Curl",
+          "sets": "3",
+          "reps": "15",
+          "rest": "60s",
+          "superset_type": "end"
+        }
+      ]
+    }
+  ]
+}
