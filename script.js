@@ -99,6 +99,8 @@ function showLoadError(message) {
     if (pan) { pan.innerHTML = ""; pan.hidden = true; }
     const btnProg = document.getElementById('btn-progression-toggle');
     if (btnProg) { btnProg.textContent = '📈 Ma progression'; btnProg.setAttribute('aria-expanded', 'false'); }
+    const resetWrap = document.getElementById('reset-session-wrap');
+    if (resetWrap) resetWrap.innerHTML = "";
 }
 
 function initApp(data) {
@@ -290,6 +292,8 @@ function renderCalendar(sessions) {
 }
 
 function showRestDay(dayName) {
+    const resetWrap = document.getElementById('reset-session-wrap');
+    if (resetWrap) resetWrap.innerHTML = "";
     const container = document.getElementById('workout-container');
     container.innerHTML = `
         <div class="rest-day-message">
@@ -314,41 +318,50 @@ function renderSession(sessionIndex, dateStr) {
     container.innerHTML = "";
     document.getElementById('progress-bar').style.width = "0%";
 
-    const resetBtn = document.createElement('button');
-    resetBtn.type = 'button';
-    resetBtn.className = 'reset-session-btn';
-    resetBtn.setAttribute('data-reset-session', '1');
-    resetBtn.setAttribute('aria-label', 'Recommencer la séance et décocher toutes les séries');
-    resetBtn.textContent = "↺ Recommencer la séance";
-    container.appendChild(resetBtn);
+    const resetWrap = document.getElementById('reset-session-wrap');
+    if (resetWrap) {
+        resetWrap.innerHTML = "";
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'reset-session-btn';
+        resetBtn.setAttribute('data-reset-session', '1');
+        resetBtn.setAttribute('aria-label', 'Recommencer la séance et décocher toutes les séries');
+        resetBtn.textContent = "↺ Recommencer la séance";
+        resetWrap.appendChild(resetBtn);
+    }
 
-    let currentSupersetContainer = null;
+    let currentSupersetBlock = null;
 
     session.exercises.forEach((exo, index) => {
         if (exo.type === "section") {
-            if (currentSupersetContainer) { container.appendChild(currentSupersetContainer); currentSupersetContainer = null; }
+            if (currentSupersetBlock) {
+                container.appendChild(currentSupersetBlock);
+                currentSupersetBlock = null;
+            }
             container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
-            return; 
+            return;
         }
 
         if (exo.superset_type === "start") {
-            currentSupersetContainer = document.createElement('div');
-            currentSupersetContainer.className = "superset-row";
+            currentSupersetBlock = document.createElement('div');
+            currentSupersetBlock.className = "superset-block";
+            currentSupersetBlock.innerHTML = '<div class="superset-label">Superset</div><div class="superset-row"></div>';
         }
 
         const cardHtml = createExerciseCard(exo, index, currentSessionId);
-        
-        if (currentSupersetContainer) {
-            currentSupersetContainer.innerHTML += cardHtml;
+        const row = currentSupersetBlock ? currentSupersetBlock.querySelector('.superset-row') : null;
+
+        if (row) {
+            row.insertAdjacentHTML('beforeend', cardHtml);
             if (exo.superset_type === "end") {
-                container.appendChild(currentSupersetContainer);
-                currentSupersetContainer = null;
+                container.appendChild(currentSupersetBlock);
+                currentSupersetBlock = null;
             }
         } else {
             container.insertAdjacentHTML('beforeend', cardHtml);
         }
     });
-    if (currentSupersetContainer) container.appendChild(currentSupersetContainer);
+    if (currentSupersetBlock) container.appendChild(currentSupersetBlock);
 
     // Initialisation des hauteurs pour l'animation accordéon
     setTimeout(() => {
@@ -398,15 +411,16 @@ function createExerciseCard(exo, index, sessionId) {
     const checkTechniqueHtml = (exo.check_technique === true)
         ? (() => {
             const msg = `Hello Coach ! 📹 Voici ma vidéo pour vérifier ma technique sur : ${exo.name || 'cet exercice'}`;
-            const url = `https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
+            const safeName = (exo.name || '').replace(/"/g, '&quot;');
+            const safeMsg = msg.replace(/"/g, '&quot;');
             return `
                 <div class="check-technique-wrap">
-                    <a href="${url}" target="_blank" rel="noopener noreferrer" class="btn-check-technique" aria-label="Envoyer ma vidéo au coach pour vérifier ma technique sur ${(exo.name || '').replace(/"/g, '&quot;')}">
+                    <button type="button" class="btn-check-technique" data-wa-msg="${safeMsg}" aria-label="Enregistrer une vidéo et l’envoyer au coach pour vérifier ma technique sur ${safeName}">
                         <span class="btn-check-technique-icon" aria-hidden="true">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                         </span>
                         <span>Check ma technique</span>
-                    </a>
+                    </button>
                 </div>`;
         })()
         : '';
@@ -935,11 +949,49 @@ function initCopyLink() {
     if (btn) btn.addEventListener('click', copyProgramLink);
 }
 
+// --- Check Ma Technique : input caméra + partage WhatsApp ---
+let _checkTechniquePendingMessage = '';
+const _checkTechniqueInput = document.createElement('input');
+_checkTechniqueInput.type = 'file';
+_checkTechniqueInput.accept = 'video/*';
+_checkTechniqueInput.setAttribute('capture', 'user');
+_checkTechniqueInput.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;';
+_checkTechniqueInput.setAttribute('aria-hidden', 'true');
+document.body.appendChild(_checkTechniqueInput);
+
+_checkTechniqueInput.addEventListener('change', function () {
+    const file = this.files && this.files[0];
+    const msg = _checkTechniquePendingMessage;
+    this.value = '';
+    _checkTechniquePendingMessage = '';
+    if (!file || !msg) return;
+    const waUrl = `https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
+    function openWaWithToast() {
+        window.open(waUrl, '_blank');
+        showToast('Ouvre WhatsApp et ajoute ta vidéo au message.');
+    }
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file], text: msg })) {
+        navigator.share({ files: [file], text: msg }).then(function () {
+            showToast('Choisis WhatsApp pour envoyer la vidéo.');
+        }).catch(function () {
+            openWaWithToast();
+        });
+    } else {
+        openWaWithToast();
+    }
+});
+
 // --- DÉLÉGATION D'ÉVÉNEMENTS (remplace les onclick inline) ---
 document.body.addEventListener('click', (e) => {
     if (e.target.closest('.close-modal')) { closeModal(); return; }
     if (e.target.closest('.whatsapp-sticky button')) { sendToWhatsapp(); return; }
     if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }
+    const checkTechniqueBtn = e.target.closest('.btn-check-technique');
+    if (checkTechniqueBtn) {
+        _checkTechniquePendingMessage = checkTechniqueBtn.getAttribute('data-wa-msg') || '';
+        if (_checkTechniquePendingMessage) _checkTechniqueInput.click();
+        return;
+    }
     const header = e.target.closest('.exercise-header');
     if (header) { toggleCard(header); return; }
     const timerBtn = e.target.closest('.timer-btn');
@@ -965,6 +1017,13 @@ document.getElementById('workout-container').addEventListener('change', (e) => {
     const setNum = parseInt(e.target.dataset.setNum, 10);
     const totalSets = parseInt(e.target.dataset.totalSets, 10);
     checkSetAndCollapse(e.target, cardIndex, setNum, totalSets);
+    if (e.target.checked) {
+        const card = document.getElementById('card-' + cardIndex);
+        const timerBtn = card && card.querySelector('.timer-btn');
+        if (timerBtn && timerBtn.dataset.rest && !timerBtn.classList.contains('active')) {
+            startTimer(timerBtn, parseInt(timerBtn.dataset.rest, 10) || 60);
+        }
+    }
 });
 document.getElementById('workout-container').addEventListener('input', (e) => {
     if (e.target.matches('input[id^="charge-"], input[id^="rpe-"], input[id^="comment-"]')) saveAndProgress();
@@ -983,10 +1042,28 @@ document.body.addEventListener('keydown', (e) => {
     }
 });
 
-// Initialisation des boutons (disponibles dès le chargement)
+function initHeaderMenu() {
+    const menuBtn = document.getElementById('header-menu-btn');
+    const actions = document.getElementById('header-actions');
+    if (!menuBtn || !actions) return;
+    menuBtn.addEventListener('click', function () {
+        const open = actions.classList.toggle('open');
+        menuBtn.setAttribute('aria-expanded', open);
+        menuBtn.setAttribute('aria-label', open ? 'Fermer le menu' : 'Ouvrir le menu');
+    });
+    document.body.addEventListener('click', function (e) {
+        if (actions.classList.contains('open') && !actions.contains(e.target) && !menuBtn.contains(e.target)) {
+            actions.classList.remove('open');
+            menuBtn.setAttribute('aria-expanded', 'false');
+            menuBtn.setAttribute('aria-label', 'Ouvrir le menu');
+        }
+    });
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { initDarkMode(); initCopyLink(); });
+    document.addEventListener('DOMContentLoaded', () => { initDarkMode(); initCopyLink(); initHeaderMenu(); });
 } else {
     initDarkMode();
     initCopyLink();
+    initHeaderMenu();
 }

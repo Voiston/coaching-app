@@ -20,14 +20,23 @@
 
     <header class="header-main">
         <div class="header-top">
-            <div class="logo-area">COACHING</div>
-            <button type="button" class="btn-copy-link" id="btn-copy-link" aria-label="Copier le lien" title="Copier le lien">📋 Copier le lien</button>
-            <button type="button" class="btn-focus-mode" id="btn-focus-mode" aria-label="Réduire le calendrier" title="Mode focus">◐ Focus</button>
-            <button type="button" class="btn-dark-mode" id="btn-dark-mode" aria-label="Activer le mode sombre" title="Mode sombre">🌙</button>
-            <button type="button" class="btn-settings" id="btn-settings" aria-label="Paramètres" title="Paramètres">⚙️</button>
+            <div class="header-left">
+                <div class="logo-area">COACHING</div>
+            </div>
+            <div class="header-center">
+                <h1 id="client-name" class="loading-skeleton">Chargement...</h1>
+                <p id="program-title" class="subtitle loading-skeleton">...</p>
+            </div>
+            <div class="header-right">
+                <button type="button" class="header-menu-btn" id="header-menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="header-actions">⋯</button>
+                <div class="header-actions" id="header-actions" role="menu">
+                    <button type="button" class="btn-copy-link" id="btn-copy-link" aria-label="Copier le lien" title="Copier le lien">📋 Copier le lien</button>
+                    <button type="button" class="btn-focus-mode" id="btn-focus-mode" aria-label="Réduire le calendrier" title="Mode focus">◐ Focus</button>
+                    <button type="button" class="btn-dark-mode" id="btn-dark-mode" aria-label="Mode sombre" title="Mode sombre">🌙</button>
+                    <button type="button" class="btn-settings" id="btn-settings" aria-label="Paramètres" title="Paramètres">⚙️</button>
+                </div>
+            </div>
         </div>
-        <h1 id="client-name" class="loading-skeleton">Chargement...</h1>
-        <p id="program-title" class="subtitle loading-skeleton">...</p>
     </header>
 
     <div id="calendar-wrap" class="calendar-wrap">
@@ -43,6 +52,8 @@
     <main id="workout-container"></main>
 
     <button type="button" class="btn-print-session" id="btn-print-session" aria-label="Imprimer la séance" title="Imprimer">🖨️ Imprimer la séance</button>
+
+    <div id="reset-session-wrap" class="reset-session-wrap"></div>
 
     <footer class="coach-signature" id="coach-signature"></footer>
 
