@@ -646,7 +646,8 @@ body {
     font-style: italic;
 }
 .details-grid.has-tempo { grid-template-columns: repeat(4, 1fr); }
-.details-grid.has-tempo .timer-btn { grid-column: span 4; }
+.details-grid.has-tempo .timer-btn,
+.details-grid.has-tempo .active-timer-btn { grid-column: span 4; }
 
 /* --- TOAST --- */
 .toast {
@@ -883,6 +884,134 @@ main {
 .set-checkbox:checked + .set-label svg {
     display: block;
     stroke: white; /* On force la couleur blanche */
+}
+
+/* Série chauffe vs travail */
+.set-label-warmup {
+    border-style: dashed !important;
+    border-color: #f59e0b !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+}
+.set-checkbox:checked + .set-label-warmup {
+    background: #f59e0b !important;
+    border-color: #f59e0b !important;
+}
+.set-label-work {
+    border-color: var(--primary) !important;
+}
+
+/* --- CHRONO EFFORT (Active Timer) --- */
+.active-timer-btn {
+    grid-column: span 3;
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin-top: 5px;
+}
+.active-timer-btn:hover { background: #1d4ed8; }
+.active-timer-btn.active {
+    background: #1e40af;
+}
+
+/* --- BOUTONS INPUT (Warm-up, RPE) --- */
+.input-with-btn { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.input-with-btn input { flex: 1; min-width: 0; }
+.btn-warmup-gen, .btn-rpe-help {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid rgba(183, 110, 121, 0.3);
+    border-radius: 50%;
+    background: var(--card-bg);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.btn-warmup-gen:hover, .btn-rpe-help:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+}
+
+/* --- ALTERNATIVE (Joker) --- */
+.exercise-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.btn-alternative {
+    flex-shrink: 0;
+    padding: 4px 8px;
+    border: 1px solid rgba(183, 110, 121, 0.3);
+    border-radius: 8px;
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.btn-alternative:hover { background: var(--primary-soft); border-color: var(--primary); }
+
+/* --- MODALE ÉCHAUFFEMENT --- */
+.warmup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2200;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+.warmup-overlay.active { opacity: 1; visibility: visible; }
+.warmup-modal {
+    background: var(--card-bg);
+    padding: 24px;
+    border-radius: var(--radius);
+    max-width: 320px;
+    width: 90%;
+    position: relative;
+    box-shadow: var(--shadow-strong);
+}
+.warmup-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-light);
+}
+.warmup-close:hover { color: var(--primary); }
+.warmup-modal h3 { margin: 0 0 16px 0; font-size: 1.1rem; color: var(--primary-dark); }
+.warmup-list { margin: 0; padding-left: 20px; }
+.warmup-list li { margin-bottom: 8px; color: var(--text-main); }
+
+/* --- TOOLTIP RPE --- */
+.rpe-tooltip-popover {
+    position: fixed;
+    z-index: 2300;
+    background: var(--card-bg);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    box-shadow: var(--shadow-strong);
+    border: 1px solid rgba(183, 110, 121, 0.2);
+}
+.rpe-scale-item { padding: 4px 0; font-size: 0.85rem; }
+.rpe-green { color: #16a34a; }
+.rpe-yellow { color: #ca8a04; }
+.rpe-red { color: #dc2626; }
+.rpe-tooltip-close {
+    display: block;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
 }
 
 /* --- NOTES & INPUTS --- */

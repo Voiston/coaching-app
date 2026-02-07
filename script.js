@@ -2,7 +2,7 @@
 const COACH_PHONE_NUMBER = "33662110786"; // TON NUMÉRO
 const COACH_NAME = "David";
 const DEFAULT_RECOVERY_VIDEO_URL = "https://www.youtube.com/watch?v=4BOTvaRaDjI"; // Stretching générique 10min
-const APP_VERSION = "2.4";
+const APP_VERSION = "2.5";
 const PAST_DAYS = 3;
 const DAYS_AHEAD = 21;
 
@@ -12,6 +12,8 @@ const clientID = urlParams.get('client') || 'demo';
 let globalData = null;
 let currentSessionId = "default";
 let currentSessionDate = "";
+let sessionStartTime = null;
+let sessionEndTime = null;
 
 // --- PARAMÈTRES (localStorage) ---
 const KEY_SOUND = 'fitapp_sound_' + clientID;
@@ -321,6 +323,8 @@ function renderSession(sessionIndex, dateStr) {
 
     currentSessionId = session.id || `session_${sessionIndex}`;
     currentSessionDate = dateStr || (session.date || "");
+    sessionStartTime = null;
+    sessionEndTime = null;
 
     const waBottom = document.getElementById('whatsapp-bottom');
     if (waBottom) waBottom.style.display = '';
@@ -394,14 +398,16 @@ function createExerciseCard(exo, index, sessionId) {
     }
 
     let setsCount = parseInt(exo.sets) || 3;
+    const warmupSets = parseInt(exo.warmup_sets) || 0;
     let checkboxesHtml = '<div class="sets-container">';
     
     const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>`;
 
     for (let i = 1; i <= setsCount; i++) {
+        const setClass = i <= warmupSets ? ' set-label-warmup' : ' set-label-work';
         checkboxesHtml += `<div>
             <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="Série ${i} sur ${setsCount}">
-            <label for="set-${index}-${i}" class="set-label">
+            <label for="set-${index}-${i}" class="set-label${setClass}">
                 ${i}
                 ${checkIcon}
             </label>
@@ -415,6 +421,9 @@ function createExerciseCard(exo, index, sessionId) {
         const idCom = `comment-${sessionId}-${index}`;
 
     const repsDisplay = (exo.until_failure || exo.failure) ? 'Jusqu\'à échec' : (exo.reps || '-');
+    const isTimeBased = /^\d+\s*(s|sec|min|mn)/i.test(String(exo.reps || ''));
+    const timeMatch = String(exo.reps || '').match(/(\d+)\s*(s|sec|min|mn)/i);
+    const targetSeconds = timeMatch ? (timeMatch[2].toLowerCase().startsWith('min') ? parseInt(timeMatch[1], 10) * 60 : parseInt(timeMatch[1], 10)) : 45;
     const tempoHtml = exo.tempo ? `<div class="detail-box"><span class="detail-label">Tempo</span><span class="detail-value">${exo.tempo}</span></div>` : '';
     const variationHtml = exo.variation ? `<div class="exercise-variation">Variante : ${exo.variation}</div>` : '';
     const gridClass = exo.tempo ? 'details-grid has-tempo' : 'details-grid';
@@ -438,11 +447,17 @@ function createExerciseCard(exo, index, sessionId) {
 
     const restSec = parseInt(String(exo.rest).replace(/\D/g, ''), 10) || 60;
     const supersetRole = exo.superset_type === 'start' ? '1' : exo.superset_type === 'end' ? '2' : '';
+    const altData = exo.alternative ? (typeof exo.alternative === 'string' ? { name: exo.alternative } : exo.alternative) : null;
+    const altName = altData ? (altData.name || String(exo.alternative)) : '';
+    const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${(exo.name || '').replace(/"/g, '&quot;')}" data-alt-name="${altName.replace(/"/g, '&quot;')}" title="Remplacer par : ${altName}" aria-label="Remplacer par ${altName}">🔄</button>` : '';
+    const activeTimerHtml = isTimeBased ? `<button type="button" class="active-timer-btn" data-target-seconds="${targetSeconds}" aria-label="Lancer le chrono d'effort"><span class="active-timer-text">▶ Go</span></button>` : '';
+    const warmupBtnHtml = `<button type="button" class="btn-warmup-gen" data-charge-id="${idCharge}" data-exo-name="${(exo.name || '').replace(/"/g, '&quot;')}" title="Générer un échauffement" aria-label="Générer un échauffement">🔥</button>`;
+    const rpeTooltipHtml = `<button type="button" class="btn-rpe-help" title="Échelle RPE" aria-label="Aide échelle RPE">?</button>`;
     return `
     <div class="exercise-card open" id="card-${index}" data-index="${index}"${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
-                <div class="exercise-title">${exo.name}</div>
+                <div class="exercise-title-row"><span class="exercise-title">${exo.name}</span>${altBtnHtml}</div>
                 <div class="rpe-badge" title="RPE = Rate of Perceived Exertion : échelle 1-10 de l'effort ressenti (1=très facile, 10=maximum)">RPE: ${exo.rpe_target || '-'}</div>
             </div>
             <div class="toggle-icon">▼</div>
@@ -461,13 +476,14 @@ function createExerciseCard(exo, index, sessionId) {
                         <span class="timer-icon">⏱️</span><span class="timer-text">Lancer le repos</span>
                         <span class="timer-close" aria-label="Arrêter le chronomètre">×</span>
                     </button>
+                    ${activeTimerHtml}
                 </div>
                 ${checkboxesHtml}
                 ${exo.note_coach ? `<div class="coach-note">💡 "${exo.note_coach}"</div>` : ''}
                 <div class="client-input-zone">
                     <div class="input-row">
-                        <input type="text" id="${idCharge}" placeholder="Charge (kg)" aria-label="Charge en kg">
-                        <input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti" title="Échelle 1-10 de l'effort ressenti (1=facile, 10=maximum)">
+                        <span class="input-with-btn"><input type="text" id="${idCharge}" placeholder="Charge (kg)" aria-label="Charge en kg">${warmupBtnHtml}</span>
+                        <span class="input-with-btn"><input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti" title="Échelle 1-10 de l'effort ressenti (1=facile, 10=maximum)">${rpeTooltipHtml}</span>
                     </div>
                     <input type="text" id="${idCom}" placeholder="Note..." aria-label="Note personnelle">
                 </div>
@@ -482,14 +498,20 @@ function updateSupersetHighlight() {
         const cards = block.querySelectorAll('.exercise-card[data-superset-role]');
         if (cards.length !== 2) return;
         const [card1, card2] = Array.from(cards);
-        const cbs1 = card1.querySelectorAll('.set-checkbox');
-        const allChecked1 = cbs1.length > 0 && Array.from(cbs1).every((cb) => cb.checked);
-        card1.classList.toggle('superset-current', !allChecked1);
-        card2.classList.toggle('superset-current', allChecked1);
+        const totalChecked = block.querySelectorAll('.set-checkbox:checked').length;
+        const totalSets = block.querySelectorAll('.set-checkbox').length;
+        if (totalChecked >= totalSets) {
+            card1.classList.remove('superset-current');
+            card2.classList.remove('superset-current');
+        } else {
+            card1.classList.toggle('superset-current', totalChecked % 2 === 0);
+            card2.classList.toggle('superset-current', totalChecked % 2 === 1);
+        }
     });
 }
 
 function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
+    if (sessionStartTime === null) sessionStartTime = Date.now();
     updateProgress(true); 
     saveData(); 
     updateSupersetHighlight();
@@ -529,6 +551,7 @@ function updateProgress(shouldOpenModal = false) {
     document.getElementById('progress-bar').style.width = percent + "%";
 
     if (percent === 100 && shouldOpenModal) {
+        sessionEndTime = Date.now();
         if (currentSessionDate) markSessionCompleted(currentSessionId, currentSessionDate);
         fireConfetti();
         document.body.classList.add('modal-open');
@@ -639,6 +662,101 @@ function stopTimer(btn) {
     if (timerText) timerText.textContent = "Lancer le repos";
 }
 
+function startActiveTimer(btn) {
+    if (btn.classList.contains('active')) return;
+    const targetSec = parseInt(btn.dataset.targetSeconds, 10) || 45;
+    let elapsed = 0;
+    btn.classList.add('active');
+    const textEl = btn.querySelector('.active-timer-text');
+    const interval = setInterval(() => {
+        elapsed++;
+        if (textEl) textEl.textContent = `${elapsed}s`;
+        if (elapsed >= targetSec) {
+            clearInterval(interval);
+            btn.classList.remove('active');
+            if (textEl) textEl.textContent = 'Terminé !';
+            playBeep();
+            if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+        }
+    }, 1000);
+    btn.dataset.activeTimerInterval = interval;
+    if (textEl) textEl.textContent = '0s';
+}
+
+function stopActiveTimer(btn) {
+    const id = btn.dataset.activeTimerInterval;
+    if (id) clearInterval(parseInt(id, 10));
+    btn.classList.remove('active');
+    const textEl = btn.querySelector('.active-timer-text');
+    if (textEl) textEl.textContent = '▶ Go';
+}
+
+function showWarmupGenerator(chargeId, exoName) {
+    const input = document.getElementById(chargeId);
+    const target = parseInt(String(input?.value || '').replace(/\D/g, ''), 10);
+    if (!target || target < 20) {
+        showToast('Saisis ta charge de travail (kg) pour générer l\'échauffement.');
+        return;
+    }
+    const bar = 20;
+    const s1 = Math.round(target * 0.4 / 2.5) * 2.5 || bar;
+    const s2 = Math.round(target * 0.6 / 2.5) * 2.5;
+    const s3 = Math.round(target * 0.8 / 2.5) * 2.5;
+    const lines = [
+        `Barre à vide (${bar}kg) x 10 reps`,
+        `${s1}kg x 8 reps`,
+        `${s2}kg x 5 reps`,
+        `${s3}kg x 3 reps`,
+        `➜ Go ${target}kg !`
+    ];
+    let el = document.getElementById('warmup-overlay');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'warmup-overlay';
+        el.className = 'warmup-overlay';
+        el.innerHTML = '<div class="warmup-modal"><button type="button" class="warmup-close">×</button><h3></h3><ul class="warmup-list"></ul></div>';
+        document.body.appendChild(el);
+        el.querySelector('.warmup-close').onclick = () => el.classList.remove('active');
+        el.onclick = (e) => { if (e.target === el) el.classList.remove('active'); };
+    }
+    el.querySelector('h3').textContent = `🔥 Échauffement ${exoName}`;
+    el.querySelector('.warmup-list').innerHTML = lines.map(l => `<li>${l}</li>`).join('');
+    el.classList.add('active');
+}
+
+function showRpeTooltip(btn) {
+    const existing = document.getElementById('rpe-tooltip-popover');
+    if (existing) { existing.remove(); return; }
+    const pop = document.createElement('div');
+    pop.id = 'rpe-tooltip-popover';
+    pop.className = 'rpe-tooltip-popover';
+    pop.innerHTML = `
+        <div class="rpe-scale-item rpe-green">🟢 RPE 5-6 : Échauffement / Facile</div>
+        <div class="rpe-scale-item rpe-yellow">🟡 RPE 7-8 : Difficile (reste 2-3 reps)</div>
+        <div class="rpe-scale-item rpe-red">🔴 RPE 9-10 : Échec ou limite</div>
+        <button type="button" class="rpe-tooltip-close">Fermer</button>
+    `;
+    const rect = btn.getBoundingClientRect();
+    pop.style.left = rect.left + 'px';
+    pop.style.top = (rect.bottom + 8) + 'px';
+    document.body.appendChild(pop);
+    const close = () => { pop.remove(); document.removeEventListener('click', closeOut); };
+    const closeOut = (e) => { if (!pop.contains(e.target) && e.target !== btn) close(); };
+    setTimeout(() => document.addEventListener('click', closeOut), 10);
+    pop.querySelector('.rpe-tooltip-close').onclick = close;
+}
+
+function swapExerciseAlternative(btn) {
+    const card = btn.closest('.exercise-card');
+    const titleEl = card?.querySelector('.exercise-title');
+    if (!titleEl) return;
+    const orig = btn.dataset.originalName || '';
+    const alt = btn.dataset.altName || '';
+    const current = titleEl.textContent.trim();
+    titleEl.textContent = (current === orig || !btn.dataset.showingAlt) ? alt : orig;
+    btn.dataset.showingAlt = (current === orig || !btn.dataset.showingAlt) ? '1' : '';
+}
+
 function buildSessionReport() {
     const clientNameEl = document.getElementById('client-name');
     const clientName = clientNameEl ? clientNameEl.innerText.replace(/^Bonjour\s+|\s*!$/g, '').trim() : '';
@@ -686,13 +804,19 @@ function buildSessionReport() {
         },
         coachNote: document.getElementById('coach-note-free')?.value?.trim() || null
     };
+    if (sessionStartTime && sessionEndTime) {
+        const mins = Math.round((sessionEndTime - sessionStartTime) / 60000);
+        report.durationMinutes = mins;
+    }
     return report;
 }
 
 function sendToWhatsapp() {
     const report = buildSessionReport();
     let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
-    msg += `📂 *${report.sessionName}*\n\n`;
+    msg += `📂 *${report.sessionName}*\n`;
+    if (report.durationMinutes != null) msg += `⏱️ Durée : ${report.durationMinutes} min\n`;
+    msg += `\n`;
 
     report.exercises.forEach((ex) => {
         msg += `🔹 *${ex.name}*\n`;
@@ -1042,6 +1166,14 @@ document.body.addEventListener('click', (e) => {
         if (msg) window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         return;
     }
+    const altBtn = e.target.closest('.btn-alternative');
+    if (altBtn) { e.stopPropagation(); swapExerciseAlternative(altBtn); return; }
+    const warmupBtn = e.target.closest('.btn-warmup-gen');
+    if (warmupBtn) { e.stopPropagation(); showWarmupGenerator(warmupBtn.dataset.chargeId, warmupBtn.dataset.exoName || 'cet exercice'); return; }
+    const rpeBtn = e.target.closest('.btn-rpe-help');
+    if (rpeBtn) { e.stopPropagation(); showRpeTooltip(rpeBtn); return; }
+    const activeTimerBtn = e.target.closest('.active-timer-btn');
+    if (activeTimerBtn) { e.stopPropagation(); startActiveTimer(activeTimerBtn); return; }
     const header = e.target.closest('.exercise-header');
     if (header) { toggleCard(header); return; }
     const timerClose = e.target.closest('.timer-close');
