@@ -1,55 +1,64 @@
 {
-  "clientName": "Testeuse",
-  "programTitle": "Demo : Check Technique 📹",
+  "clientName": "Sophie",
+  "programTitle": "Objectif Athlète Complet — Semaine 1",
+  "weeklyGoal": 3,
   "recovery_url": "https://www.youtube.com/watch?v=4BOTvaRaDjI",
   "sessions": [
     {
-      "id": "s_test_tech_1",
-      "date": "2026-02-07",
-      "name": "🧪 Séance Test : Technique",
-      "nutrition_tip": "Dans les 30 min post-workout, mange des protéines + glucides (ex: banane + shaker) pour optimiser la récupération musculaire. 💪",
+      "id": "s1_jambes",
+      "date": "2026-02-10",
+      "name": "🍑 Jambes & Fessiers",
+      "nutrition_tip": "Dans les 30 min post-workout, mange des protéines + glucides (banane + shaker ou poulet + riz) pour optimiser la récupération musculaire.",
       "exercises": [
         {
           "type": "section",
-          "title": "Mouvements Techniques"
+          "title": "Échauffement"
         },
         {
           "name": "Gainage planche",
           "sets": "3",
           "reps": "45s",
           "rest": "60s",
-          "rpe_target": "7"
+          "rpe_target": "6"
         },
         {
-          "name": "Squat Arrière (Barre)",
+          "type": "section",
+          "title": "Mouvements techniques"
+        },
+        {
+          "name": "Squat arrière (barre)",
           "sets": "4",
           "reps": ["10", "8", "6", "6"],
           "rest": ["60s", "90s", "120s", "120s"],
           "charge": "60",
           "rpe_target": "8",
           "check_technique": true,
-          "note_coach": "Filme-toi de 3/4 face pour que je vois la profondeur."
+          "note_coach": "Filme-toi de 3/4 face pour que je vois la profondeur.",
+          "warmup_sets": 1
         },
         {
-          "name": "Pendlay Rowing",
-          "sets": "3",
+          "name": "Rowing barre",
+          "sets": "4",
           "reps": "8",
           "rest": "90s",
+          "charge": "40",
           "rpe_target": "8",
+          "tempo": "3-1-2-0",
           "check_technique": true,
           "note_coach": "Garde le dos bien parallèle au sol."
         },
         {
           "type": "section",
-          "title": "Volume Musculaire"
+          "title": "Volume"
         },
         {
           "name": "Presse à cuisses",
           "sets": "3",
           "reps": "12-15",
           "rest": "90s",
+          "charge": "80",
           "check_technique": false,
-          "note_coach": "Pas besoin de vidéo ici, focus sur la brûlure.",
+          "note_coach": "Focus sur la brûlure.",
           "alternative": "Goblet Squat",
           "warmup_sets": 1
         },
@@ -66,6 +75,14 @@
           "reps": "15",
           "rest": "60s",
           "superset_type": "end"
+        },
+        {
+          "name": "Mollets debout",
+          "sets": "3",
+          "reps": "20",
+          "rest": "45s",
+          "until_failure": true,
+          "variation": "pieds parallèles"
         }
       ]
     }
