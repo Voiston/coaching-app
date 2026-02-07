@@ -295,6 +295,8 @@ function renderCalendar(sessions) {
 function showRestDay(dayName) {
     const resetWrap = document.getElementById('reset-session-wrap');
     if (resetWrap) resetWrap.innerHTML = "";
+    const waBottom = document.getElementById('whatsapp-bottom');
+    if (waBottom) waBottom.style.display = 'none';
     const recoveryUrl = (globalData && globalData.recovery_url && String(globalData.recovery_url).trim())
         ? globalData.recovery_url
         : DEFAULT_RECOVERY_VIDEO_URL;
@@ -319,6 +321,9 @@ function renderSession(sessionIndex, dateStr) {
 
     currentSessionId = session.id || `session_${sessionIndex}`;
     currentSessionDate = dateStr || (session.date || "");
+
+    const waBottom = document.getElementById('whatsapp-bottom');
+    if (waBottom) waBottom.style.display = '';
 
     container.innerHTML = "";
     document.getElementById('progress-bar').style.width = "0%";
@@ -377,6 +382,7 @@ function renderSession(sessionIndex, dateStr) {
 
     loadProgress();
     renderProgressionPanel();
+    updateSupersetHighlight();
 }
 
 function createExerciseCard(exo, index, sessionId) {
@@ -415,7 +421,7 @@ function createExerciseCard(exo, index, sessionId) {
 
     const checkTechniqueHtml = (exo.check_technique === true)
         ? (() => {
-            const msg = `Hello Coach ! 📹 Voici ma vidéo pour vérifier ma technique sur : ${exo.name || 'cet exercice'}`;
+            const msg = `Coach, je t'envoie ma technique sur le ${exo.name || 'cet exercice'} 👇`;
             const safeName = (exo.name || '').replace(/"/g, '&quot;');
             const safeMsg = msg.replace(/"/g, '&quot;');
             return `
@@ -431,12 +437,13 @@ function createExerciseCard(exo, index, sessionId) {
         : '';
 
     const restSec = parseInt(String(exo.rest).replace(/\D/g, ''), 10) || 60;
+    const supersetRole = exo.superset_type === 'start' ? '1' : exo.superset_type === 'end' ? '2' : '';
     return `
-    <div class="exercise-card open" id="card-${index}" data-index="${index}">
+    <div class="exercise-card open" id="card-${index}" data-index="${index}"${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
                 <div class="exercise-title">${exo.name}</div>
-                <div class="rpe-badge">RPE: ${exo.rpe_target || '-'}</div>
+                <div class="rpe-badge" title="RPE = Rate of Perceived Exertion : échelle 1-10 de l'effort ressenti (1=très facile, 10=maximum)">RPE: ${exo.rpe_target || '-'}</div>
             </div>
             <div class="toggle-icon">▼</div>
         </div>
@@ -460,7 +467,7 @@ function createExerciseCard(exo, index, sessionId) {
                 <div class="client-input-zone">
                     <div class="input-row">
                         <input type="text" id="${idCharge}" placeholder="Charge (kg)" aria-label="Charge en kg">
-                        <input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti">
+                        <input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti" title="Échelle 1-10 de l'effort ressenti (1=facile, 10=maximum)">
                     </div>
                     <input type="text" id="${idCom}" placeholder="Note..." aria-label="Note personnelle">
                 </div>
@@ -470,9 +477,22 @@ function createExerciseCard(exo, index, sessionId) {
     </div>`;
 }
 
+function updateSupersetHighlight() {
+    document.querySelectorAll('.superset-block').forEach((block) => {
+        const cards = block.querySelectorAll('.exercise-card[data-superset-role]');
+        if (cards.length !== 2) return;
+        const [card1, card2] = Array.from(cards);
+        const cbs1 = card1.querySelectorAll('.set-checkbox');
+        const allChecked1 = cbs1.length > 0 && Array.from(cbs1).every((cb) => cb.checked);
+        card1.classList.toggle('superset-current', !allChecked1);
+        card2.classList.toggle('superset-current', allChecked1);
+    });
+}
+
 function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
     updateProgress(true); 
     saveData(); 
+    updateSupersetHighlight();
 
     if (checkbox.checked && setNumber === totalSets) {
         const card = document.getElementById(`card-${cardIndex}`);
@@ -516,7 +536,7 @@ function updateProgress(shouldOpenModal = false) {
         overlay.classList.add('active');
         overlay.setAttribute('aria-hidden', 'false');
         injectNutritionCard();
-        const whatsappBtn = document.querySelector('.whatsapp-sticky button');
+        const whatsappBtn = document.querySelector('#whatsapp-bottom button');
         if (whatsappBtn) document.getElementById('modal-btn-container').appendChild(whatsappBtn);
         if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
         loadCoachNoteIntoModal();
@@ -776,7 +796,7 @@ function closeModal() {
     const modal = document.querySelector('.completion-modal');
     if (modal && modal._trapTab) modal.removeEventListener('keydown', modal._trapTab);
     const whatsappBtn = document.querySelector('#modal-btn-container button');
-    if (whatsappBtn) document.querySelector('.whatsapp-sticky').appendChild(whatsappBtn);
+    if (whatsappBtn) document.getElementById('whatsapp-bottom').appendChild(whatsappBtn);
     if (modalPreviousFocus && typeof modalPreviousFocus.focus === 'function') modalPreviousFocus.focus();
     saveCoachNoteFromModal();
     refreshCalendarCompletedState();
@@ -1005,42 +1025,10 @@ function initCopyLink() {
     if (btn) btn.addEventListener('click', copyProgramLink);
 }
 
-// --- Check Ma Technique : input caméra + partage WhatsApp ---
-let _checkTechniquePendingMessage = '';
-const _checkTechniqueInput = document.createElement('input');
-_checkTechniqueInput.type = 'file';
-_checkTechniqueInput.accept = 'video/*';
-_checkTechniqueInput.setAttribute('capture', 'user');
-_checkTechniqueInput.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;';
-_checkTechniqueInput.setAttribute('aria-hidden', 'true');
-document.body.appendChild(_checkTechniqueInput);
-
-_checkTechniqueInput.addEventListener('change', function () {
-    const file = this.files && this.files[0];
-    const msg = _checkTechniquePendingMessage;
-    this.value = '';
-    _checkTechniquePendingMessage = '';
-    if (!file || !msg) return;
-    const waUrl = `https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`;
-    function openWaWithToast() {
-        window.open(waUrl, '_blank');
-        showToast('Ouvre WhatsApp et ajoute ta vidéo au message.');
-    }
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file], text: msg })) {
-        navigator.share({ files: [file], text: msg }).then(function () {
-            showToast('Choisis WhatsApp pour envoyer la vidéo.');
-        }).catch(function () {
-            openWaWithToast();
-        });
-    } else {
-        openWaWithToast();
-    }
-});
-
 // --- DÉLÉGATION D'ÉVÉNEMENTS (remplace les onclick inline) ---
 document.body.addEventListener('click', (e) => {
     if (e.target.closest('.close-modal')) { closeModal(); return; }
-    if (e.target.closest('.whatsapp-sticky button')) { sendToWhatsapp(); return; }
+    if (e.target.closest('#whatsapp-bottom button')) { sendToWhatsapp(); return; }
     const recoveryBtn = e.target.closest('.btn-recovery-video');
     if (recoveryBtn) {
         const url = recoveryBtn.getAttribute('data-recovery-url') || DEFAULT_RECOVERY_VIDEO_URL;
@@ -1050,8 +1038,8 @@ document.body.addEventListener('click', (e) => {
     if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }
     const checkTechniqueBtn = e.target.closest('.btn-check-technique');
     if (checkTechniqueBtn) {
-        _checkTechniquePendingMessage = checkTechniqueBtn.getAttribute('data-wa-msg') || '';
-        if (_checkTechniquePendingMessage) _checkTechniqueInput.click();
+        const msg = checkTechniqueBtn.getAttribute('data-wa-msg') || '';
+        if (msg) window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         return;
     }
     const header = e.target.closest('.exercise-header');
