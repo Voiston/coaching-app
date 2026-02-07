@@ -4,22 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Programme Coaching</title>
+    <meta name="description" content="Ton programme d'entraînement personnalisé — suivi des séances, chrono et bilan envoyé à ton coach.">
+    <meta property="og:title" content="Mon Programme Coaching">
+    <meta property="og:description" content="Programme d'entraînement personnalisé — séances, suivi et bilan coach.">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#B76E79">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="progress-container"><div id="progress-bar"></div></div>
 
-    <header>
-        <div class="logo-area">COACHING</div>
-        <h1 id="client-name">Chargement...</h1>
-        <p id="program-title" class="subtitle">...</p>
+    <header class="header-main">
+        <div class="header-top">
+            <div class="logo-area">COACHING</div>
+            <button type="button" class="btn-copy-link" id="btn-copy-link" aria-label="Copier le lien de mon programme" title="Copier le lien">📋 Copier le lien</button>
+            <button type="button" class="btn-dark-mode" id="btn-dark-mode" aria-label="Activer le mode sombre" title="Mode sombre">🌙</button>
+        </div>
+        <h1 id="client-name" class="loading-skeleton">Chargement...</h1>
+        <p id="program-title" class="subtitle loading-skeleton">...</p>
     </header>
-<div id="calendar-strip" class="calendar-container">
-    </div>
-    <main id="workout-container">
-        </main>
+
+    <div id="calendar-strip" class="calendar-container"></div>
+    <div id="week-context" class="week-context" aria-live="polite"></div>
+    <div id="next-session" class="next-session" aria-live="polite"></div>
+
+    <main id="workout-container"></main>
+
+    <footer class="coach-signature" id="coach-signature"></footer>
 
     <div class="whatsapp-sticky">
         <button type="button" aria-label="Terminer la séance et envoyer le rapport au coach par WhatsApp">
@@ -31,8 +45,8 @@
         <div class="completion-modal">
             <span class="close-modal" tabindex="0" role="button" aria-label="Fermer la fenêtre">&times;</span>
             
-            <div id="completion-title" class="completion-title">Séance Terminée ! 🏆</div>
-            <p class="completion-text">Prends une minute pour noter ton ressenti.</p>
+            <div id="completion-title" class="completion-title">Séance terminée — bravo ! 🏆</div>
+            <p class="completion-text">Prends une minute pour noter ton ressenti. Ça aide ton coach à adapter la suite.</p>
             
             <div class="feedback-container">
                 <div class="feedback-item">
@@ -69,6 +83,7 @@
         </div>
     </div>
 
+    <div id="toast" class="toast" aria-live="polite"></div>
     <script src="script.js"></script>
     <script>
       if ('serviceWorker' in navigator) {

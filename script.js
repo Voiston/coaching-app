@@ -1,17 +1,15 @@
 // --- CONFIGURATION ---
 const COACH_PHONE_NUMBER = "33600000000"; // TON NUMÉRO
-const PAST_DAYS = 3;   // Jours passés affichés dans le calendrier
-const DAYS_AHEAD = 21; // Jours à venir affichés
+const COACH_NAME = "Ton coach"; // Affiché en bas de page (ex: "David", "Programme par David")
+const PAST_DAYS = 3;
+const DAYS_AHEAD = 21;
 
 const urlParams = new URLSearchParams(window.location.search);
 const clientID = urlParams.get('client') || 'demo';
 
-// Variables Globales pour le multi-séances
 let globalData = null;
 let currentSessionId = "default";
-let currentSessionDate = ""; // Date AAAA-MM-JJ de la séance affichée (pour "terminée")
-
-document.body.insertAdjacentHTML('afterbegin', '<div id="progress-container"><div id="progress-bar"></div></div>');
+let currentSessionDate = "";
 
 // --- VALIDATION JSON ---
 function validateProgram(data) {
@@ -56,32 +54,84 @@ fetch(`./clients/${clientID.toLowerCase()}.json`)
         initApp(data);
     })
     .catch(err => {
-        const msg = err.message === 'notfound' ? "Programme introuvable. Vérifie l'URL (?client=nom)." : "Impossible de charger le programme. Vérifie ta connexion.";
+        const msg = err.message === 'notfound'
+            ? "Ce programme n'est pas encore disponible. Ton coach te l'enverra très bientôt !"
+            : "Impossible de charger le programme. Vérifie ta connexion et réessaie.";
         showLoadError(msg);
     });
 
 function showLoadError(message) {
-    document.getElementById('client-name').textContent = "Erreur de chargement";
+    document.getElementById('client-name').textContent = "Oups...";
     document.getElementById('program-title').textContent = "";
+    document.getElementById('client-name').classList.remove('loading-skeleton');
+    document.getElementById('program-title').classList.remove('loading-skeleton');
     document.getElementById('workout-container').innerHTML = `<div class="error-message" role="alert"><p>${message}</p></div>`;
     document.getElementById('calendar-strip').innerHTML = "";
+    document.getElementById('week-context').innerHTML = "";
+    document.getElementById('next-session').innerHTML = "";
+    document.getElementById('coach-signature').innerHTML = "";
 }
 
 function initApp(data) {
+    document.getElementById('client-name').classList.remove('loading-skeleton');
+    document.getElementById('program-title').classList.remove('loading-skeleton');
     document.getElementById('client-name').textContent = `Bonjour ${data.clientName} !`;
     document.getElementById('program-title').textContent = data.programTitle;
 
-    // Si on a des sessions, on lance le calendrier
     if (data.sessions && data.sessions.length > 0) {
         renderCalendar(data.sessions);
+        updateWeekAndNextSession(data.sessions);
     } else if (data.exercises) {
-        // Rétro-compatibilité (Ancien format sans calendrier)
         globalData.sessions = [{ id: "unique", name: "Séance Unique", exercises: data.exercises }];
-        renderSession(0); // On charge direct
+        renderSession(0);
+    }
+    renderCoachSignature();
+}
+
+// --- SEMAINE & PROCHAINE SÉANCE ---
+function getWeekLabel() {
+    const d = new Date();
+    const j = d.getDate(), m = d.getMonth();
+    const mois = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+    return `Semaine du ${j} ${mois[m]}`;
+}
+
+function getNextSessionInfo(sessions) {
+    const today = new Date();
+    const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    for (let i = 1; i <= DAYS_AHEAD; i++) {
+        const date = new Date();
+        date.setDate(today.getDate() + i);
+        const y = date.getFullYear(), mo = String(date.getMonth() + 1).padStart(2, '0'), da = String(date.getDate()).padStart(2, '0');
+        const dateString = `${y}-${mo}-${da}`;
+        const idx = sessions.findIndex(s => s.date === dateString || (s.day && s.day.toLowerCase() === dayMap[date.getDay()]));
+        if (idx !== -1) {
+            const s = sessions[idx];
+            const dayName = dayMap[date.getDay()];
+            const shortName = (s.name || "Séance").replace(/^[\s\S]*?[\s:]/, "").trim() || s.name || "Séance";
+            return { dayName, dateNum: date.getDate(), name: shortName, sessionIndex: idx };
+        }
+    }
+    return null;
+}
+
+function updateWeekAndNextSession(sessions) {
+    const weekEl = document.getElementById('week-context');
+    const nextEl = document.getElementById('next-session');
+    if (weekEl) weekEl.textContent = getWeekLabel();
+    const next = getNextSessionInfo(sessions);
+    if (nextEl) {
+        if (next) nextEl.innerHTML = `Prochaine séance : <strong>${next.dayName} ${next.dateNum}</strong> — ${next.name}`;
+        else nextEl.innerHTML = "";
     }
 }
 
-// --- CALENDRIER HYBRIDE (DATES RÉELLES & JOURS SEMAINE) ---
+// --- CALENDRIER ---
+function shortSessionName(name) {
+    if (!name) return "";
+    return name.replace(/^[^\w]*[\s:]/, "").trim().slice(0, 12) || name.slice(0, 12);
+}
+
 function renderCalendar(sessions) {
     const calendarContainer = document.getElementById('calendar-strip');
     calendarContainer.innerHTML = "";
@@ -109,8 +159,10 @@ function renderCalendar(sessions) {
         });
 
         const hasSession = sessionIndex !== -1;
-        const sId = hasSession ? (sessions[sessionIndex].id || `session_${sessionIndex}`) : null;
+        const session = hasSession ? sessions[sessionIndex] : null;
+        const sId = hasSession ? (session.id || `session_${sessionIndex}`) : null;
         const completed = hasSession && isSessionCompleted(sId, dateString);
+        const sessionShortName = hasSession ? shortSessionName(session.name) : "";
 
         const dayEl = document.createElement('div');
         let classes = "calendar-day";
@@ -118,7 +170,7 @@ function renderCalendar(sessions) {
         if (completed) classes += " is-completed";
         dayEl.className = classes;
         dayEl.setAttribute('role', 'button');
-        dayEl.setAttribute('aria-label', hasSession ? `Séance du ${dayNameFR} ${dateNum}` : `Repos le ${dayNameFR} ${dateNum}`);
+        dayEl.setAttribute('aria-label', hasSession ? `Séance du ${dayNameFR} ${dateNum} : ${sessionShortName || session.name}` : `Repos le ${dayNameFR} ${dateNum}`);
         dayEl.dataset.sessionIndex = hasSession ? String(sessionIndex) : '';
         dayEl.dataset.dateString = dateString;
         dayEl.dataset.dayName = dayNameFR + " " + dateNum;
@@ -127,6 +179,7 @@ function renderCalendar(sessions) {
         dayEl.innerHTML = `
             <span class="day-name">${dayNameFR.substring(0, 3).toUpperCase()}</span>
             <span class="day-date">${dateNum}</span>
+            ${sessionShortName ? `<span class="day-session-name" title="${(session && session.name) || ''}">${sessionShortName}</span>` : ""}
         `;
 
         dayEl.addEventListener('click', () => {
@@ -147,13 +200,14 @@ function showRestDay(dayName) {
     const container = document.getElementById('workout-container');
     container.innerHTML = `
         <div class="rest-day-message">
-            <span class="rest-icon">🧘‍♀️</span>
-            <h2>Repos ce ${dayName}</h2>
-            <p>Profite-en pour récupérer, bien manger et dormir.</p>
-            <p style="font-size:0.9rem; margin-top:20px; color:var(--primary)">Patience, la prochaine séance arrive !</p>
+            <span class="rest-icon" aria-hidden="true">🧘‍♀️</span>
+            <h2>Jour de récup' — ${dayName}</h2>
+            <p class="rest-lead">La récupération fait partie de la progression. Ton corps construit pendant le repos.</p>
+            <p class="rest-tip">Hydrate-toi bien, mange équilibré et dors à ta soif. La prochaine séance t'attend ! 💪</p>
         </div>
     `;
-    document.getElementById('progress-bar').style.width = "0%";
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.width = "0%";
 }
 
 // --- MOTEUR D'AFFICHAGE DE SÉANCE ---
@@ -507,10 +561,76 @@ function closeModal() {
 }
 
 function resetCurrentSession() {
+    if (!confirm("Recommencer cette séance ? Toutes les cases seront décochées.")) return;
     const container = document.getElementById('workout-container');
     if (!container) return;
     container.querySelectorAll('.set-checkbox').forEach(cb => { cb.checked = false; });
-    document.getElementById('progress-bar').style.width = "0%";
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.width = "0%";
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function copyProgramLink() {
+    const url = window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => showToast("Lien copié !")).catch(() => fallbackCopy(url));
+    } else fallbackCopy(url);
+}
+function fallbackCopy(url) {
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+        document.execCommand('copy');
+        showToast("Lien copié !");
+    } catch (_) {
+        showToast("Copie impossible");
+    }
+    document.body.removeChild(ta);
+}
+
+function renderCoachSignature() {
+    const footer = document.getElementById('coach-signature');
+    if (!footer || !COACH_NAME) return;
+    footer.innerHTML = `Programme par ${COACH_NAME}`;
+}
+
+const DARK_STORAGE_KEY = 'coaching_dark_mode';
+function initDarkMode() {
+    const btn = document.getElementById('btn-dark-mode');
+    if (!btn) return;
+    const isDark = localStorage.getItem(DARK_STORAGE_KEY) === '1';
+    if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+    updateDarkModeButton();
+    btn.addEventListener('click', () => {
+        const isDarkNow = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDarkNow ? 'light' : 'dark');
+        localStorage.setItem(DARK_STORAGE_KEY, isDarkNow ? '0' : '1');
+        updateDarkModeButton();
+    });
+}
+function updateDarkModeButton() {
+    const btn = document.getElementById('btn-dark-mode');
+    if (!btn) return;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = isDark ? '☀️' : '🌙';
+    btn.setAttribute('aria-label', isDark ? 'Activer le mode clair' : 'Activer le mode sombre');
+    btn.title = isDark ? 'Mode clair' : 'Mode sombre';
+}
+
+function initCopyLink() {
+    const btn = document.getElementById('btn-copy-link');
+    if (btn) btn.addEventListener('click', copyProgramLink);
 }
 
 // --- DÉLÉGATION D'ÉVÉNEMENTS (remplace les onclick inline) ---
@@ -553,3 +673,11 @@ document.body.addEventListener('input', (e) => {
         if (span) span.textContent = e.target.value;
     }
 });
+
+// Initialisation des boutons (disponibles dès le chargement)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { initDarkMode(); initCopyLink(); });
+} else {
+    initDarkMode();
+    initCopyLink();
+}
