@@ -1,0 +1,197 @@
+{
+  "clientName": "Océane",
+  "programTitle": "Wedding Countdown: Shape & Burn",
+  "weeklyGoal": 3,
+  "sessions": [
+    {
+      "id": "s_1",
+      "date": "Séance 1",
+      "name": "Hypertrophie: Courbes & Galbe",
+      "nutrition_tip": "Consomme des protéines dans les 2h après la séance pour la récupération.",
+      "exercises": [
+        {
+          "type": "section",
+          "title": "Échauffement Spécifique"
+        },
+        {
+          "name": "Rotations Thoraciques + Wall Slides + Glute Bridge",
+          "sets": "2",
+          "reps": "Circuit",
+          "rest": "0s",
+          "rpe_target": "3",
+          "check_technique": false,
+          "note_coach": "Focus ouverture cage thoracique."
+        },
+        {
+          "type": "section",
+          "title": "Corps de Séance"
+        },
+        {
+          "name": "Hip Thrust",
+          "sets": "4",
+          "reps": "10-12",
+          "rest": "90s",
+		  "charge": "20",
+          "rpe_target": "8",
+          "check_technique": true,
+          "note_coach": "Contraction maximale des fessiers en haut. Pousse plutôt avec l'arrière des pieds."
+        },
+        {
+          "name": "Goblet Squat",
+          "sets": "3",
+          "reps": "12-15",
+          "rest": "75s",
+		  "charge": "10",
+          "rpe_target": "7",
+          "check_technique": true,
+          "note_coach": "Dos bien droit. Descend le plus bas possible en gardant les pieds bien à plat."
+        },
+        {
+          "name": "Tirage Vertical Poitrine",
+          "sets": "3",
+          "reps": "12",
+          "rest": "0s",
+          "rpe_target": "7",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": "Sors la poitrine."
+        },
+        {
+          "name": "Élévations Latérales",
+          "sets": "3",
+          "reps": "15-20",
+          "rest": "60s",
+          "rpe_target": "9",
+          "check_technique": false,
+          "superset_type": "end",
+          "note_coach": "Contrôle la descente."
+        },
+        {
+          "name": "Coude-Genoux croisés",
+          "sets": "3",
+          "reps": "30",
+          "rest": "25s",
+          "rpe_target": "N/A",
+          "check_technique": false,
+          "note_coach": "Lombaires plaquées au sol. Jambes qui frolent le sol."
+        }
+      ]
+    },
+    {
+      "id": "s_2",
+      "date": "Séance 2",
+      "name": "Hybride: Posture & Force",
+      
+      "exercises": [
+        {
+          "type": "section",
+          "title": "Corps de Séance"
+        },
+        {
+          "name": "Kettlebel swing",
+          "sets": "4",
+          "reps": "45s",
+          "rest": "45s",
+		  "charge": "12",
+          "rpe_target": "8",
+          "check_technique": true,
+          "note_coach": "Focus chaîne postérieure. Garde le dos bien droit et monte la Kettlebel au moins à hauteur de tes yeux. Contraction des fessiers en fin de mouvement."
+        },
+        {
+          "name": "Fentes Arrière Alternées",
+          "sets": "3",
+          "reps": "20 total",
+          "rest": "0s",
+		  "charge": "10",
+          "rpe_target": "7",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": "Descend bien jusqu'en bas."
+        },
+        {
+          "name": "Développé Incliné Haltères",
+          "sets": "3",
+          "reps": "10-12",
+          "rest": "90s",
+		  "charge": "10 par haltère",
+          "rpe_target": "7",
+          "check_technique": true,
+          "superset_type": "end",
+          "note_coach": "Avant-bras verticaux. Les pieds bien ancrés au sol pour la stabilité."
+        },
+        {
+          "name": "Facepull (Poulie haute)",
+          "sets": "3",
+          "reps": "15",
+          "rest": "60s",
+          "rpe_target": "6",
+          "check_technique": false,
+          "note_coach": "Tire vers les yeux, retiens le retour."
+        },
+        {
+          "name": "Pallof Press",
+          "sets": "3",
+          "reps": "30s/côté",
+          "rest": "45s",
+          "rpe_target": "6",
+          "check_technique": false,
+          "note_coach": "Anti-rotation. Reste statique, les bras bien horizontaux et tendus."
+        }
+      ]
+    },
+    {
+      "id": "s_3",
+      "date": "Séance 3",
+      "name": "Cardio: Metabolic Fat Burner",
+      "nutrition_tip": "N'oublie pas de bien boire, tu peux même utiliser une boisson d'effort où ajouter une pincer de sel à ton eau.",
+      "exercises": [
+        {
+          "type": "section",
+          "title": "Circuit Training (4 Tours)"
+        },
+        {
+          "name": "Thrusters (Haltères légers)",
+          "sets": "4",
+          "reps": "14",
+          "rest": "0s",
+		  "charge": "6",
+          "rpe_target": "8",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": "Explosif. Utilise les jambes."
+        },
+        {
+          "name": "Rowing Bûcheron",
+          "sets": "4",
+          "reps": "14/bras",
+          "rest": "0s",
+		  "charge": "6",
+          "rpe_target": "7",
+          "check_technique": true,
+          "superset_type": "middle",
+          "note_coach": "Dos plat, pas de rotation."
+        },
+        {
+          "name": "Squats sautés",
+          "sets": "4",
+          "reps": "14",
+          "rest": "0s",
+          "rpe_target": "8",
+          "check_technique": true,
+          "superset_type": "middle",
+          "note_coach": "Rythme soutenu. Descend bas sur le squat et "rebondis" bien, comme une grenouille."
+        },
+        {
+          "name": "Mountain Climbers",
+          "sets": "4",
+          "reps": "30 sec",
+          "rest": "90s",
+          "rpe_target": "10",
+          "check_technique": false,
+          "superset_type": "end",
+          "note_coach": "Intensité maximale. Vide le réservoir."
+        }
+      ]
+    }
+  ]
+}
