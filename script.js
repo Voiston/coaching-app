@@ -62,7 +62,7 @@ function isSessionCompleted(sessionId, dateStr) {
 }
 
 // --- CHARGEMENT INITIAL ---
-fetch(`./clients/${clientID.toLowerCase()}.json`)
+fetch(`./clients/${clientID.toLowerCase()}.json?t=${Date.now()}`, { cache: 'no-store' })
     .then(r => r.ok ? r.json() : Promise.reject(new Error(r.status === 404 ? 'notfound' : 'fetch')))
     .then(data => {
         const validation = validateProgram(data);

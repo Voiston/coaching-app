@@ -1,4 +1,5 @@
-const CACHE_NAME = 'coaching-v1';
+// Mettre à jour ce nom à chaque release (ex: v2.5) pour invalider l’ancien cache
+const CACHE_NAME = 'coaching-v2.4';
 const ASSETS = [
   './',
   './index.html',
@@ -22,14 +23,21 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// Réseau d'abord pour l'app (fraîcheur) ; cache pour offline. JSON (clients/) jamais mis en cache.
 self.addEventListener('fetch', (e) => {
-  if (e.request.url.startsWith(self.location.origin) && !e.request.url.includes('clients/')) {
-    e.respondWith(
-      caches.match(e.request).then((r) => r || fetch(e.request).then((res) => {
+  const url = e.request.url;
+  if (!url.startsWith(self.location.origin)) return;
+  if (url.includes('clients/') || url.includes('.json?')) return; // Ne jamais cacher les programmes
+
+  e.respondWith(
+    fetch(e.request)
+      .then((res) => {
         const clone = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
+        if (res.ok && !e.request.url.includes('.json')) {
+          caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
+        }
         return res;
-      }))
-    );
-  }
+      })
+      .catch(() => caches.match(e.request))
+  );
 });
