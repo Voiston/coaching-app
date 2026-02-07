@@ -224,6 +224,32 @@
     line-height: 1.5;
     margin: 0;
 }
+.btn-recovery-video {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(183, 110, 121, 0.3);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+.btn-recovery-video:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(183, 110, 121, 0.4);
+}
+.btn-recovery-video:focus-visible {
+    outline: none;
+    box-shadow: 0 6px 20px rgba(183, 110, 121, 0.3), var(--focus-ring);
+}
 @keyframes float {
     0% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
@@ -763,8 +789,45 @@ main {
 .detail-label { display: block; font-size: 0.6rem; color: #AAA; text-transform: uppercase; }
 .detail-value { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
 
-.timer-btn { grid-column: span 3; background: #333; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; gap: 10px; margin-top:5px; }
+.timer-btn { grid-column: span 3; background: #333; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top:5px; position: relative; }
 .timer-btn.active { background: var(--primary); }
+.timer-close {
+    display: none;
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    font-size: 1.2rem;
+    line-height: 1;
+    color: rgba(255,255,255,0.9);
+    background: rgba(0,0,0,0.2);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.timer-close:hover { background: rgba(0,0,0,0.35); }
+.timer-btn.timer-floating {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    z-index: 150;
+    padding: 12px 40px 12px 20px;
+    border-radius: 50px;
+    box-shadow: 0 8px 24px rgba(183, 110, 121, 0.4);
+    min-width: 160px;
+}
+.timer-btn.timer-floating .timer-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+}
 
 /* --- CHECKBOXES SÉRIES (Design SVG) --- */
 .sets-container {
@@ -933,6 +996,38 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     color: var(--primary);
 }
 
+/* --- CARTE NUTRITION POST-WORKOUT --- */
+.nutrition-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    text-align: left;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.1);
+}
+.nutrition-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+.nutrition-card p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #2e7d32;
+    line-height: 1.5;
+    font-weight: 500;
+}
+[data-theme="dark"] .nutrition-card {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.4);
+}
+[data-theme="dark"] .nutrition-card p {
+    color: #81c784;
+}
+
 /* --- STYLES DU BILAN DE FIN --- */
 .feedback-container {
     text-align: left;
@@ -1053,7 +1148,7 @@ button:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--prim
     body { background: #fff; padding: 0; }
     #progress-container, #offline-banner, .whatsapp-sticky, .btn-copy-link, .btn-dark-mode, .btn-focus-mode, .btn-settings,
     .reset-session-wrap, .reset-session-btn, .btn-progression-toggle, .progression-panel, .btn-print-session,
-    .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti { display: none !important; }
+    .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video { display: none !important; }
     .calendar-wrap.collapsed { max-height: none; opacity: 1; pointer-events: auto; }
     .header-top { margin-bottom: 8px; }
     .calendar-container { flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; overflow: visible; mask: none; -webkit-mask: none; }

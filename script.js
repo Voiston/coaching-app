@@ -1,7 +1,8 @@
 // --- CONFIGURATION ---
-const COACH_PHONE_NUMBER = "33600000000"; // TON NUMÉRO
+const COACH_PHONE_NUMBER = "33662110786"; // TON NUMÉRO
 const COACH_NAME = "David";
-const APP_VERSION = "2.2";
+const DEFAULT_RECOVERY_VIDEO_URL = "https://www.youtube.com/watch?v=4BOTvaRaDjI"; // Stretching générique 10min
+const APP_VERSION = "2.4";
 const PAST_DAYS = 3;
 const DAYS_AHEAD = 21;
 
@@ -294,6 +295,9 @@ function renderCalendar(sessions) {
 function showRestDay(dayName) {
     const resetWrap = document.getElementById('reset-session-wrap');
     if (resetWrap) resetWrap.innerHTML = "";
+    const recoveryUrl = (globalData && globalData.recovery_url && String(globalData.recovery_url).trim())
+        ? globalData.recovery_url
+        : DEFAULT_RECOVERY_VIDEO_URL;
     const container = document.getElementById('workout-container');
     container.innerHTML = `
         <div class="rest-day-message">
@@ -301,6 +305,7 @@ function showRestDay(dayName) {
             <h2>Jour de récup' — ${dayName}</h2>
             <p class="rest-lead">La récupération fait partie de la progression. Ton corps construit pendant le repos.</p>
             <p class="rest-tip">Hydrate-toi bien, mange équilibré et dors à ta soif. La prochaine séance t'attend ! 💪</p>
+            <button type="button" class="btn-recovery-video" data-recovery-url="${recoveryUrl.replace(/"/g, '&quot;')}" aria-label="Lancer la routine Récupération (10 minutes)">🧘‍♀️ Lancer ma routine Récupération (10min)</button>
         </div>
     `;
     const bar = document.getElementById('progress-bar');
@@ -447,6 +452,7 @@ function createExerciseCard(exo, index, sessionId) {
                     ${tempoHtml}
                     <button type="button" class="timer-btn" data-rest="${restSec}" aria-label="Lancer le chronomètre de repos de ${exo.rest}">
                         <span class="timer-icon">⏱️</span><span class="timer-text">Lancer le repos</span>
+                        <span class="timer-close" aria-label="Arrêter le chronomètre">×</span>
                     </button>
                 </div>
                 ${checkboxesHtml}
@@ -509,6 +515,7 @@ function updateProgress(shouldOpenModal = false) {
         const overlay = document.getElementById('completion-overlay');
         overlay.classList.add('active');
         overlay.setAttribute('aria-hidden', 'false');
+        injectNutritionCard();
         const whatsappBtn = document.querySelector('.whatsapp-sticky button');
         if (whatsappBtn) document.getElementById('modal-btn-container').appendChild(whatsappBtn);
         if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
@@ -583,6 +590,7 @@ function startTimer(btn, seconds) {
     if (btn.classList.contains('active')) return;
     let timeLeft = seconds;
     btn.classList.add('active');
+    btn.classList.add('timer-floating');
     const timerText = btn.querySelector('.timer-text');
     timerText.textContent = `Repos : ${timeLeft}s`;
     const interval = setInterval(() => {
@@ -591,11 +599,24 @@ function startTimer(btn, seconds) {
         if (timeLeft <= 0) {
             clearInterval(interval);
             btn.classList.remove('active');
+            btn.classList.remove('timer-floating');
+            btn.dataset.timerInterval = '';
             timerText.textContent = "Terminé !";
             playBeep();
             if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
         }
     }, 1000);
+    btn.dataset.timerInterval = interval;
+}
+
+function stopTimer(btn) {
+    const intervalId = btn.dataset.timerInterval;
+    if (intervalId) clearInterval(parseInt(intervalId, 10));
+    btn.dataset.timerInterval = '';
+    btn.classList.remove('active');
+    btn.classList.remove('timer-floating');
+    const timerText = btn.querySelector('.timer-text');
+    if (timerText) timerText.textContent = "Lancer le repos";
 }
 
 function sendToWhatsapp() {
@@ -686,6 +707,21 @@ function handleModalEscape(e) {
     if (e.key === 'Escape') {
         closeModal();
         document.removeEventListener('keydown', handleModalEscape);
+    }
+}
+
+function injectNutritionCard() {
+    const slot = document.getElementById('nutrition-card-slot');
+    if (!slot) return;
+    slot.innerHTML = "";
+    const session = globalData && globalData.sessions
+        ? globalData.sessions.find(s => (s.id === currentSessionId) || (`session_${globalData.sessions.indexOf(s)}` === currentSessionId))
+        : null;
+    if (session && session.nutrition_tip && String(session.nutrition_tip).trim()) {
+        const card = document.createElement('div');
+        card.className = 'nutrition-card';
+        card.innerHTML = `<span class="nutrition-icon" aria-hidden="true">🥑</span><p>${String(session.nutrition_tip).trim()}</p>`;
+        slot.appendChild(card);
     }
 }
 
@@ -985,6 +1021,12 @@ _checkTechniqueInput.addEventListener('change', function () {
 document.body.addEventListener('click', (e) => {
     if (e.target.closest('.close-modal')) { closeModal(); return; }
     if (e.target.closest('.whatsapp-sticky button')) { sendToWhatsapp(); return; }
+    const recoveryBtn = e.target.closest('.btn-recovery-video');
+    if (recoveryBtn) {
+        const url = recoveryBtn.getAttribute('data-recovery-url') || DEFAULT_RECOVERY_VIDEO_URL;
+        if (url) window.open(url, '_blank');
+        return;
+    }
     if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }
     const checkTechniqueBtn = e.target.closest('.btn-check-technique');
     if (checkTechniqueBtn) {
@@ -994,8 +1036,17 @@ document.body.addEventListener('click', (e) => {
     }
     const header = e.target.closest('.exercise-header');
     if (header) { toggleCard(header); return; }
+    const timerClose = e.target.closest('.timer-close');
+    if (timerClose) {
+        const timerBtn = timerClose.closest('.timer-btn');
+        if (timerBtn && timerBtn.classList.contains('active')) {
+            e.stopPropagation();
+            stopTimer(timerBtn);
+        }
+        return;
+    }
     const timerBtn = e.target.closest('.timer-btn');
-    if (timerBtn && timerBtn.dataset.rest !== undefined) {
+    if (timerBtn && timerBtn.dataset.rest !== undefined && !e.target.closest('.timer-close')) {
         startTimer(timerBtn, parseInt(timerBtn.dataset.rest, 10) || 60);
     }
 });
