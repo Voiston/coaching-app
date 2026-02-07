@@ -407,23 +407,25 @@ function createExerciseCard(exo, index, sessionId) {
     let checkboxesHtml = '<div class="sets-container">';
     const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>`;
 
+    const idCharge = `charge-${sessionId}-${index}`;
+    const safeExoName = (exo.name || '').replace(/"/g, '&quot;');
     for (let i = 1; i <= setsCount; i++) {
         const isWarmup = i <= warmupSets;
         const setClass = isWarmup ? ' set-label-warmup' : ' set-label-work';
         const wrapperClass = isWarmup ? ' set-wrapper-warmup' : ' set-wrapper-work';
-        checkboxesHtml += `<div class="set-wrapper${wrapperClass}">
+        const warmupTriggerHtml = isWarmup ? `<button type="button" class="warmup-trigger-btn" data-charge-id="${idCharge}" data-exo-name="${safeExoName}" title="Voir échauffement" aria-label="Voir échauffement">🔥</button>` : '';
+        checkboxesHtml += `<div class="set-wrapper${wrapperClass}"${isWarmup ? ` data-charge-id="${idCharge}" data-exo-name="${safeExoName}"` : ''}>
             <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="Série ${i} sur ${setsCount}">
             <label for="set-${index}-${i}" class="set-label${setClass}">
                 ${i}
                 ${checkIcon}
             </label>
+            ${warmupTriggerHtml}
         </div>`;
     }
     checkboxesHtml += '</div>';
 
-    // CONSTRUCTION DES IDs UNIQUES
-        const idCharge = `charge-${sessionId}-${index}`;
-        const idRpe = `rpe-${sessionId}-${index}`;
+    const idRpe = `rpe-${sessionId}-${index}`;
         const idCom = `comment-${sessionId}-${index}`;
 
     const repsDisplayInit = (exo.until_failure || exo.failure) ? 'Jusqu\'à échec' : (repsArr && repsArr[0] ? repsArr[0] : (exo.reps || '-'));
@@ -458,8 +460,6 @@ function createExerciseCard(exo, index, sessionId) {
     const altName = altData ? (altData.name || String(exo.alternative)) : '';
     const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${(exo.name || '').replace(/"/g, '&quot;')}" data-alt-name="${altName.replace(/"/g, '&quot;')}" title="Remplacer par : ${altName}" aria-label="Remplacer par ${altName}">🔄</button>` : '';
     const activeTimerHtml = isTimeBased ? `<button type="button" class="active-timer-btn" data-target-seconds="${targetSeconds}" aria-label="Lancer le chrono d'effort"><span class="active-timer-text">▶ Go</span></button>` : '';
-    const warmupBtnHtml = `<button type="button" class="btn-warmup-gen" data-charge-id="${idCharge}" data-exo-name="${(exo.name || '').replace(/"/g, '&quot;')}" title="Générer un échauffement" aria-label="Générer un échauffement">🔥</button>`;
-    const rpeTooltipHtml = `<button type="button" class="btn-rpe-help" title="Échelle RPE" aria-label="Aide échelle RPE">?</button>`;
     return `
     <div class="exercise-card open" id="card-${index}" data-index="${index}"${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
@@ -489,8 +489,8 @@ function createExerciseCard(exo, index, sessionId) {
                 ${exo.note_coach ? `<div class="coach-note">💡 "${exo.note_coach}"</div>` : ''}
                 <div class="client-input-zone">
                     <div class="input-row">
-                        <span class="input-with-btn"><input type="text" id="${idCharge}" placeholder="Charge (kg)" value="${(exo.charge || exo.default_charge || '').toString().replace(/"/g, '&quot;')}" aria-label="Charge en kg">${warmupBtnHtml}</span>
-                        <span class="input-with-btn"><input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti" title="Échelle 1-10 de l'effort ressenti (1=facile, 10=maximum)">${rpeTooltipHtml}</span>
+                        <span class="input-with-btn"><input type="text" id="${idCharge}" placeholder="Charge (kg)" value="${(exo.charge || exo.default_charge || '').toString().replace(/"/g, '&quot;')}" aria-label="Charge en kg"></span>
+                        <span class="input-with-btn"><input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti" title="Échelle 1-10 de l'effort ressenti (1=facile, 10=maximum)"></span>
                     </div>
                     <input type="text" id="${idCom}" placeholder="Note..." aria-label="Note personnelle">
                 </div>
@@ -690,13 +690,13 @@ function startTimer(btn, seconds) {
     const interval = setInterval(() => {
         timeLeft--;
         timerText.textContent = `Repos : ${timeLeft}s`;
+        if (timeLeft > 0 && timeLeft <= 3) playBeep();
         if (timeLeft <= 0) {
             clearInterval(interval);
             btn.classList.remove('active');
             btn.classList.remove('timer-floating');
             btn.dataset.timerInterval = '';
             timerText.textContent = "Terminé !";
-            playBeep();
             if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
         }
     }, 1000);
@@ -722,11 +722,12 @@ function startActiveTimer(btn) {
     const interval = setInterval(() => {
         elapsed++;
         if (textEl) textEl.textContent = `${elapsed}s`;
+        const remaining = targetSec - elapsed;
+        if (remaining > 0 && remaining <= 3) playBeep();
         if (elapsed >= targetSec) {
             clearInterval(interval);
             btn.classList.remove('active');
             if (textEl) textEl.textContent = 'Terminé !';
-            playBeep();
             if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
         }
     }, 1000);
@@ -1225,9 +1226,9 @@ document.body.addEventListener('click', (e) => {
     }
     const altBtn = e.target.closest('.btn-alternative');
     if (altBtn) { e.stopPropagation(); swapExerciseAlternative(altBtn); return; }
-    const warmupBtn = e.target.closest('.btn-warmup-gen');
-    if (warmupBtn) { e.stopPropagation(); showWarmupGenerator(warmupBtn.dataset.chargeId, warmupBtn.dataset.exoName || 'cet exercice'); return; }
-    const rpeBtn = e.target.closest('.btn-rpe-help, .btn-rpe-badge');
+    const warmupTrigger = e.target.closest('.warmup-trigger-btn');
+    if (warmupTrigger) { e.stopPropagation(); showWarmupGenerator(warmupTrigger.dataset.chargeId, warmupTrigger.dataset.exoName || 'cet exercice'); return; }
+    const rpeBtn = e.target.closest('.btn-rpe-badge');
     if (rpeBtn) { e.stopPropagation(); showRpeTooltip(rpeBtn); return; }
     const activeTimerBtn = e.target.closest('.active-timer-btn');
     if (activeTimerBtn) { e.stopPropagation(); startActiveTimer(activeTimerBtn); return; }

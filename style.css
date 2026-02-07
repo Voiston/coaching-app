@@ -40,7 +40,8 @@
 [data-theme="dark"] .exercise-content { background: var(--card-bg); }
 [data-theme="dark"] .completion-modal { background: var(--card-bg); }
 [data-theme="dark"] .feedback-container { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.08); }
-[data-theme="dark"] .detail-box { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.06); }
+[data-theme="dark"] .detail-box { background: rgba(212, 137, 148, 0.15); border-color: rgba(212, 137, 148, 0.3); }
+[data-theme="dark"] .detail-label { color: var(--primary); }
 [data-theme="dark"] .coach-note { background: var(--primary-soft); border-left-color: var(--primary); }
 [data-theme="dark"] #progress-container { background: #251e20; }
 [data-theme="dark"] .btn-copy-link,
@@ -733,7 +734,7 @@ main {
     background: linear-gradient(135deg, rgba(183, 110, 121, 0.08) 0%, rgba(183, 110, 121, 0.03) 100%);
 }
 .superset-row .exercise-card:not(.superset-current) {
-    opacity: 0.85;
+    opacity: 0.45;
 }
 
 /* --- CARTE EXERCICE (ACCORDÉON) --- */
@@ -759,6 +760,8 @@ main {
     background: var(--card-bg);
     transition: background 0.2s;
 }
+.exercise-header > div { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.exercise-header .toggle-icon { flex-shrink: 0; margin-left: 8px; }
 .exercise-header:hover { background: rgba(183, 110, 121, 0.04); }
 .exercise-header:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
 
@@ -798,9 +801,9 @@ main {
 .exercise-img.show { display: block; }
 
 .details-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-.detail-box { text-align: center; background: #FAFAFA; padding: 10px 5px; border-radius: 12px; border: 1px solid #F0F0F0; }
-.detail-label { display: block; font-size: 0.6rem; color: #AAA; text-transform: uppercase; }
-.detail-value { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+.detail-box { text-align: center; background: rgba(183, 110, 121, 0.12); padding: 12px 8px; border-radius: 12px; border: 1px solid rgba(183, 110, 121, 0.25); }
+.detail-label { display: block; font-size: 0.6rem; color: var(--primary-dark); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.detail-value { font-size: 1rem; font-weight: 700; color: var(--text-main); }
 
 .timer-btn { grid-column: span 3; background: #333; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top:5px; position: relative; }
 .timer-btn.active { background: var(--primary); }
@@ -865,14 +868,19 @@ main {
     color: #CCC;
     font-weight: 600;
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative; /* Pour positionner l'icone */
+    position: relative;
 }
 
-/* L'icône SVG (Cachée par défaut) */
+/* L'icône SVG (Cachée par défaut), centrée */
 .set-label svg {
     display: none;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
 }
 
 /* Quand c'est coché */
@@ -908,6 +916,32 @@ main {
     background: var(--primary) !important;
     border-color: var(--primary) !important;
 }
+.set-wrapper-warmup {
+    position: relative;
+}
+.warmup-trigger-btn {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    transition: var(--transition);
+}
+.warmup-trigger-btn:hover {
+    background: #f59e0b;
+    color: white;
+}
 
 /* --- CHRONO EFFORT (Active Timer) --- */
 .active-timer-btn {
@@ -927,41 +961,31 @@ main {
     background: #1e40af;
 }
 
-/* --- BOUTONS INPUT (Warm-up, RPE) --- */
+/* --- BOUTONS INPUT --- */
 .input-with-btn { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
 .input-with-btn input { flex: 1; min-width: 0; }
-.btn-warmup-gen, .btn-rpe-help {
-    flex-shrink: 0;
-    min-width: 44px;
-    min-height: 44px;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: 1px solid rgba(183, 110, 121, 0.3);
-    border-radius: 50%;
-    background: var(--card-bg);
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: var(--transition);
-    -webkit-tap-highlight-color: transparent;
-}
-.btn-warmup-gen:hover, .btn-rpe-help:hover {
-    background: var(--primary-soft);
-    border-color: var(--primary);
-}
 
 /* --- ALTERNATIVE (Joker) --- */
 .exercise-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .btn-alternative {
     flex-shrink: 0;
-    padding: 4px 8px;
-    border: 1px solid rgba(183, 110, 121, 0.3);
-    border-radius: 8px;
-    background: var(--card-bg);
+    min-width: 32px;
+    min-height: 32px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid rgba(183, 110, 121, 0.25);
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary-dark);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
 }
-.btn-alternative:hover { background: var(--primary-soft); border-color: var(--primary); }
+.btn-alternative:hover { background: rgba(183, 110, 121, 0.2); border-color: var(--primary); }
 
 /* --- MODALE ÉCHAUFFEMENT --- */
 .warmup-overlay {
@@ -1321,7 +1345,8 @@ button:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--prim
     body { background: #fff; padding: 0; }
     #progress-container, #offline-banner, .whatsapp-bottom, .btn-copy-link, .btn-dark-mode, .btn-focus-mode, .btn-settings,
     .reset-session-wrap, .reset-session-btn, .btn-progression-toggle, .progression-panel, .btn-print-session,
-    .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video { display: none !important; }
+    .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video,
+    .warmup-trigger-btn { display: none !important; }
     .calendar-wrap.collapsed { max-height: none; opacity: 1; pointer-events: auto; }
     .header-top { margin-bottom: 8px; }
     .calendar-container { flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; overflow: visible; mask: none; -webkit-mask: none; }
