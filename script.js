@@ -21,6 +21,9 @@ const KEY_THEME = 'fitapp_theme_' + clientID;
 const KEY_COACH_NOTE = 'fitapp_coach_note_' + clientID;
 const KEY_NOTIF_DAY = 'fitapp_notif_day_' + clientID;
 const KEY_NOTIF_ENABLED = 'fitapp_notif_enabled_' + clientID;
+const KEY_INSTALL_DISMISSED = 'fitapp_install_dismissed_' + clientID;
+const KEY_GUIDED_MODE = 'fitapp_guided_' + clientID;
+const KEY_CHARGE_HISTORY = 'fitapp_charge_history_' + clientID;
 
 function getSettingSound() { return localStorage.getItem(KEY_SOUND) !== '0'; }
 function setSettingSound(on) { localStorage.setItem(KEY_SOUND, on ? '1' : '0'); }
@@ -30,6 +33,10 @@ function getCoachNote() { return localStorage.getItem(KEY_COACH_NOTE) || ''; }
 function setCoachNote(t) { localStorage.setItem(KEY_COACH_NOTE, (t || '').trim()); }
 function isNotificationEnabled() { return localStorage.getItem(KEY_NOTIF_ENABLED) === '1'; }
 function setNotificationEnabled(on) { localStorage.setItem(KEY_NOTIF_ENABLED, on ? '1' : '0'); }
+function isInstallDismissed() { return localStorage.getItem(KEY_INSTALL_DISMISSED) === '1'; }
+function setInstallDismissed() { localStorage.setItem(KEY_INSTALL_DISMISSED, '1'); }
+function isGuidedMode() { return localStorage.getItem(KEY_GUIDED_MODE) === '1'; }
+function setGuidedMode(on) { localStorage.setItem(KEY_GUIDED_MODE, on ? '1' : '0'); }
 function getLastNotifDate() { return localStorage.getItem(KEY_NOTIF_DAY) || ''; }
 function setLastNotifDate(d) { localStorage.setItem(KEY_NOTIF_DAY, d); }
 
@@ -127,6 +134,8 @@ function initApp(data) {
     initPrintButton();
     initProgressionToggle();
     initOfflineBanner();
+    initInstallPrompt();
+    initGuidedMode();
     maybeShowNotification(globalData && globalData.sessions ? globalData.sessions : []);
 }
 
@@ -388,6 +397,10 @@ function renderSession(sessionIndex, dateStr) {
     renderProgressionPanel();
     updateSupersetHighlight();
     updateAllExerciseDetails();
+    if (document.body.classList.contains('guided-mode')) {
+        guidedViewIndex = 0;
+        setTimeout(() => { guidedViewIndex = getFirstIncompleteIndex(); updateGuidedMode(); }, 150);
+    }
 }
 
 function createExerciseCard(exo, index, sessionId) {
@@ -413,14 +426,12 @@ function createExerciseCard(exo, index, sessionId) {
         const isWarmup = i <= warmupSets;
         const setClass = isWarmup ? ' set-label-warmup' : ' set-label-work';
         const wrapperClass = isWarmup ? ' set-wrapper-warmup' : ' set-wrapper-work';
-        const warmupTriggerHtml = isWarmup ? `<button type="button" class="warmup-trigger-btn" data-charge-id="${idCharge}" data-exo-name="${safeExoName}" title="Voir échauffement" aria-label="Voir échauffement">🔥</button>` : '';
         checkboxesHtml += `<div class="set-wrapper${wrapperClass}"${isWarmup ? ` data-charge-id="${idCharge}" data-exo-name="${safeExoName}"` : ''}>
             <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="Série ${i} sur ${setsCount}">
             <label for="set-${index}-${i}" class="set-label${setClass}">
                 ${i}
                 ${checkIcon}
             </label>
-            ${warmupTriggerHtml}
         </div>`;
     }
     checkboxesHtml += '</div>';
@@ -458,7 +469,8 @@ function createExerciseCard(exo, index, sessionId) {
     const supersetRole = exo.superset_type === 'start' ? '1' : exo.superset_type === 'end' ? '2' : '';
     const altData = exo.alternative ? (typeof exo.alternative === 'string' ? { name: exo.alternative } : exo.alternative) : null;
     const altName = altData ? (altData.name || String(exo.alternative)) : '';
-    const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${(exo.name || '').replace(/"/g, '&quot;')}" data-alt-name="${altName.replace(/"/g, '&quot;')}" title="Remplacer par : ${altName}" aria-label="Remplacer par ${altName}">🔄</button>` : '';
+    const altIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>`;
+    const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${(exo.name || '').replace(/"/g, '&quot;')}" data-alt-name="${altName.replace(/"/g, '&quot;')}" title="Remplacer par : ${altName}" aria-label="Remplacer par ${altName}">${altIconSvg}</button>` : '';
     const activeTimerHtml = isTimeBased ? `<button type="button" class="active-timer-btn" data-target-seconds="${targetSeconds}" aria-label="Lancer le chrono d'effort"><span class="active-timer-text">▶ Go</span></button>` : '';
     return `
     <div class="exercise-card open" id="card-${index}" data-index="${index}"${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
@@ -543,18 +555,25 @@ function updateAllExerciseDetails() {
 }
 
 function updateSupersetHighlight() {
+    document.querySelectorAll('.set-wrapper').forEach(w => w.classList.remove('superset-next-set'));
     document.querySelectorAll('.superset-block').forEach((block) => {
         const cards = block.querySelectorAll('.exercise-card[data-superset-role]');
         if (cards.length !== 2) return;
         const [card1, card2] = Array.from(cards);
+        const checkboxes = block.querySelectorAll('.set-checkbox');
         const totalChecked = block.querySelectorAll('.set-checkbox:checked').length;
-        const totalSets = block.querySelectorAll('.set-checkbox').length;
+        const totalSets = checkboxes.length;
         if (totalChecked >= totalSets) {
             card1.classList.remove('superset-current');
             card2.classList.remove('superset-current');
         } else {
             card1.classList.toggle('superset-current', totalChecked % 2 === 0);
             card2.classList.toggle('superset-current', totalChecked % 2 === 1);
+            const nextCb = Array.from(checkboxes).find(cb => !cb.checked);
+            if (nextCb) {
+                const wrapper = nextCb.closest('.set-wrapper');
+                if (wrapper) wrapper.classList.add('superset-next-set');
+            }
         }
     });
 }
@@ -564,6 +583,10 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
     updateProgress(true); 
     saveData(); 
     updateSupersetHighlight();
+    if (document.body.classList.contains('guided-mode')) {
+        guidedViewIndex = getFirstIncompleteIndex();
+        updateGuidedMode();
+    }
     const card = document.getElementById(`card-${cardIndex}`);
     if (card) updateExerciseDetails(card);
 
@@ -604,6 +627,7 @@ function updateProgress(shouldOpenModal = false) {
     if (percent === 100 && shouldOpenModal) {
         sessionEndTime = Date.now();
         if (currentSessionDate) markSessionCompleted(currentSessionId, currentSessionDate);
+        saveChargeHistory();
         fireConfetti();
         document.body.classList.add('modal-open');
         const overlay = document.getElementById('completion-overlay');
@@ -631,6 +655,31 @@ function saveData() {
     const newData = { ...existingData, ...dataToSave };
 
     localStorage.setItem('fitapp_' + clientID, JSON.stringify(newData));
+}
+
+function getChargeHistory() {
+    try {
+        return JSON.parse(localStorage.getItem(KEY_CHARGE_HISTORY) || '[]');
+    } catch { return []; }
+}
+
+function saveChargeHistory() {
+    const history = getChargeHistory();
+    const session = globalData && globalData.sessions ? globalData.sessions.find(s => (s.id === currentSessionId) || (`session_${globalData.sessions.indexOf(s)}` === currentSessionId)) : null;
+    if (!session || !session.exercises) return;
+    const dateStr = currentSessionDate || new Date().toISOString().slice(0, 10);
+    session.exercises.forEach((exo, idx) => {
+        if (exo.type === 'section') return;
+        const idCharge = `charge-${currentSessionId}-${idx}`;
+        const chargeEl = document.getElementById(idCharge);
+        const val = chargeEl ? String(chargeEl.value || '').trim() : '';
+        const numVal = parseFloat(val.replace(/[^\d.,]/g, '').replace(',', '.'));
+        if (val && !isNaN(numVal)) {
+            history.push({ sessionId: currentSessionId, exoIdx: idx, exoName: exo.name, charge: numVal, date: dateStr });
+        }
+    });
+    while (history.length > 100) history.shift();
+    localStorage.setItem(KEY_CHARGE_HISTORY, JSON.stringify(history));
 }
 
 function loadProgress() {
@@ -1033,17 +1082,32 @@ function renderProgressionPanel() {
     const panel = document.getElementById('progression-panel');
     if (!panel || !globalData || !globalData.sessions) return;
     const saved = JSON.parse(localStorage.getItem('fitapp_' + clientID) || '{}');
+    const history = getChargeHistory();
     const session = globalData.sessions.find(s => (s.id === currentSessionId) || s.id === currentSessionId);
     if (!session || !session.exercises) { panel.innerHTML = ''; return; }
-    let html = '<p class="progression-intro">Dernières charges enregistrées pour cette séance :</p><ul class="progression-list">';
+    let html = '<p class="progression-intro">Charges enregistrées pour cette séance :</p><ul class="progression-list">';
+    let hasAny = false;
     session.exercises.forEach((exo, idx) => {
         if (exo.type === 'section') return;
         const idCharge = `charge-${currentSessionId}-${idx}`;
         const val = saved[idCharge];
-        if (val) html += `<li><strong>${exo.name}</strong> : ${val} kg</li>`;
+        const exoHistory = history.filter(h => h.sessionId === currentSessionId && h.exoIdx === idx).slice(-10);
+        const hasHistory = exoHistory.length > 0;
+        if (val || hasHistory) hasAny = true;
+        if (!val && !hasHistory) return;
+        const displayVal = val || (hasHistory ? exoHistory[exoHistory.length - 1].charge : '-');
+        const maxCharge = hasHistory ? Math.max(...exoHistory.map(h => h.charge)) : 1;
+        let sparkHtml = '';
+        if (hasHistory && maxCharge > 0) {
+            sparkHtml = '<div class="progression-sparkline">' + exoHistory.map(h => {
+                const pct = Math.round((h.charge / maxCharge) * 100);
+                return `<span class="progression-sparkline-bar" style="height:${Math.max(8, pct)}%" title="${h.date}: ${h.charge}kg"></span>`;
+            }).join('') + '</div>';
+        }
+        html += `<li class="progression-item"><span class="progression-item-name">${exo.name}</span> : ${displayVal} kg${sparkHtml}</li>`;
     });
     html += '</ul>';
-    if (html === '<p class="progression-intro">Dernières charges enregistrées pour cette séance :</p><ul class="progression-list"></ul>')
+    if (!hasAny)
         html = '<p class="progression-intro">Aucune charge enregistrée pour cette séance.</p>';
     panel.innerHTML = html;
 }
@@ -1119,6 +1183,7 @@ function initSettings() {
         if (!confirm('Effacer toutes les données de ce programme (séances terminées, charges, notes) ? Cette action est irréversible.')) return;
         localStorage.removeItem('fitapp_' + clientID);
         localStorage.removeItem(COMPLETED_KEY);
+        localStorage.removeItem(KEY_CHARGE_HISTORY);
         setCoachNote('');
         showToast('Données effacées.');
         closeSettings();
@@ -1150,6 +1215,102 @@ function initOfflineBanner() {
     update();
     window.addEventListener('online', update);
     window.addEventListener('offline', update);
+}
+
+let deferredInstallPrompt = null;
+function initInstallPrompt() {
+    const banner = document.getElementById('install-banner');
+    const btnInstall = document.getElementById('btn-install-app');
+    const btnDismiss = document.getElementById('btn-dismiss-install');
+    if (!banner || !btnInstall || !btnDismiss) return;
+    if (isInstallDismissed() || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) return;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        if (!isInstallDismissed()) banner.hidden = false;
+    });
+    btnInstall.addEventListener('click', () => {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then((r) => {
+            if (r.outcome === 'accepted') banner.hidden = true;
+            deferredInstallPrompt = null;
+        });
+    });
+    btnDismiss.addEventListener('click', () => {
+        setInstallDismissed();
+        banner.hidden = true;
+    });
+}
+
+let guidedViewIndex = 0;
+function getFirstIncompleteIndex() {
+    const cards = document.querySelectorAll('#workout-container .exercise-card');
+    for (let i = 0; i < cards.length; i++) {
+        const cb = cards[i].querySelector('.set-checkbox:not(:checked)');
+        if (cb) return i;
+    }
+    return Math.max(0, cards.length - 1);
+}
+
+function updateGuidedMode() {
+    const on = document.body.classList.contains('guided-mode');
+    const nav = document.getElementById('guided-nav');
+    const cards = document.querySelectorAll('#workout-container .exercise-card');
+    if (!on || cards.length === 0) {
+        if (nav) nav.hidden = true;
+        cards.forEach(c => c.classList.remove('guided-current'));
+        return;
+    }
+    guidedViewIndex = Math.min(guidedViewIndex, cards.length - 1);
+    cards.forEach((c, i) => c.classList.toggle('guided-current', i === guidedViewIndex));
+    if (nav) {
+        nav.hidden = false;
+        const btnPrev = document.getElementById('btn-guided-prev');
+        const btnNext = document.getElementById('btn-guided-next');
+        if (btnPrev) btnPrev.disabled = guidedViewIndex <= 0;
+        if (btnNext) btnNext.disabled = guidedViewIndex >= cards.length - 1;
+    }
+}
+
+function initGuidedMode() {
+    const btn = document.getElementById('btn-guided-mode');
+    const btnPrev = document.getElementById('btn-guided-prev');
+    const btnNext = document.getElementById('btn-guided-next');
+    if (!btn) return;
+    if (isGuidedMode()) {
+        document.body.classList.add('guided-mode');
+        guidedViewIndex = 0;
+        setTimeout(() => { guidedViewIndex = getFirstIncompleteIndex(); updateGuidedMode(); }, 100);
+    }
+    btn.addEventListener('click', () => {
+        const on = !document.body.classList.contains('guided-mode');
+        document.body.classList.toggle('guided-mode', on);
+        setGuidedMode(on);
+        if (on) updateGuidedMode();
+        else {
+            const nav = document.getElementById('guided-nav');
+            if (nav) nav.hidden = true;
+            document.querySelectorAll('.exercise-card').forEach(c => c.classList.remove('guided-current'));
+        }
+        btn.textContent = on ? '◎ Vue complète' : '◎ Guidé';
+        btn.setAttribute('title', on ? 'Revenir à la vue complète' : 'Mode séance guidée');
+    });
+    if (btnPrev) btnPrev.addEventListener('click', () => {
+        if (guidedViewIndex > 0) {
+            guidedViewIndex--;
+            updateGuidedMode();
+            document.querySelector('.exercise-card.guided-current')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+    if (btnNext) btnNext.addEventListener('click', () => {
+        const cards = document.querySelectorAll('#workout-container .exercise-card');
+        if (guidedViewIndex < cards.length - 1) {
+            guidedViewIndex++;
+            updateGuidedMode();
+            document.querySelector('.exercise-card.guided-current')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
 }
 
 function maybeShowNotification(sessions) {
@@ -1226,8 +1387,12 @@ document.body.addEventListener('click', (e) => {
     }
     const altBtn = e.target.closest('.btn-alternative');
     if (altBtn) { e.stopPropagation(); swapExerciseAlternative(altBtn); return; }
-    const warmupTrigger = e.target.closest('.warmup-trigger-btn');
-    if (warmupTrigger) { e.stopPropagation(); showWarmupGenerator(warmupTrigger.dataset.chargeId, warmupTrigger.dataset.exoName || 'cet exercice'); return; }
+    const warmupLabel = e.target.closest('.set-label-warmup');
+    if (warmupLabel) {
+        const wrapper = warmupLabel.closest('.set-wrapper-warmup');
+        if (wrapper) { showWarmupGenerator(wrapper.dataset.chargeId, wrapper.dataset.exoName || 'cet exercice'); }
+        return;
+    }
     const rpeBtn = e.target.closest('.btn-rpe-badge');
     if (rpeBtn) { e.stopPropagation(); showRpeTooltip(rpeBtn); return; }
     const activeTimerBtn = e.target.closest('.active-timer-btn');

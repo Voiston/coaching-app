@@ -381,6 +381,7 @@ body {
         transform: translateY(0);
     }
     .header-actions .btn-copy-link,
+    .header-actions .btn-guided-mode,
     .header-actions .btn-dark-mode,
     .header-actions .btn-focus-mode,
     .header-actions .btn-settings {
@@ -391,6 +392,7 @@ body {
 }
 .logo-area { font-size: 0.7rem; letter-spacing: 3px; color: var(--primary); font-weight: 600; text-transform: uppercase; }
 .btn-copy-link,
+.btn-guided-mode,
 .btn-dark-mode,
 .btn-focus-mode,
 .btn-settings {
@@ -406,6 +408,7 @@ body {
     transition: var(--transition);
 }
 .btn-copy-link:hover,
+.btn-guided-mode:hover,
 .btn-dark-mode:hover,
 .btn-focus-mode:hover,
 .btn-settings:hover {
@@ -415,6 +418,7 @@ body {
     transform: translateY(-1px);
 }
 .btn-copy-link:focus-visible,
+.btn-guided-mode:focus-visible,
 .btn-dark-mode:focus-visible,
 .btn-focus-mode:focus-visible,
 .btn-settings:focus-visible {
@@ -526,6 +530,57 @@ body {
 .progression-intro { font-size: 0.9rem; color: var(--text-light); margin: 0 0 10px 0; }
 .progression-list { margin: 0; padding-left: 20px; }
 .progression-list li { margin-bottom: 6px; color: var(--text-main); }
+.progression-item { margin-bottom: 14px; }
+.progression-item-name { font-weight: 600; margin-bottom: 4px; }
+.progression-sparkline {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 32px;
+    margin-top: 6px;
+}
+.progression-sparkline-bar {
+    flex: 1;
+    min-width: 4px;
+    background: var(--primary);
+    border-radius: 2px 2px 0 0;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+}
+.progression-sparkline-bar:last-child { opacity: 1; }
+
+/* --- MODE SÉANCE GUIDÉE --- */
+body.guided-mode .calendar-wrap,
+body.guided-mode .stats-bar,
+body.guided-mode .btn-print-session,
+body.guided-mode .btn-progression-toggle,
+body.guided-mode .progression-panel,
+body.guided-mode .reset-session-wrap,
+body.guided-mode .whatsapp-bottom,
+body.guided-mode .coach-signature { display: none !important; }
+body.guided-mode .exercise-card { display: none !important; }
+body.guided-mode .exercise-card.guided-current { display: block !important; }
+body.guided-mode .guided-nav { display: flex !important; }
+.guided-nav {
+    display: none;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px 20px;
+}
+.guided-nav-btn {
+    padding: 10px 24px;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary);
+    border-radius: 50px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.guided-nav-btn:hover { background: rgba(183, 110, 121, 0.2); transform: translateY(-1px); }
+.guided-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 /* --- IMPRIMER SÉANCE --- */
 .btn-print-session {
@@ -561,13 +616,57 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    padding: 10px 20px;
-    background: #ff9800;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #e65100 0%, #ff9800 100%);
     color: #fff;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 500;
     text-align: center;
     z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
 }
+.offline-icon { font-size: 1.2rem; }
+
+/* --- INSTALL BANNER --- */
+.install-banner {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 360px;
+    width: calc(100% - 32px);
+    padding: 16px 20px;
+    background: var(--card-bg);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(183, 110, 121, 0.25);
+    z-index: 1500;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.install-banner[hidden] { display: none !important; }
+.install-icon { font-size: 1.5rem; }
+.install-banner span:first-of-type { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-main); }
+.install-banner-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.install-banner-btn {
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: var(--transition);
+}
+.install-banner-install { background: var(--primary); color: white; border-color: var(--primary); }
+.install-banner-install:hover { background: var(--primary-dark); transform: translateY(-1px); }
+.install-banner-dismiss { background: transparent; color: var(--text-light); border-color: rgba(0,0,0,0.1); }
+.install-banner-dismiss:hover { background: var(--primary-soft); color: var(--primary-dark); }
 
 /* --- CONFETTI --- */
 .confetti {
@@ -736,6 +835,15 @@ main {
 .superset-row .exercise-card:not(.superset-current) {
     opacity: 0.45;
 }
+/* Prochaine série à faire dans superset */
+.set-wrapper.superset-next-set .set-label {
+    box-shadow: 0 0 0 3px var(--primary);
+    animation: superset-pulse 2s ease-in-out infinite;
+}
+@keyframes superset-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px var(--primary); }
+    50% { box-shadow: 0 0 0 6px var(--primary-soft), 0 0 12px var(--primary-soft); }
+}
 
 /* --- CARTE EXERCICE (ACCORDÉON) --- */
 .exercise-card {
@@ -752,16 +860,21 @@ main {
 
 /* En-tête de la carte (Toujours visible) */
 .exercise-header {
-    padding: 20px;
+    padding: 20px 48px 20px 20px;
     cursor: pointer;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     background: var(--card-bg);
     transition: background 0.2s;
+    position: relative;
 }
-.exercise-header > div { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
-.exercise-header .toggle-icon { flex-shrink: 0; margin-left: 8px; }
+.exercise-header > div { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+.exercise-header .toggle-icon {
+    position: absolute;
+    right: 16px;
+    flex-shrink: 0;
+}
 .exercise-header:hover { background: rgba(183, 110, 121, 0.04); }
 .exercise-header:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
 
@@ -883,12 +996,18 @@ main {
     transform: translate(-50%, -50%);
 }
 
-/* Quand c'est coché */
+/* Quand c'est coché — micro-animation */
 .set-checkbox:checked + .set-label {
     background: var(--primary);
     border-color: var(--primary);
-    color: transparent; /* On cache le chiffre */
+    color: transparent;
     transform: scale(1.1);
+    animation: set-check-pop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.4);
+}
+@keyframes set-check-pop {
+    0% { transform: scale(1.2); }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1.1); }
 }
 
 /* On affiche l'icône quand c'est coché */
@@ -919,28 +1038,8 @@ main {
 .set-wrapper-warmup {
     position: relative;
 }
-.warmup-trigger-btn {
-    position: absolute;
-    bottom: -4px;
-    right: -4px;
-    width: 22px;
-    height: 22px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: rgba(245, 158, 11, 0.2);
-    color: #f59e0b;
-    font-size: 0.7rem;
+.set-label-warmup {
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1;
-    transition: var(--transition);
-}
-.warmup-trigger-btn:hover {
-    background: #f59e0b;
-    color: white;
 }
 
 /* --- CHRONO EFFORT (Active Timer) --- */
@@ -986,6 +1085,7 @@ main {
     transition: var(--transition);
 }
 .btn-alternative:hover { background: rgba(183, 110, 121, 0.2); border-color: var(--primary); }
+.btn-alternative svg { flex-shrink: 0; }
 
 /* --- MODALE ÉCHAUFFEMENT --- */
 .warmup-overlay {
@@ -1343,10 +1443,9 @@ button:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--prim
 /* --- IMPRESSION --- */
 @media print {
     body { background: #fff; padding: 0; }
-    #progress-container, #offline-banner, .whatsapp-bottom, .btn-copy-link, .btn-dark-mode, .btn-focus-mode, .btn-settings,
+    #progress-container, #offline-banner, #install-banner, .whatsapp-bottom, .btn-copy-link, .btn-guided-mode, .btn-dark-mode, .btn-focus-mode, .btn-settings,
     .reset-session-wrap, .reset-session-btn, .btn-progression-toggle, .progression-panel, .btn-print-session,
-    .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video,
-    .warmup-trigger-btn { display: none !important; }
+    .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video, .guided-nav { display: none !important; }
     .calendar-wrap.collapsed { max-height: none; opacity: 1; pointer-events: auto; }
     .header-top { margin-bottom: 8px; }
     .calendar-container { flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; overflow: visible; mask: none; -webkit-mask: none; }

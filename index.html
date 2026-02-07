@@ -15,7 +15,18 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>Tu es hors ligne — tes données sont enregistrées localement.</div>
+    <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>
+        <span class="offline-icon">📡</span>
+        <span>Tu es hors ligne — tes données sont enregistrées localement. Pense à installer l'app pour un accès hors ligne optimal.</span>
+    </div>
+    <div id="install-banner" class="install-banner" role="status" aria-live="polite" hidden>
+        <span class="install-icon">📲</span>
+        <span>Installe l'app sur ton téléphone pour un accès rapide et hors ligne.</span>
+        <div class="install-banner-actions">
+            <button type="button" class="install-banner-btn install-banner-install" id="btn-install-app">Installer</button>
+            <button type="button" class="install-banner-btn install-banner-dismiss" id="btn-dismiss-install">Plus tard</button>
+        </div>
+    </div>
     <div id="progress-container"><div id="progress-bar"></div></div>
 
     <header class="header-main">
@@ -31,6 +42,7 @@
                 <button type="button" class="header-menu-btn" id="header-menu-btn" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="header-actions">⋯</button>
                 <div class="header-actions" id="header-actions" role="menu">
                     <button type="button" class="btn-copy-link" id="btn-copy-link" aria-label="Copier le lien" title="Copier le lien">📋 Copier le lien</button>
+                    <button type="button" class="btn-guided-mode" id="btn-guided-mode" aria-label="Mode séance guidée" title="Mode guidé">◎ Guidé</button>
                     <button type="button" class="btn-focus-mode" id="btn-focus-mode" aria-label="Réduire le calendrier" title="Mode focus">◐ Focus</button>
                     <button type="button" class="btn-dark-mode" id="btn-dark-mode" aria-label="Mode sombre" title="Mode sombre">🌙</button>
                     <button type="button" class="btn-settings" id="btn-settings" aria-label="Paramètres" title="Paramètres">⚙️</button>
@@ -48,6 +60,10 @@
     <div id="stats-bar" class="stats-bar" aria-live="polite"></div>
 
     <main id="workout-container"></main>
+    <div class="guided-nav" id="guided-nav" hidden>
+        <button type="button" class="guided-nav-btn" id="btn-guided-prev">← Précédent</button>
+        <button type="button" class="guided-nav-btn" id="btn-guided-next">Suivant →</button>
+    </div>
     <div id="progression-panel" class="progression-panel" hidden></div>
 
     <button type="button" class="btn-print-session" id="btn-print-session" aria-label="Imprimer la séance" title="Imprimer">🖨️ Imprimer la séance</button>
