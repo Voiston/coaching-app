@@ -1,6 +1,7 @@
 // --- CONFIGURATION ---
 const COACH_PHONE_NUMBER = "33600000000"; // TON NUMÉRO
-const COACH_NAME = "Ton coach"; // Affiché en bas de page (ex: "David", "Programme par David")
+const COACH_NAME = "David";
+const APP_VERSION = "2.2";
 const PAST_DAYS = 3;
 const DAYS_AHEAD = 21;
 
@@ -10,6 +11,24 @@ const clientID = urlParams.get('client') || 'demo';
 let globalData = null;
 let currentSessionId = "default";
 let currentSessionDate = "";
+
+// --- PARAMÈTRES (localStorage) ---
+const KEY_SOUND = 'fitapp_sound_' + clientID;
+const KEY_THEME = 'fitapp_theme_' + clientID;
+const KEY_COACH_NOTE = 'fitapp_coach_note_' + clientID;
+const KEY_NOTIF_DAY = 'fitapp_notif_day_' + clientID;
+const KEY_NOTIF_ENABLED = 'fitapp_notif_enabled_' + clientID;
+
+function getSettingSound() { return localStorage.getItem(KEY_SOUND) !== '0'; }
+function setSettingSound(on) { localStorage.setItem(KEY_SOUND, on ? '1' : '0'); }
+function getSettingTheme() { return localStorage.getItem(KEY_THEME) || 'light'; }
+function setSettingTheme(v) { localStorage.setItem(KEY_THEME, v); }
+function getCoachNote() { return localStorage.getItem(KEY_COACH_NOTE) || ''; }
+function setCoachNote(t) { localStorage.setItem(KEY_COACH_NOTE, (t || '').trim()); }
+function isNotificationEnabled() { return localStorage.getItem(KEY_NOTIF_ENABLED) === '1'; }
+function setNotificationEnabled(on) { localStorage.setItem(KEY_NOTIF_ENABLED, on ? '1' : '0'); }
+function getLastNotifDate() { return localStorage.getItem(KEY_NOTIF_DAY) || ''; }
+function setLastNotifDate(d) { localStorage.setItem(KEY_NOTIF_DAY, d); }
 
 // --- VALIDATION JSON ---
 function validateProgram(data) {
@@ -67,9 +86,19 @@ function showLoadError(message) {
     document.getElementById('program-title').classList.remove('loading-skeleton');
     document.getElementById('workout-container').innerHTML = `<div class="error-message" role="alert"><p>${message}</p></div>`;
     document.getElementById('calendar-strip').innerHTML = "";
+    const wrap = document.getElementById('calendar-wrap');
+    if (wrap) wrap.classList.remove('collapsed');
     document.getElementById('week-context').innerHTML = "";
     document.getElementById('next-session').innerHTML = "";
+    const goalEl = document.getElementById('weekly-goal-banner');
+    if (goalEl) goalEl.innerHTML = "";
+    const statsEl = document.getElementById('stats-bar');
+    if (statsEl) statsEl.innerHTML = "";
     document.getElementById('coach-signature').innerHTML = "";
+    const pan = document.getElementById('progression-panel');
+    if (pan) { pan.innerHTML = ""; pan.hidden = true; }
+    const btnProg = document.getElementById('btn-progression-toggle');
+    if (btnProg) { btnProg.textContent = '📈 Ma progression'; btnProg.setAttribute('aria-expanded', 'false'); }
 }
 
 function initApp(data) {
@@ -84,8 +113,16 @@ function initApp(data) {
     } else if (data.exercises) {
         globalData.sessions = [{ id: "unique", name: "Séance Unique", exercises: data.exercises }];
         renderSession(0);
+        updateWeekAndNextSession(globalData.sessions);
     }
     renderCoachSignature();
+    renderProgressionPanel();
+    initFocusMode();
+    initSettings();
+    initPrintButton();
+    initProgressionToggle();
+    initOfflineBanner();
+    maybeShowNotification(globalData && globalData.sessions ? globalData.sessions : []);
 }
 
 // --- SEMAINE & PROCHAINE SÉANCE ---
@@ -109,20 +146,76 @@ function getNextSessionInfo(sessions) {
             const s = sessions[idx];
             const dayName = dayMap[date.getDay()];
             const shortName = (s.name || "Séance").replace(/^[\s\S]*?[\s:]/, "").trim() || s.name || "Séance";
-            return { dayName, dateNum: date.getDate(), name: shortName, sessionIndex: idx };
+            return { dayName, dateNum: date.getDate(), name: shortName, sessionIndex: idx, inDays: i };
         }
     }
     return null;
 }
 
+function getStats(sessions) {
+    const completed = getCompletedSessions();
+    const now = new Date();
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let sessionsThisMonth = 0;
+    const completedByWeek = {};
+    completed.forEach(e => {
+        if (e.date && e.date.startsWith(thisMonth)) sessionsThisMonth++;
+        if (e.date) {
+            const d = new Date(e.date);
+            const weekStart = new Date(d);
+            weekStart.setDate(d.getDate() - d.getDay());
+            const key = weekStart.toISOString().slice(0, 10);
+            completedByWeek[key] = (completedByWeek[key] || 0) + 1;
+        }
+    });
+    const weekKeys = Object.keys(completedByWeek).sort();
+    let streakWeeks = 0;
+    const todayKey = new Date();
+    todayKey.setDate(todayKey.getDate() - todayKey.getDay());
+    const thisWeekKey = todayKey.toISOString().slice(0, 10);
+    for (let i = weekKeys.indexOf(thisWeekKey) >= 0 ? weekKeys.indexOf(thisWeekKey) : weekKeys.length; i--; ) {
+        if (completedByWeek[weekKeys[i]] > 0) streakWeeks++;
+        else break;
+    }
+    const next = getNextSessionInfo(sessions);
+    return { sessionsThisMonth, streakWeeks, nextInDays: next ? next.inDays : null };
+}
+
 function updateWeekAndNextSession(sessions) {
     const weekEl = document.getElementById('week-context');
     const nextEl = document.getElementById('next-session');
+    const goalEl = document.getElementById('weekly-goal-banner');
+    const statsEl = document.getElementById('stats-bar');
     if (weekEl) weekEl.textContent = getWeekLabel();
     const next = getNextSessionInfo(sessions);
     if (nextEl) {
         if (next) nextEl.innerHTML = `Prochaine séance : <strong>${next.dayName} ${next.dateNum}</strong> — ${next.name}`;
         else nextEl.innerHTML = "";
+    }
+    if (goalEl && globalData && globalData.weeklyGoal) {
+        const completed = getCompletedSessions();
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        weekStart.setHours(0,0,0,0);
+        const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+        let thisWeekCount = 0;
+        completed.forEach(e => {
+            if (e.date) {
+                const d = new Date(e.date);
+                if (d >= weekStart && d < weekEnd) thisWeekCount++;
+            }
+        });
+        const goal = globalData.weeklyGoal;
+        goalEl.innerHTML = `Objectif semaine : ${thisWeekCount}/${goal} séance${goal > 1 ? 's' : ''}`;
+        goalEl.classList.add('show');
+    } else if (goalEl) goalEl.innerHTML = '';
+    if (statsEl && sessions && sessions.length) {
+        const st = getStats(sessions);
+        let html = `<span>${st.sessionsThisMonth} séance${st.sessionsThisMonth !== 1 ? 's' : ''} ce mois</span>`;
+        if (st.streakWeeks > 0) html += ` · <span>Série : ${st.streakWeeks} sem.</span>`;
+        if (st.nextInDays != null) html += ` · <span>Prochaine dans ${st.nextInDays} j</span>`;
+        statsEl.innerHTML = html;
     }
 }
 
@@ -264,8 +357,8 @@ function renderSession(sessionIndex, dateStr) {
         });
     }, 100);
 
-    // CHARGEMENT DES DONNÉES SAUVEGARDÉES
     loadProgress();
+    renderProgressionPanel();
 }
 
 function createExerciseCard(exo, index, sessionId) {
@@ -293,9 +386,14 @@ function createExerciseCard(exo, index, sessionId) {
     checkboxesHtml += '</div>';
 
     // CONSTRUCTION DES IDs UNIQUES
-    const idCharge = `charge-${sessionId}-${index}`;
-    const idRpe = `rpe-${sessionId}-${index}`;
-    const idCom = `comment-${sessionId}-${index}`;
+        const idCharge = `charge-${sessionId}-${index}`;
+        const idRpe = `rpe-${sessionId}-${index}`;
+        const idCom = `comment-${sessionId}-${index}`;
+
+    const repsDisplay = (exo.until_failure || exo.failure) ? 'Jusqu\'à échec' : (exo.reps || '-');
+    const tempoHtml = exo.tempo ? `<div class="detail-box"><span class="detail-label">Tempo</span><span class="detail-value">${exo.tempo}</span></div>` : '';
+    const variationHtml = exo.variation ? `<div class="exercise-variation">Variante : ${exo.variation}</div>` : '';
+    const gridClass = exo.tempo ? 'details-grid has-tempo' : 'details-grid';
 
     const restSec = parseInt(String(exo.rest).replace(/\D/g, ''), 10) || 60;
     return `
@@ -311,10 +409,12 @@ function createExerciseCard(exo, index, sessionId) {
         <div class="exercise-content">
             <div class="exercise-inner">
                 ${mediaHtml}
-                <div class="details-grid">
+                ${variationHtml}
+                <div class="${gridClass}">
                     <div class="detail-box"><span class="detail-label">Séries</span><span class="detail-value">${exo.sets}</span></div>
-                    <div class="detail-box"><span class="detail-label">Reps</span><span class="detail-value">${exo.reps}</span></div>
+                    <div class="detail-box"><span class="detail-label">Reps</span><span class="detail-value">${repsDisplay}</span></div>
                     <div class="detail-box"><span class="detail-label">Repos</span><span class="detail-value">${exo.rest}</span></div>
+                    ${tempoHtml}
                     <button type="button" class="timer-btn" data-rest="${restSec}" aria-label="Lancer le chronomètre de repos de ${exo.rest}">
                         <span class="timer-icon">⏱️</span><span class="timer-text">Lancer le repos</span>
                     </button>
@@ -373,6 +473,7 @@ function updateProgress(shouldOpenModal = false) {
 
     if (percent === 100 && shouldOpenModal) {
         if (currentSessionDate) markSessionCompleted(currentSessionId, currentSessionDate);
+        fireConfetti();
         document.body.classList.add('modal-open');
         const overlay = document.getElementById('completion-overlay');
         overlay.classList.add('active');
@@ -380,6 +481,7 @@ function updateProgress(shouldOpenModal = false) {
         const whatsappBtn = document.querySelector('.whatsapp-sticky button');
         if (whatsappBtn) document.getElementById('modal-btn-container').appendChild(whatsappBtn);
         if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+        loadCoachNoteIntoModal();
         setupModalFocusTrap();
         document.addEventListener('keydown', handleModalEscape);
     }
@@ -414,6 +516,7 @@ function loadProgress() {
 }
 
 function playBeep() {
+    if (!getSettingSound()) return;
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
@@ -427,6 +530,22 @@ function playBeep() {
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.3);
     } catch (_) {}
+}
+
+function fireConfetti() {
+    const colors = ['#B76E79', '#965A62', '#fff', '#FFE4E1'];
+    const container = document.body;
+    for (let i = 0; i < 35; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti';
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.animationDelay = Math.random() * 0.5 + 's';
+        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+        el.style.width = (6 + Math.random() * 8) + 'px';
+        el.style.height = el.style.width;
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 3500);
+    }
 }
 
 function startTimer(btn, seconds) {
@@ -498,6 +617,12 @@ function sendToWhatsapp() {
         if(sSleep)  msg += `💤 Sommeil: ${sSleep}/10 ${cSleep ? '('+cSleep+')' : ''}\n`;
     }
 
+    const coachNoteFree = document.getElementById('coach-note-free');
+    if (coachNoteFree && coachNoteFree.value.trim()) {
+        setCoachNote(coachNoteFree.value.trim());
+        msg += `\n💬 *Message pour toi:*\n${coachNoteFree.value.trim()}\n`;
+    }
+
     msg += `\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
     
     window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -533,6 +658,15 @@ function handleModalEscape(e) {
     }
 }
 
+function loadCoachNoteIntoModal() {
+    const ta = document.getElementById('coach-note-free');
+    if (ta) ta.value = getCoachNote();
+}
+function saveCoachNoteFromModal() {
+    const ta = document.getElementById('coach-note-free');
+    if (ta) setCoachNote(ta.value);
+}
+
 function refreshCalendarCompletedState() {
     if (!globalData || !globalData.sessions) return;
     document.querySelectorAll('.calendar-day.has-session').forEach(dayEl => {
@@ -557,6 +691,7 @@ function closeModal() {
     const whatsappBtn = document.querySelector('#modal-btn-container button');
     if (whatsappBtn) document.querySelector('.whatsapp-sticky').appendChild(whatsappBtn);
     if (modalPreviousFocus && typeof modalPreviousFocus.focus === 'function') modalPreviousFocus.focus();
+    saveCoachNoteFromModal();
     refreshCalendarCompletedState();
 }
 
@@ -601,21 +736,171 @@ function fallbackCopy(url) {
 
 function renderCoachSignature() {
     const footer = document.getElementById('coach-signature');
-    if (!footer || !COACH_NAME) return;
-    footer.innerHTML = `Programme par ${COACH_NAME}`;
+    if (!footer) return;
+    footer.innerHTML = (COACH_NAME ? `Programme par ${COACH_NAME}` : '') + ` <span class="app-version">· v${APP_VERSION}</span>`;
 }
 
-const DARK_STORAGE_KEY = 'coaching_dark_mode';
+function renderProgressionPanel() {
+    const panel = document.getElementById('progression-panel');
+    if (!panel || !globalData || !globalData.sessions) return;
+    const saved = JSON.parse(localStorage.getItem('fitapp_' + clientID) || '{}');
+    const session = globalData.sessions.find(s => (s.id === currentSessionId) || s.id === currentSessionId);
+    if (!session || !session.exercises) { panel.innerHTML = ''; return; }
+    let html = '<p class="progression-intro">Dernières charges enregistrées pour cette séance :</p><ul class="progression-list">';
+    session.exercises.forEach((exo, idx) => {
+        if (exo.type === 'section') return;
+        const idCharge = `charge-${currentSessionId}-${idx}`;
+        const val = saved[idCharge];
+        if (val) html += `<li><strong>${exo.name}</strong> : ${val} kg</li>`;
+    });
+    html += '</ul>';
+    if (html === '<p class="progression-intro">Dernières charges enregistrées pour cette séance :</p><ul class="progression-list"></ul>')
+        html = '<p class="progression-intro">Aucune charge enregistrée pour cette séance.</p>';
+    panel.innerHTML = html;
+}
+
+function initProgressionToggle() {
+    const btn = document.getElementById('btn-progression-toggle');
+    const panel = document.getElementById('progression-panel');
+    if (!btn || !panel) return;
+    btn.addEventListener('click', () => {
+        const open = !panel.hidden;
+        panel.hidden = open;
+        btn.setAttribute('aria-expanded', !open);
+        btn.textContent = open ? '📈 Ma progression' : '📈 Masquer la progression';
+        if (!open) renderProgressionPanel();
+    });
+}
+
+function initFocusMode() {
+    const btn = document.getElementById('btn-focus-mode');
+    const wrap = document.getElementById('calendar-wrap');
+    if (!btn || !wrap) return;
+    btn.addEventListener('click', () => {
+        wrap.classList.toggle('collapsed');
+        const on = wrap.classList.contains('collapsed');
+        btn.textContent = on ? '◑ Calendrier' : '◐ Focus';
+        btn.setAttribute('aria-label', on ? 'Afficher le calendrier' : 'Réduire le calendrier');
+        btn.title = on ? 'Afficher le calendrier' : 'Mode focus';
+    });
+}
+
+function openSettings() {
+    const overlay = document.getElementById('settings-overlay');
+    if (!overlay) return;
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.getElementById('setting-sound').checked = getSettingSound();
+    const theme = getSettingTheme();
+    document.querySelectorAll('input[name="theme"]').forEach(r => { r.checked = r.value === theme; });
+    document.getElementById('setting-notifications').checked = isNotificationEnabled();
+}
+function closeSettings() {
+    const overlay = document.getElementById('settings-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    overlay.setAttribute('aria-hidden', 'true');
+    setSettingSound(document.getElementById('setting-sound').checked);
+    const themeRadio = document.querySelector('input[name="theme"]:checked');
+    if (themeRadio) {
+        setSettingTheme(themeRadio.value);
+        applyTheme(themeRadio.value);
+    }
+    setNotificationEnabled(document.getElementById('setting-notifications').checked);
+}
+function applyTheme(v) {
+    if (v === 'auto') {
+        document.documentElement.removeAttribute('data-theme');
+        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    } else {
+        document.documentElement.setAttribute('data-theme', v);
+    }
+    updateDarkModeButton();
+}
+function initSettings() {
+    const btn = document.getElementById('btn-settings');
+    const overlay = document.getElementById('settings-overlay');
+    const closeBtn = overlay && overlay.querySelector('.close-settings');
+    const resetBtn = document.getElementById('btn-reset-data');
+    if (btn) btn.addEventListener('click', openSettings);
+    if (closeBtn) closeBtn.addEventListener('click', closeSettings);
+    if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSettings(); });
+    if (resetBtn) resetBtn.addEventListener('click', () => {
+        if (!confirm('Effacer toutes les données de ce programme (séances terminées, charges, notes) ? Cette action est irréversible.')) return;
+        localStorage.removeItem('fitapp_' + clientID);
+        localStorage.removeItem(COMPLETED_KEY);
+        setCoachNote('');
+        showToast('Données effacées.');
+        closeSettings();
+        if (globalData && globalData.sessions && globalData.sessions.length) {
+            refreshCalendarCompletedState();
+            updateWeekAndNextSession(globalData.sessions);
+        }
+        const container = document.getElementById('workout-container');
+        if (container && container.querySelector('.set-checkbox')) {
+            container.querySelectorAll('.set-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('progress-bar').style.width = '0%';
+        }
+        loadProgress();
+        renderProgressionPanel();
+    });
+}
+
+function initPrintButton() {
+    const btn = document.getElementById('btn-print-session');
+    if (btn) btn.addEventListener('click', () => { window.print(); showToast('Ouverture de l\'impression...'); });
+}
+
+function initOfflineBanner() {
+    const banner = document.getElementById('offline-banner');
+    if (!banner) return;
+    function update() {
+        banner.hidden = navigator.onLine;
+    }
+    update();
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+}
+
+function maybeShowNotification(sessions) {
+    if (!sessions || !sessions.length || !isNotificationEnabled() || !('Notification' in window)) return;
+    const today = new Date();
+    const y = today.getFullYear(), m = String(today.getMonth() + 1).padStart(2, '0'), d = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${y}-${m}-${d}`;
+    if (getLastNotifDate() === todayStr) return;
+    const hasSessionToday = sessions.some(s => s.date === todayStr);
+    if (!hasSessionToday) return;
+    if (Notification.permission === 'granted') {
+        try {
+            new Notification('Mon Programme Coaching', { body: 'Séance prévue aujourd\'hui ! 💪', icon: 'favicon.svg' });
+            setLastNotifDate(todayStr);
+        } catch (_) {}
+        return;
+    }
+    if (Notification.permission === 'default') {
+        Notification.requestPermission().then(p => {
+            if (p === 'granted') {
+                try {
+                    new Notification('Mon Programme Coaching', { body: 'Séance prévue aujourd\'hui ! 💪', icon: 'favicon.svg' });
+                    setLastNotifDate(todayStr);
+                } catch (_) {}
+            }
+        });
+    }
+}
+
 function initDarkMode() {
     const btn = document.getElementById('btn-dark-mode');
     if (!btn) return;
-    const isDark = localStorage.getItem(DARK_STORAGE_KEY) === '1';
-    if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
-    updateDarkModeButton();
+    applyTheme(getSettingTheme());
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', () => { if (getSettingTheme() === 'auto') applyTheme('auto'); });
     btn.addEventListener('click', () => {
-        const isDarkNow = document.documentElement.getAttribute('data-theme') === 'dark';
-        document.documentElement.setAttribute('data-theme', isDarkNow ? 'light' : 'dark');
-        localStorage.setItem(DARK_STORAGE_KEY, isDarkNow ? '0' : '1');
+        const current = document.documentElement.getAttribute('data-theme') || 'light';
+        const next = current === 'dark' ? 'light' : 'dark';
+        setSettingTheme(next);
+        applyTheme(next);
         updateDarkModeButton();
     });
 }
@@ -671,6 +956,13 @@ document.body.addEventListener('input', (e) => {
     if (e.target.classList.contains('score-slider')) {
         const span = document.querySelector('.score-value[data-for="' + e.target.id + '"]');
         if (span) span.textContent = e.target.value;
+    }
+    if (e.target.id === 'coach-note-free') setCoachNote(e.target.value);
+});
+document.body.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const settings = document.getElementById('settings-overlay');
+        if (settings && settings.classList.contains('active')) { closeSettings(); e.preventDefault(); }
     }
 });
 

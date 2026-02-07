@@ -15,23 +15,34 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="offline-banner" class="offline-banner" role="status" aria-live="polite" hidden>Tu es hors ligne — tes données sont enregistrées localement.</div>
     <div id="progress-container"><div id="progress-bar"></div></div>
 
     <header class="header-main">
         <div class="header-top">
             <div class="logo-area">COACHING</div>
-            <button type="button" class="btn-copy-link" id="btn-copy-link" aria-label="Copier le lien de mon programme" title="Copier le lien">📋 Copier le lien</button>
+            <button type="button" class="btn-copy-link" id="btn-copy-link" aria-label="Copier le lien" title="Copier le lien">📋 Copier le lien</button>
+            <button type="button" class="btn-focus-mode" id="btn-focus-mode" aria-label="Réduire le calendrier" title="Mode focus">◐ Focus</button>
             <button type="button" class="btn-dark-mode" id="btn-dark-mode" aria-label="Activer le mode sombre" title="Mode sombre">🌙</button>
+            <button type="button" class="btn-settings" id="btn-settings" aria-label="Paramètres" title="Paramètres">⚙️</button>
         </div>
         <h1 id="client-name" class="loading-skeleton">Chargement...</h1>
         <p id="program-title" class="subtitle loading-skeleton">...</p>
     </header>
 
-    <div id="calendar-strip" class="calendar-container"></div>
-    <div id="week-context" class="week-context" aria-live="polite"></div>
-    <div id="next-session" class="next-session" aria-live="polite"></div>
+    <div id="calendar-wrap" class="calendar-wrap">
+        <div id="calendar-strip" class="calendar-container"></div>
+        <div id="week-context" class="week-context" aria-live="polite"></div>
+        <div id="weekly-goal-banner" class="weekly-goal-banner" aria-live="polite"></div>
+        <div id="next-session" class="next-session" aria-live="polite"></div>
+    </div>
+    <div id="stats-bar" class="stats-bar" aria-live="polite"></div>
+    <button type="button" class="btn-progression-toggle" id="btn-progression-toggle" aria-expanded="false" aria-controls="progression-panel">📈 Ma progression</button>
+    <div id="progression-panel" class="progression-panel" hidden></div>
 
     <main id="workout-container"></main>
+
+    <button type="button" class="btn-print-session" id="btn-print-session" aria-label="Imprimer la séance" title="Imprimer">🖨️ Imprimer la séance</button>
 
     <footer class="coach-signature" id="coach-signature"></footer>
 
@@ -79,7 +90,35 @@
                 </div>
             </div>
 
+            <div class="feedback-item coach-note-free-wrap">
+                <label for="coach-note-free">💬 Message pour ton coach (optionnel)</label>
+                <textarea id="coach-note-free" class="com-input coach-note-input" placeholder="Comment tu te sens, questions, remarques..." rows="2"></textarea>
+            </div>
             <div id="modal-btn-container"></div>
+        </div>
+    </div>
+
+    <div id="settings-overlay" class="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-hidden="true">
+        <div class="settings-modal">
+            <span class="close-settings" tabindex="0" role="button" aria-label="Fermer">&times;</span>
+            <h2 id="settings-title" class="settings-title">Paramètres</h2>
+            <div class="settings-item">
+                <label><input type="checkbox" id="setting-sound" checked> Bip à la fin du chrono (repos)</label>
+            </div>
+            <div class="settings-item">
+                <span class="settings-label">Thème</span>
+                <div class="settings-theme">
+                    <label><input type="radio" name="theme" value="light"> Clair</label>
+                    <label><input type="radio" name="theme" value="dark"> Sombre</label>
+                    <label><input type="radio" name="theme" value="auto"> Auto</label>
+                </div>
+            </div>
+            <div class="settings-item">
+                <button type="button" class="btn-reset-data" id="btn-reset-data">Effacer toutes mes données (ce programme)</button>
+            </div>
+            <div class="settings-item">
+                <label><input type="checkbox" id="setting-notifications"> Rappel « Séance aujourd'hui »</label>
+            </div>
         </div>
     </div>
 
