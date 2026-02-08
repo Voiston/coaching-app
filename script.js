@@ -384,7 +384,7 @@ function renderSession(sessionIndex, dateStr) {
             supersetPos = 1;
         }
 
-        const cardHtml = createExerciseCard(exo, index, currentSessionId, supersetPos > 0 ? supersetPos : null, isWarmupExercise);
+        const cardHtml = createExerciseCard(exo, index, currentSessionId, supersetPos > 0 ? supersetPos : null, inWarmupSection);
         const row = currentSupersetBlock ? currentSupersetBlock.querySelector('.superset-row') : null;
 
         if (row) {
