@@ -70,72 +70,44 @@ function isSessionCompleted(sessionId, dateStr) {
     return getCompletedSessions().some(e => e.sessionId === sessionId && e.date === dateStr);
 }
 
-// --- CALENDRIER PLANIFIÉ (ajout automatique des séances) ---
-const KEY_SCHEDULE = 'fitapp_schedule_' + clientID;
-function getSchedule() {
-    try {
-        return JSON.parse(localStorage.getItem(KEY_SCHEDULE) || '{}');
-    } catch { return {}; }
-}
-function setSchedule(schedule) {
-    localStorage.setItem(KEY_SCHEDULE, JSON.stringify(schedule));
-}
-function clearSchedule() {
-    localStorage.removeItem(KEY_SCHEDULE);
-}
-
-function generateSchedule(sessions) {
-    if (!sessions || sessions.length === 0) return {};
-    const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-    const weekdayToSession = {};
-    sessions.forEach((s, idx) => {
-        let dayOfWeek;
-        if (s.date) {
-            const d = new Date(s.date + 'T12:00:00');
-            dayOfWeek = d.getDay();
-        } else if (s.day) {
-            const name = String(s.day).toLowerCase().trim();
-            dayOfWeek = dayMap.indexOf(name);
-            if (dayOfWeek === -1) dayOfWeek = idx % 7;
-        } else {
-            dayOfWeek = idx % 7;
-        }
-        weekdayToSession[dayOfWeek] = idx;
+// --- EXPORT VERS AGENDA (Google Calendar) ---
+function getGoogleCalendarAddUrl(sessionName, dateStr, details, durationMinutes) {
+    if (!dateStr || !sessionName) return null;
+    const duration = durationMinutes || 60;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const start = new Date(y, m - 1, d, 10, 0, 0);
+    const end = new Date(start.getTime() + duration * 60 * 1000);
+    const format = (date) => {
+        const Y = date.getFullYear();
+        const M = String(date.getMonth() + 1).padStart(2, '0');
+        const D = String(date.getDate()).padStart(2, '0');
+        const h = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        const s = String(date.getSeconds()).padStart(2, '0');
+        return `${Y}${M}${D}T${h}${min}${s}`;
+    };
+    const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: sessionName,
+        dates: `${format(start)}/${format(end)}`
     });
-
-    const schedule = {};
-    const today = new Date();
-    for (let i = -PAST_DAYS; i <= DAYS_AHEAD; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
-        const dayOfWeek = date.getDay();
-        if (weekdayToSession[dayOfWeek] !== undefined) {
-            const y = date.getFullYear(), m = String(date.getMonth() + 1).padStart(2, '0'), d = String(date.getDate()).padStart(2, '0');
-            schedule[`${y}-${m}-${d}`] = weekdayToSession[dayOfWeek];
-        }
-    }
-    return schedule;
+    if (details) params.set('details', details);
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-function fillCalendarWithSessions() {
-    if (!globalData || !globalData.sessions || globalData.sessions.length === 0) {
-        showToast('Aucune séance à planifier.');
+function addSessionToGoogleCalendar() {
+    if (!globalData || !globalData.sessions || !currentSessionDate) {
+        showToast('Aucune séance à ajouter.');
         return;
     }
-    const schedule = generateSchedule(globalData.sessions);
-    setSchedule(schedule);
-    renderCalendar(globalData.sessions);
-    updateWeekAndNextSession(globalData.sessions);
-    showToast('Calendrier rempli avec les séances pour les prochaines semaines.');
-}
-
-function resetCalendarSchedule() {
-    clearSchedule();
-    if (globalData && globalData.sessions) {
-        renderCalendar(globalData.sessions);
-        updateWeekAndNextSession(globalData.sessions);
-    }
-    showToast('Planification du calendrier réinitialisée.');
+    const session = globalData.sessions.find(s => (s.id || '').toString() === (currentSessionId || '').toString())
+        || globalData.sessions.find((_, i) => `session_${i}` === currentSessionId);
+    const name = (session && session.name) ? session.name : 'Séance';
+    const intro = session?.session_intro || session?.objectives || '';
+    const details = [globalData.programTitle, intro].filter(Boolean).join('\n\n');
+    const url = getGoogleCalendarAddUrl(name, currentSessionDate, details || undefined, 60);
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    else showToast('Impossible de générer le lien agenda.');
 }
 
 // --- CHARGEMENT INITIAL ---
@@ -199,7 +171,6 @@ function initApp(data) {
     renderProgressionPanel();
     initFocusMode();
     initSettings();
-    initFillCalendar();
     initPrintButton();
     initProgressionToggle();
     initInstallPrompt();
@@ -216,18 +187,14 @@ function getWeekLabel() {
 }
 
 function getNextSessionInfo(sessions) {
-    if (!sessions || sessions.length === 0) return null;
     const today = new Date();
     const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-    const schedule = getSchedule();
     for (let i = 1; i <= DAYS_AHEAD; i++) {
-        const date = new Date(today);
+        const date = new Date();
         date.setDate(today.getDate() + i);
         const y = date.getFullYear(), mo = String(date.getMonth() + 1).padStart(2, '0'), da = String(date.getDate()).padStart(2, '0');
         const dateString = `${y}-${mo}-${da}`;
-        let idx = schedule[dateString];
-        if (idx === undefined || idx < 0 || idx >= sessions.length)
-            idx = sessions.findIndex(s => s.date === dateString || (s.day && s.day.toLowerCase() === dayMap[date.getDay()]));
+        const idx = sessions.findIndex(s => s.date === dateString || (s.day && s.day.toLowerCase() === dayMap[date.getDay()]));
         if (idx !== -1) {
             const s = sessions[idx];
             const dayName = dayMap[date.getDay()];
@@ -317,7 +284,6 @@ function renderCalendar(sessions) {
 
     const today = new Date();
     const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-    const schedule = getSchedule();
     let todayEl = null;
 
     for (let i = -PAST_DAYS; i <= DAYS_AHEAD; i++) {
@@ -332,16 +298,11 @@ function renderCalendar(sessions) {
         const day = String(date.getDate()).padStart(2, '0');
         const dateString = `${year}-${month}-${day}`;
 
-        let sessionIndex = schedule[dateString];
-        if (sessionIndex === undefined) {
-            sessionIndex = sessions.findIndex(s => {
-                if (s.date) return s.date === dateString;
-                if (s.day) return s.day.toLowerCase() === dayNameFR;
-                return false;
-            });
-        } else if (sessionIndex < 0 || sessionIndex >= sessions.length) {
-            sessionIndex = -1;
-        }
+        const sessionIndex = sessions.findIndex(s => {
+            if (s.date) return s.date === dateString;
+            if (s.day) return s.day.toLowerCase() === dayNameFR;
+            return false;
+        });
 
         const hasSession = sessionIndex !== -1;
         const session = hasSession ? sessions[sessionIndex] : null;
@@ -429,6 +390,13 @@ function renderSession(sessionIndex, dateStr) {
         resetBtn.setAttribute('aria-label', 'Recommencer la séance et décocher toutes les séries');
         resetBtn.textContent = "↺ Recommencer la séance";
         resetWrap.appendChild(resetBtn);
+        const addToCalendarBtn = document.createElement('button');
+        addToCalendarBtn.type = 'button';
+        addToCalendarBtn.className = 'btn-add-to-calendar';
+        addToCalendarBtn.setAttribute('data-add-to-calendar', '1');
+        addToCalendarBtn.setAttribute('aria-label', 'Ajouter cette séance à Google Agenda');
+        addToCalendarBtn.textContent = "📅 Ajouter à Google Agenda";
+        resetWrap.appendChild(addToCalendarBtn);
     }
 
     let currentSupersetBlock = null;
@@ -1552,13 +1520,6 @@ function initCopyLink() {
     if (btn) btn.addEventListener('click', copyProgramLink);
 }
 
-function initFillCalendar() {
-    const btnFill = document.getElementById('btn-fill-calendar');
-    const btnReset = document.getElementById('btn-reset-calendar');
-    if (btnFill) btnFill.addEventListener('click', () => fillCalendarWithSessions());
-    if (btnReset) btnReset.addEventListener('click', () => resetCalendarSchedule());
-}
-
 // --- DÉLÉGATION D'ÉVÉNEMENTS (remplace les onclick inline) ---
 document.body.addEventListener('click', (e) => {
     if (e.target.closest('.close-modal')) { closeModal(); return; }
@@ -1570,6 +1531,7 @@ document.body.addEventListener('click', (e) => {
         return;
     }
     if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }
+    if (e.target.closest('[data-add-to-calendar]')) { addSessionToGoogleCalendar(); return; }
     const checkTechniqueBtn = e.target.closest('.btn-check-technique');
     if (checkTechniqueBtn) {
         const msg = checkTechniqueBtn.getAttribute('data-wa-msg') || '';

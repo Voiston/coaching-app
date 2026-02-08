@@ -46,14 +46,10 @@
 [data-theme="dark"] .coach-notes-intro { background: rgba(160, 140, 180, 0.2); border-color: rgba(180, 160, 200, 0.4); color: #c4b8d4; }
 [data-theme="dark"] .exercise-card.exercise-warmup.open { border-left-color: #e5b84d; }
 [data-theme="dark"] #progress-container { background: #251e20; }
-[data-theme="dark"] .btn-fill-calendar,
-[data-theme="dark"] .btn-reset-calendar,
 [data-theme="dark"] .btn-copy-link,
 [data-theme="dark"] .btn-dark-mode,
 [data-theme="dark"] .btn-focus-mode,
 [data-theme="dark"] .btn-settings { background: rgba(255,255,255,0.08); color: var(--text-main); border-color: rgba(255,255,255,0.1); }
-[data-theme="dark"] .btn-fill-calendar:hover,
-[data-theme="dark"] .btn-reset-calendar:hover,
 [data-theme="dark"] .btn-copy-link:hover,
 [data-theme="dark"] .btn-dark-mode:hover,
 [data-theme="dark"] .btn-focus-mode:hover,
@@ -386,8 +382,6 @@ body {
         visibility: visible;
         transform: translateY(0);
     }
-    .header-actions .btn-fill-calendar,
-    .header-actions .btn-reset-calendar,
     .header-actions .btn-copy-link,
     .header-actions .btn-guided-mode,
     .header-actions .btn-dark-mode,
@@ -399,8 +393,6 @@ body {
     }
 }
 .logo-area { font-size: 0.7rem; letter-spacing: 3px; color: var(--primary); font-weight: 600; text-transform: uppercase; }
-.btn-fill-calendar,
-.btn-reset-calendar,
 .btn-copy-link,
 .btn-guided-mode,
 .btn-dark-mode,
@@ -417,8 +409,6 @@ body {
     cursor: pointer;
     transition: var(--transition);
 }
-.btn-fill-calendar:hover,
-.btn-reset-calendar:hover,
 .btn-copy-link:hover,
 .btn-guided-mode:hover,
 .btn-dark-mode:hover,
@@ -429,8 +419,6 @@ body {
     color: var(--primary-dark);
     transform: translateY(-1px);
 }
-.btn-fill-calendar:focus-visible,
-.btn-reset-calendar:focus-visible,
 .btn-copy-link:focus-visible,
 .btn-guided-mode:focus-visible,
 .btn-dark-mode:focus-visible,
@@ -1494,27 +1482,44 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     margin: 0 auto;
     padding: 20px 20px 28px;
     text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
 }
 .reset-session-wrap:empty { display: none; }
-.reset-session-btn {
+.reset-session-btn,
+.btn-add-to-calendar {
     display: inline-block;
     width: 100%;
     max-width: 280px;
-    margin: 0 auto;
     padding: 12px 20px;
-    background: #f5f5f5;
-    border: 1px solid #e0e0e0;
     border-radius: 50px;
     font-family: 'Poppins', sans-serif;
     font-size: 0.9rem;
-    color: var(--text-main);
     cursor: pointer;
     transition: all 0.2s;
+}
+.reset-session-btn {
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    color: var(--text-main);
 }
 .reset-session-btn:hover {
     background: #eee;
     border-color: var(--primary);
     color: var(--primary);
+}
+.btn-add-to-calendar {
+    background: var(--primary-soft);
+    border: 1px solid var(--primary);
+    color: var(--primary-dark);
+}
+.btn-add-to-calendar:hover {
+    background: rgba(183, 110, 121, 0.2);
+    border-color: var(--primary-dark);
+    color: var(--primary-dark);
 }
 
 /* --- SLIDERS BILAN (0-10) --- */
@@ -1541,7 +1546,7 @@ button:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--prim
 /* --- IMPRESSION --- */
 @media print {
     body { background: #fff; padding: 0; }
-    #progress-container, #install-banner, .whatsapp-bottom, .btn-fill-calendar, .btn-reset-calendar, .btn-copy-link, .btn-guided-mode, .btn-dark-mode, .btn-focus-mode, .btn-settings,
+    #progress-container, #install-banner, .whatsapp-bottom, .btn-copy-link, .btn-guided-mode, .btn-dark-mode, .btn-focus-mode, .btn-settings,
     .reset-session-wrap, .reset-session-btn, .btn-progression-toggle, .progression-panel, .btn-print-session,
     .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video, .guided-nav { display: none !important; }
     .calendar-wrap.collapsed { max-height: none; opacity: 1; pointer-events: auto; }
