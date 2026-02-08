@@ -644,7 +644,7 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
             const nextHeader = nextCard.querySelector('.exercise-header');
             const target = nextHeader || nextCard;
             setTimeout(() => {
-                target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+                target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
             }, 1200);
         }
     }
