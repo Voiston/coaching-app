@@ -796,6 +796,13 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
             const cards = container ? Array.from(container.querySelectorAll('.exercise-card')) : [];
             const idx = cards.findIndex(c => c.id === `card-${cardIndex}`);
             const nextCard = idx >= 0 && idx < cards.length - 1 ? cards[idx + 1] : null;
+            if (document.body.classList.contains('guided-mode')) {
+                if (nextCard) {
+                    guidedViewIndex = idx + 1;
+                    updateGuidedMode();
+                }
+                return;
+            }
             if (nextCard) {
                 setTimeout(() => {
                     nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1055,8 +1062,8 @@ function showRpeModal(cardIndex, sessionId, exoName, onConfirm) {
         el.innerHTML = `
             <div class="rpe-modal" role="dialog" aria-labelledby="rpe-modal-title" aria-modal="true">
                 <button type="button" class="rpe-modal-close" aria-label="Fermer">×</button>
-                <h3 id="rpe-modal-title">Noter ton RPE</h3>
-                <p class="rpe-modal-exo"></p>
+                <h3 id="rpe-modal-title">Comment c’était ?</h3>
+                <div class="rpe-modal-exo-wrap"><span class="rpe-modal-exo"></span></div>
                 <div class="rpe-modal-slider-wrap">
                     <label for="rpe-modal-slider">Effort ressenti (1 = facile, 10 = max)</label>
                     <input type="range" id="rpe-modal-slider" class="rpe-modal-slider" min="1" max="10" value="7">

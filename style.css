@@ -1,5 +1,5 @@
 /* --- FONTS & VARIABLES --- */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap');
 
 :root {
     --primary: #B76E79;
@@ -559,7 +559,12 @@ body.guided-mode .exercise-card.guided-current {
     display: flex !important;
     flex-direction: column !important;
     position: fixed !important;
-    inset: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 100% !important;
+    max-width: 420px !important;
     z-index: 10 !important;
     margin: 0 !important;
     max-height: 100vh !important;
@@ -567,6 +572,10 @@ body.guided-mode .exercise-card.guided-current {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     border-radius: 0 !important;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.04);
+}
+@media (max-width: 480px) {
+    body.guided-mode .exercise-card.guided-current { max-width: none !important; }
 }
 body.guided-mode #workout-container { overflow: hidden !important; min-height: 0 !important; }
 body.guided-mode .guided-nav {
@@ -884,7 +893,7 @@ main {
 .exercise-header:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
 
 .exercise-title {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Josefin Sans', sans-serif;
     font-weight: 600;
     letter-spacing: 0.02em;
     font-size: 1.45rem;
@@ -1266,11 +1275,13 @@ main {
     -webkit-tap-highlight-color: transparent;
 }
 
-/* --- Modal RPE (après dernière série) --- */
+/* --- Modal RPE (après dernière série) — clean girl --- */
 .rpe-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
+    background: rgba(255, 250, 248, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1280,28 +1291,55 @@ main {
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 .rpe-modal-overlay.active { opacity: 1; visibility: visible; }
+[data-theme="dark"] .rpe-modal-overlay { background: rgba(20, 18, 19, 0.88); }
 .rpe-modal {
     background: var(--card-bg);
-    padding: 24px;
-    border-radius: var(--radius);
-    max-width: 340px;
+    padding: 28px 24px;
+    border-radius: 24px;
+    max-width: 320px;
     width: 90%;
     position: relative;
-    box-shadow: var(--shadow-strong);
+    box-shadow: 0 4px 24px rgba(183, 110, 121, 0.08), 0 0 0 1px rgba(183, 110, 121, 0.06);
 }
 .rpe-modal-close {
     position: absolute;
-    top: 8px;
-    right: 12px;
-    font-size: 1.5rem;
+    top: 12px;
+    right: 14px;
+    font-size: 1.4rem;
     background: none;
     border: none;
     cursor: pointer;
     color: var(--text-light);
+    line-height: 1;
+    padding: 4px;
 }
 .rpe-modal-close:hover { color: var(--primary); }
-.rpe-modal h3 { margin: 0 0 8px 0; font-size: 1.1rem; color: var(--primary-dark); }
-.rpe-modal-exo { margin: 0 0 16px 0; font-size: 0.9rem; color: var(--text-light); }
+.rpe-modal h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-main);
+    font-family: 'Josefin Sans', sans-serif;
+    letter-spacing: 0.01em;
+}
+.rpe-modal-exo-wrap {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+}
+.rpe-modal-exo {
+    display: inline-block;
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--primary-dark);
+    background: rgba(183, 110, 121, 0.08);
+    border-radius: 999px;
+    letter-spacing: 0.03em;
+    font-family: 'Josefin Sans', sans-serif;
+    max-width: 100%;
+    text-align: center;
+}
 .rpe-modal-slider-wrap {
     margin-bottom: 20px;
     display: flex;
