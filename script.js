@@ -524,7 +524,13 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
                 ${exo.note_coach ? `<div class="coach-note">💡 "${exo.note_coach}"</div>` : ''}
                 <div class="client-input-zone">
                     <div class="input-row">
-                        <span class="input-with-btn"><input type="text" id="${idCharge}" placeholder="Charge (kg)" value="${(exo.charge || exo.default_charge || '').toString().replace(/"/g, '&quot;')}" aria-label="Charge en kg"></span>
+                        <span class="input-with-btn charge-input-wrap">
+                            <label for="${idCharge}" class="charge-input-label">Charge (kg)</label>
+                            <span class="charge-input-row">
+                                <input type="text" id="${idCharge}" placeholder="—" value="${(exo.charge || exo.default_charge || '').toString().replace(/"/g, '&quot;')}" aria-label="Charge en kg">
+                                <span class="charge-suffix">kg</span>
+                            </span>
+                        </span>
                         <span class="input-with-btn"><input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti" title="Échelle 1-10 de l'effort ressenti (1=facile, 10=maximum)"></span>
                     </div>
                     <input type="text" id="${idCom}" placeholder="Note..." aria-label="Note personnelle">

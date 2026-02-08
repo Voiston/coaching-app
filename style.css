@@ -1073,6 +1073,11 @@ main {
 /* --- BOUTONS INPUT --- */
 .input-with-btn { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
 .input-with-btn input { flex: 1; min-width: 0; }
+.charge-input-wrap { flex-direction: column; align-items: stretch; gap: 4px; }
+.charge-input-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary-dark); }
+.charge-input-row { display: flex; align-items: center; gap: 6px; }
+.charge-input-row input { flex: 1; min-width: 0; }
+.charge-suffix { font-size: 0.8rem; font-weight: 600; color: var(--primary); flex-shrink: 0; }
 
 /* --- ALTERNATIVE (Joker) --- */
 .exercise-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
