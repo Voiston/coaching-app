@@ -1,12 +1,12 @@
 {
   "clientName": "Océane",
   "programTitle": "Wedding Countdown: Shape & Burn",
+  "recovery_url": "https://www.youtube.com/watch?v=4BOTvaRaDjI",
   "weeklyGoal": 3,
-  "recovery_url": null
   "sessions": [
     {
-      "id": "s_1",
-      "date": "Séance 1",
+      "id": "s_1jambes",
+      "date": "2026-02-10",
       "name": "Hypertrophie: Courbes & Galbe",
       "nutrition_tip": "Consomme des protéines dans les 2h après la séance pour la récupération.",
       "exercises": [
@@ -32,7 +32,7 @@
           "sets": "4",
           "reps": "10-12",
           "rest": "90s",
-		  "charge": "20",
+		      "charge": "20",
           "rpe_target": "8",
           "check_technique": true,
           "note_coach": "Contraction maximale des fessiers en haut. Pousse plutôt avec l'arrière des pieds."
@@ -80,7 +80,7 @@
     },
     {
       "id": "s_2",
-      "date": "Séance 2",
+      "date": "2026-02-12",
       "name": "Hybride: Posture & Force",
       
       "exercises": [
@@ -142,7 +142,7 @@
     },
     {
       "id": "s_3",
-      "date": "Séance 3",
+      "date": "2026-02-14",
       "name": "Cardio: Metabolic Fat Burner",
       "nutrition_tip": "N'oublie pas de bien boire, tu peux même utiliser une boisson d'effort où ajouter une pincer de sel à ton eau.",
       "exercises": [
@@ -180,7 +180,7 @@
           "rpe_target": "8",
           "check_technique": true,
           "superset_type": "middle",
-          "note_coach": "Rythme soutenu. Descend bas sur le squat et "rebondis" bien, comme une grenouille."
+          "note_coach": "Rythme soutenu. Descend bas sur le squat et rebondis bien, comme une grenouille."
         },
         {
           "name": "Mountain Climbers",
