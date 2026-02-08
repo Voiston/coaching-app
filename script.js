@@ -70,6 +70,74 @@ function isSessionCompleted(sessionId, dateStr) {
     return getCompletedSessions().some(e => e.sessionId === sessionId && e.date === dateStr);
 }
 
+// --- CALENDRIER PLANIFIÉ (ajout automatique des séances) ---
+const KEY_SCHEDULE = 'fitapp_schedule_' + clientID;
+function getSchedule() {
+    try {
+        return JSON.parse(localStorage.getItem(KEY_SCHEDULE) || '{}');
+    } catch { return {}; }
+}
+function setSchedule(schedule) {
+    localStorage.setItem(KEY_SCHEDULE, JSON.stringify(schedule));
+}
+function clearSchedule() {
+    localStorage.removeItem(KEY_SCHEDULE);
+}
+
+function generateSchedule(sessions) {
+    if (!sessions || sessions.length === 0) return {};
+    const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    const weekdayToSession = {};
+    sessions.forEach((s, idx) => {
+        let dayOfWeek;
+        if (s.date) {
+            const d = new Date(s.date + 'T12:00:00');
+            dayOfWeek = d.getDay();
+        } else if (s.day) {
+            const name = String(s.day).toLowerCase().trim();
+            dayOfWeek = dayMap.indexOf(name);
+            if (dayOfWeek === -1) dayOfWeek = idx % 7;
+        } else {
+            dayOfWeek = idx % 7;
+        }
+        weekdayToSession[dayOfWeek] = idx;
+    });
+
+    const schedule = {};
+    const today = new Date();
+    for (let i = -PAST_DAYS; i <= DAYS_AHEAD; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const dayOfWeek = date.getDay();
+        if (weekdayToSession[dayOfWeek] !== undefined) {
+            const y = date.getFullYear(), m = String(date.getMonth() + 1).padStart(2, '0'), d = String(date.getDate()).padStart(2, '0');
+            schedule[`${y}-${m}-${d}`] = weekdayToSession[dayOfWeek];
+        }
+    }
+    return schedule;
+}
+
+function fillCalendarWithSessions() {
+    if (!globalData || !globalData.sessions || globalData.sessions.length === 0) {
+        showToast('Aucune séance à planifier.');
+        return;
+    }
+    const schedule = generateSchedule(globalData.sessions);
+    setSchedule(schedule);
+    renderCalendar(globalData.sessions);
+    updateWeekAndNextSession(globalData.sessions);
+    showToast('Calendrier rempli avec les séances pour les prochaines semaines.');
+}
+
+function resetCalendarSchedule() {
+    clearSchedule();
+    if (globalData && globalData.sessions) {
+        renderCalendar(globalData.sessions);
+        updateWeekAndNextSession(globalData.sessions);
+    }
+    showToast('Planification du calendrier réinitialisée.');
+}
+
 // --- CHARGEMENT INITIAL ---
 fetch(`./clients/${clientID.toLowerCase()}.json?t=${Date.now()}`, { cache: 'no-store' })
     .then(r => r.ok ? r.json() : Promise.reject(new Error(r.status === 404 ? 'notfound' : 'fetch')))
@@ -131,6 +199,7 @@ function initApp(data) {
     renderProgressionPanel();
     initFocusMode();
     initSettings();
+    initFillCalendar();
     initPrintButton();
     initProgressionToggle();
     initInstallPrompt();
@@ -147,14 +216,18 @@ function getWeekLabel() {
 }
 
 function getNextSessionInfo(sessions) {
+    if (!sessions || sessions.length === 0) return null;
     const today = new Date();
     const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    const schedule = getSchedule();
     for (let i = 1; i <= DAYS_AHEAD; i++) {
-        const date = new Date();
+        const date = new Date(today);
         date.setDate(today.getDate() + i);
         const y = date.getFullYear(), mo = String(date.getMonth() + 1).padStart(2, '0'), da = String(date.getDate()).padStart(2, '0');
         const dateString = `${y}-${mo}-${da}`;
-        const idx = sessions.findIndex(s => s.date === dateString || (s.day && s.day.toLowerCase() === dayMap[date.getDay()]));
+        let idx = schedule[dateString];
+        if (idx === undefined || idx < 0 || idx >= sessions.length)
+            idx = sessions.findIndex(s => s.date === dateString || (s.day && s.day.toLowerCase() === dayMap[date.getDay()]));
         if (idx !== -1) {
             const s = sessions[idx];
             const dayName = dayMap[date.getDay()];
@@ -244,6 +317,7 @@ function renderCalendar(sessions) {
 
     const today = new Date();
     const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    const schedule = getSchedule();
     let todayEl = null;
 
     for (let i = -PAST_DAYS; i <= DAYS_AHEAD; i++) {
@@ -258,11 +332,16 @@ function renderCalendar(sessions) {
         const day = String(date.getDate()).padStart(2, '0');
         const dateString = `${year}-${month}-${day}`;
 
-        const sessionIndex = sessions.findIndex(s => {
-            if (s.date) return s.date === dateString;
-            if (s.day) return s.day.toLowerCase() === dayNameFR;
-            return false;
-        });
+        let sessionIndex = schedule[dateString];
+        if (sessionIndex === undefined) {
+            sessionIndex = sessions.findIndex(s => {
+                if (s.date) return s.date === dateString;
+                if (s.day) return s.day.toLowerCase() === dayNameFR;
+                return false;
+            });
+        } else if (sessionIndex < 0 || sessionIndex >= sessions.length) {
+            sessionIndex = -1;
+        }
 
         const hasSession = sessionIndex !== -1;
         const session = hasSession ? sessions[sessionIndex] : null;
@@ -1471,6 +1550,13 @@ function updateDarkModeButton() {
 function initCopyLink() {
     const btn = document.getElementById('btn-copy-link');
     if (btn) btn.addEventListener('click', copyProgramLink);
+}
+
+function initFillCalendar() {
+    const btnFill = document.getElementById('btn-fill-calendar');
+    const btnReset = document.getElementById('btn-reset-calendar');
+    if (btnFill) btnFill.addEventListener('click', () => fillCalendarWithSessions());
+    if (btnReset) btnReset.addEventListener('click', () => resetCalendarSchedule());
 }
 
 // --- DÉLÉGATION D'ÉVÉNEMENTS (remplace les onclick inline) ---
