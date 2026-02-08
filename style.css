@@ -42,8 +42,8 @@
 [data-theme="dark"] .feedback-container { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.08); }
 [data-theme="dark"] .detail-box { background: rgba(212, 137, 148, 0.15); border-color: rgba(212, 137, 148, 0.3); }
 [data-theme="dark"] .detail-label { color: var(--primary); }
-[data-theme="dark"] .coach-note { background: var(--primary-soft); border-left-color: var(--primary); }
-[data-theme="dark"] .coach-notes-intro { background: rgba(229, 163, 42, 0.15); border-color: rgba(229, 163, 42, 0.4); color: #e5b84d; }
+[data-theme="dark"] .coach-note { background: rgba(160, 140, 180, 0.15); border-left-color: rgba(180, 160, 200, 0.5); color: #c4b8d4; }
+[data-theme="dark"] .coach-notes-intro { background: rgba(160, 140, 180, 0.2); border-color: rgba(180, 160, 200, 0.4); color: #c4b8d4; }
 [data-theme="dark"] .exercise-card.exercise-warmup.open { border-left-color: #e5b84d; }
 [data-theme="dark"] #progress-container { background: #251e20; }
 [data-theme="dark"] .btn-copy-link,
@@ -762,24 +762,22 @@ main {
     padding: 10px 20px;
 }
 
-/* --- ENCADRÉ "LES NOTES DU COACH" (avant premier exo échauffement) --- */
+/* --- ENCADRÉ SESSION INTRO / NOTES DU COACH --- */
 .coach-notes-intro {
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
     padding: 16px 20px;
     margin: 0 0 24px 0;
-    background: linear-gradient(135deg, rgba(229, 163, 42, 0.12) 0%, rgba(229, 163, 42, 0.06) 100%);
-    border: 1px solid rgba(229, 163, 42, 0.35);
+    background: rgba(230, 220, 235, 0.6);
+    border: 1px solid rgba(180, 160, 200, 0.35);
     border-radius: var(--radius);
-    font-family: 'Playfair Display', serif;
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: #b8860b;
-    box-shadow: 0 2px 8px rgba(229, 163, 42, 0.1);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.6;
+    color: #4a4458;
+    box-shadow: 0 2px 8px rgba(180, 160, 200, 0.08);
 }
-.coach-notes-icon { font-size: 1.3rem; flex-shrink: 0; }
-.coach-notes-text { flex: 1; line-height: 1.5; white-space: pre-wrap; }
+.coach-notes-text { flex: 1; white-space: pre-wrap; }
 
 /* --- SECTIONS (Échauffement, etc.) --- */
 .section-title {
@@ -1182,10 +1180,10 @@ main {
 }
 
 /* --- NOTES & INPUTS --- */
-.coach-note { background: #FFF8F8; border-left: 3px solid var(--primary); padding: 15px; font-size: 0.9rem; border-radius: 0 10px 10px 0; margin-bottom: 20px; color: #666; font-style: italic; }
+.coach-note { background: rgba(230, 220, 235, 0.5); border-left: 3px solid rgba(140, 120, 160, 0.5); padding: 15px; font-size: 0.9rem; font-family: 'Poppins', sans-serif; border-radius: 0 10px 10px 0; margin-bottom: 20px; color: #4a4458; font-style: italic; }
 
 .client-input-zone { border-top: 1px dashed #E0E0E0; padding-top: 20px; }
-.input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.input-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 10px; }
 
 /* --- Check Ma Technique (lien WhatsApp vidéo) --- */
 .check-technique-wrap {

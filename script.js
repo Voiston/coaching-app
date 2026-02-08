@@ -359,7 +359,7 @@ function renderSession(sessionIndex, dateStr) {
     const sessionIntro = (session.session_intro || session.objectives || session.coach_notes || '').toString().trim();
     if (sessionIntro) {
         const safe = sessionIntro.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><span class="coach-notes-icon">💡</span><div class="coach-notes-text">${safe}</div></div>`);
+        container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><div class="coach-notes-text">${safe}</div></div>`);
     }
 
     session.exercises.forEach((exo, index) => {
@@ -375,7 +375,7 @@ function renderSession(sessionIndex, dateStr) {
                 const notes = String(exo.coach_notes).trim();
                 if (notes) {
                     const safe = notes.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-                    container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><span class="coach-notes-icon">💡</span><div class="coach-notes-text">${safe}</div></div>`);
+                    container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><div class="coach-notes-text">${safe}</div></div>`);
                 }
             }
             container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
@@ -521,7 +521,7 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
                     ${activeTimerHtml}
                 </div>
                 ${checkboxesHtml}
-                ${exo.note_coach ? `<div class="coach-note">💡 "${exo.note_coach}"</div>` : ''}
+                ${exo.note_coach ? `<div class="coach-note">"${exo.note_coach}"</div>` : ''}
                 <div class="client-input-zone">
                     <div class="input-row">
                         <span class="input-with-btn charge-input-wrap">
