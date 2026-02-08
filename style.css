@@ -612,27 +612,6 @@ body.guided-mode .guided-nav { display: flex !important; }
 }
 .app-version { opacity: 0.7; }
 
-/* --- OFFLINE BANNER --- */
-.offline-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: 12px 20px;
-    background: linear-gradient(135deg, #e65100 0%, #ff9800 100%);
-    color: #fff;
-    font-size: 0.9rem;
-    font-weight: 500;
-    text-align: center;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    box-shadow: 0 4px 12px rgba(230, 81, 0, 0.3);
-}
-.offline-icon { font-size: 1.2rem; }
-
 /* --- INSTALL BANNER --- */
 .install-banner {
     position: fixed;
@@ -844,6 +823,13 @@ main {
         flex: 1;
         min-width: 0;
         margin-bottom: 0;
+    }
+    /* 3+ exos : garder colonne pour cartes pleine largeur (évite étroit) */
+    .superset-row:has(.exercise-card:nth-child(3)) {
+        flex-direction: column;
+    }
+    .superset-row:has(.exercise-card:nth-child(3)) .exercise-card {
+        flex: none;
     }
 }
 /* Surbrillance exo actif dans superset : passe au 2e quand le 1er est terminé */
@@ -1466,7 +1452,7 @@ button:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--prim
 /* --- IMPRESSION --- */
 @media print {
     body { background: #fff; padding: 0; }
-    #progress-container, #offline-banner, #install-banner, .whatsapp-bottom, .btn-copy-link, .btn-guided-mode, .btn-dark-mode, .btn-focus-mode, .btn-settings,
+    #progress-container, #install-banner, .whatsapp-bottom, .btn-copy-link, .btn-guided-mode, .btn-dark-mode, .btn-focus-mode, .btn-settings,
     .reset-session-wrap, .reset-session-btn, .btn-progression-toggle, .progression-panel, .btn-print-session,
     .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video, .guided-nav { display: none !important; }
     .calendar-wrap.collapsed { max-height: none; opacity: 1; pointer-events: auto; }

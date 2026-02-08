@@ -133,7 +133,6 @@ function initApp(data) {
     initSettings();
     initPrintButton();
     initProgressionToggle();
-    initOfflineBanner();
     initInstallPrompt();
     initGuidedMode();
     maybeShowNotification(globalData && globalData.sessions ? globalData.sessions : []);
@@ -1229,17 +1228,6 @@ function initSettings() {
 function initPrintButton() {
     const btn = document.getElementById('btn-print-session');
     if (btn) btn.addEventListener('click', () => { window.print(); showToast('Ouverture de l\'impression...'); });
-}
-
-function initOfflineBanner() {
-    const banner = document.getElementById('offline-banner');
-    if (!banner) return;
-    function update() {
-        banner.hidden = navigator.onLine;
-    }
-    update();
-    window.addEventListener('online', update);
-    window.addEventListener('offline', update);
 }
 
 let deferredInstallPrompt = null;
