@@ -852,6 +852,7 @@ main {
 
 /* --- CARTE EXERCICE (ACCORDÉON) --- */
 .exercise-card {
+    scroll-margin-top: 20px;
     background: var(--card-bg);
     border-radius: var(--radius);
     padding: 0;

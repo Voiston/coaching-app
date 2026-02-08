@@ -636,10 +636,13 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
                 if(header) toggleCard(header); 
             }, 300);
         }
-        const nextCard = document.getElementById(`card-${cardIndex + 1}`);
+        const container = document.getElementById('workout-container');
+        const cards = container ? Array.from(container.querySelectorAll('.exercise-card')) : [];
+        const idx = cards.findIndex(c => c.id === `card-${cardIndex}`);
+        const nextCard = idx >= 0 && idx < cards.length - 1 ? cards[idx + 1] : null;
         if (nextCard) {
             setTimeout(() => {
-                nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 400);
         }
     }
