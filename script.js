@@ -810,12 +810,13 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
             }
         };
         const isWarmupSection = card?.dataset.warmupSection === '1';
-        if (isWarmupSection) {
-            setTimeout(doScroll, 400);
-        } else {
+        const showRpe = !isWarmupSection && isLastCardOfSuperset(card);
+        if (showRpe) {
             setTimeout(() => {
                 showRpeModal(cardIndex, currentSessionId, exoName, doScroll);
             }, 400);
+        } else {
+            setTimeout(doScroll, 400);
         }
     }
 }
@@ -949,8 +950,9 @@ function fireConfetti() {
 }
 
 function startTimer(btn, seconds) {
-    if (btn.classList.contains('active')) return;
-    let timeLeft = seconds;
+    if (btn.classList.contains('active') && !btn.dataset.timerPaused) return;
+    let timeLeft = parseInt(btn.dataset.timerPaused, 10) || seconds;
+    btn.removeAttribute('data-timer-paused');
     btn.classList.add('active');
     btn.classList.add('timer-floating');
     const timerText = btn.querySelector('.timer-text');
@@ -971,10 +973,25 @@ function startTimer(btn, seconds) {
     btn.dataset.timerInterval = interval;
 }
 
+function toggleTimerPause(btn) {
+    if (!btn.classList.contains('active')) return;
+    const intervalId = btn.dataset.timerInterval;
+    if (intervalId) clearInterval(parseInt(intervalId, 10));
+    btn.dataset.timerInterval = '';
+    const timerText = btn.querySelector('.timer-text');
+    const match = timerText && timerText.textContent.match(/(\d+)s/);
+    const timeLeft = match ? parseInt(match[1], 10) : 0;
+    if (timeLeft <= 0) return;
+    btn.dataset.timerPaused = timeLeft;
+    timerText.textContent = `Repos : ${timeLeft}s (pause)`;
+    btn.classList.remove('timer-floating');
+}
+
 function stopTimer(btn) {
     const intervalId = btn.dataset.timerInterval;
     if (intervalId) clearInterval(parseInt(intervalId, 10));
     btn.dataset.timerInterval = '';
+    btn.removeAttribute('data-timer-paused');
     btn.classList.remove('active');
     btn.classList.remove('timer-floating');
     const timerText = btn.querySelector('.timer-text');
@@ -982,9 +999,10 @@ function stopTimer(btn) {
 }
 
 function startActiveTimer(btn) {
-    if (btn.classList.contains('active')) return;
+    if (btn.classList.contains('active') && !btn.dataset.activeTimerPaused) return;
     const targetSec = parseInt(btn.dataset.targetSeconds, 10) || 45;
-    let elapsed = 0;
+    let elapsed = parseInt(btn.dataset.activeTimerPaused, 10) || 0;
+    btn.removeAttribute('data-active-timer-paused');
     btn.classList.add('active');
     const textEl = btn.querySelector('.active-timer-text');
     const interval = setInterval(() => {
@@ -995,11 +1013,26 @@ function startActiveTimer(btn) {
         if (elapsed >= targetSec) {
             clearInterval(interval);
             btn.classList.remove('active');
+            btn.dataset.activeTimerInterval = '';
             if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
         }
     }, 1000);
     btn.dataset.activeTimerInterval = interval;
-    if (textEl) textEl.textContent = `${targetSec}s`;
+    if (textEl) textEl.textContent = (targetSec - elapsed) > 0 ? `${targetSec - elapsed}s` : `${targetSec}s`;
+}
+
+function toggleActiveTimerPause(btn) {
+    if (!btn.classList.contains('active')) return;
+    const intervalId = btn.dataset.activeTimerInterval;
+    if (intervalId) clearInterval(parseInt(intervalId, 10));
+    btn.dataset.activeTimerInterval = '';
+    const targetSec = parseInt(btn.dataset.targetSeconds, 10) || 45;
+    const textEl = btn.querySelector('.active-timer-text');
+    const match = textEl && textEl.textContent.match(/(\d+)s/);
+    const remaining = match ? parseInt(match[1], 10) : 0;
+    if (remaining <= 0) return;
+    btn.dataset.activeTimerPaused = targetSec - remaining;
+    if (textEl) textEl.textContent = `${remaining}s (pause)`;
 }
 
 function stopActiveTimer(btn) {
@@ -1639,7 +1672,16 @@ document.body.addEventListener('click', (e) => {
     const rpeBtn = e.target.closest('.btn-rpe-badge');
     if (rpeBtn) { e.stopPropagation(); showRpeTooltip(rpeBtn); return; }
     const activeTimerBtn = e.target.closest('.active-timer-btn');
-    if (activeTimerBtn) { e.stopPropagation(); startActiveTimer(activeTimerBtn); return; }
+    if (activeTimerBtn) {
+        e.stopPropagation();
+        if (activeTimerBtn.classList.contains('active')) {
+            if (activeTimerBtn.dataset.activeTimerPaused !== undefined) startActiveTimer(activeTimerBtn);
+            else toggleActiveTimerPause(activeTimerBtn);
+        } else {
+            startActiveTimer(activeTimerBtn);
+        }
+        return;
+    }
     const header = e.target.closest('.exercise-header');
     if (header) { toggleCard(header); return; }
     const timerClose = e.target.closest('.timer-close');
@@ -1653,7 +1695,12 @@ document.body.addEventListener('click', (e) => {
     }
     const timerBtn = e.target.closest('.timer-btn');
     if (timerBtn && timerBtn.dataset.rest !== undefined && !e.target.closest('.timer-close')) {
-        startTimer(timerBtn, parseInt(timerBtn.dataset.rest, 10) || 60);
+        if (timerBtn.classList.contains('active')) {
+            if (timerBtn.dataset.timerPaused) startTimer(timerBtn, parseInt(timerBtn.dataset.timerPaused, 10) || 60);
+            else toggleTimerPause(timerBtn);
+        } else {
+            startTimer(timerBtn, parseInt(timerBtn.dataset.rest, 10) || 60);
+        }
     }
 });
 document.body.addEventListener('keydown', (e) => {
