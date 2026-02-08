@@ -31,7 +31,7 @@
           "sets": "4",
           "reps": "10-12",
           "rest": "90s",
-		  "charge": "20",
+		      "charge": "20",
           "rpe_target": "8",
           "check_technique": true,
           "note_coach": "Contraction maximale des fessiers en haut. Pousse plutôt avec l'arrière des pieds."
@@ -179,7 +179,7 @@
           "rpe_target": "8",
           "check_technique": true,
           "superset_type": "middle",
-          "note_coach": "Rythme soutenu. Descend bas sur le squat et "rebondis" bien, comme une grenouille."
+          "note_coach": "Rythme soutenu. Descend bas sur le squat et rebondis bien, comme une grenouille."
         },
         {
           "name": "Mountain Climbers",
