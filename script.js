@@ -363,9 +363,10 @@ function renderSession(sessionIndex, dateStr) {
                 currentSupersetBlock = null;
                 supersetPos = 0;
             }
-            const isWarmupSection = /échauffement|echauffement/i.test(exo.title || '');
-            if (isWarmupSection) {
-                const notes = (exo.coach_notes != null ? String(exo.coach_notes) : 'Les notes du coach').trim() || 'Les notes du coach';
+            const titleNorm = (exo.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const isWarmupSection = titleNorm.includes('echauffement');
+            if (isWarmupSection && exo.coach_notes) {
+                const notes = String(exo.coach_notes).trim() || 'Les notes du coach';
                 const safe = notes.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><span class="coach-notes-icon">💡</span><span class="coach-notes-text">${safe}</span></div>`);
             }
