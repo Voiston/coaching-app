@@ -1,5 +1,5 @@
 /* --- FONTS & VARIABLES --- */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap');
 
 :root {
     --primary: #B76E79;
@@ -318,12 +318,11 @@ body {
 .header-main { padding: 16px 20px 20px; position: relative; }
 .header-top {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: 1fr auto;
     align-items: center;
     gap: 12px;
     margin-bottom: 14px;
 }
-.header-left { justify-self: start; }
 .header-center {
     justify-self: center;
     text-align: center;
@@ -391,7 +390,6 @@ body {
         justify-content: center;
     }
 }
-.logo-area { font-size: 0.7rem; letter-spacing: 3px; color: var(--primary); font-weight: 600; text-transform: uppercase; }
 .btn-add-to-agenda,
 .btn-dark-mode,
 .btn-focus-mode,
@@ -547,7 +545,8 @@ body {
 }
 .progression-sparkline-bar:last-child { opacity: 1; }
 
-/* --- MODE FOCUS (un exercice à la fois) --- */
+/* --- MODE FOCUS (un exercice à la fois, plein écran, minimal) --- */
+body.guided-mode { overflow: hidden; height: 100vh; height: 100dvh; }
 body.guided-mode .calendar-wrap,
 body.guided-mode .stats-bar,
 body.guided-mode .btn-progression-toggle,
@@ -556,8 +555,31 @@ body.guided-mode .reset-session-wrap,
 body.guided-mode .whatsapp-bottom,
 body.guided-mode .coach-signature { display: none !important; }
 body.guided-mode .exercise-card { display: none !important; }
-body.guided-mode .exercise-card.guided-current { display: block !important; }
-body.guided-mode .guided-nav { display: flex !important; }
+body.guided-mode .exercise-card.guided-current {
+    display: flex !important;
+    flex-direction: column !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 10 !important;
+    margin: 0 !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0 !important;
+}
+body.guided-mode #workout-container { overflow: hidden !important; min-height: 0 !important; }
+body.guided-mode .guided-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 20 !important;
+    background: var(--card-bg);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    padding: 12px 20px max(12px, env(safe-area-inset-bottom));
+}
 .guided-nav {
     display: none;
     justify-content: center;
@@ -862,7 +884,9 @@ main {
 .exercise-header:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }
 
 .exercise-title {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
     font-size: 1.45rem;
     color: var(--text-main);
     font-weight: 700;
@@ -1040,6 +1064,38 @@ main {
     white-space: nowrap;
 }
 .set-label .set-num { display: inline-block; }
+
+/* Warm-up cellule unique (s'ajoute avant les séries) */
+.set-wrapper-warmup-only {
+    min-width: 62px;
+    cursor: pointer;
+}
+.set-label-warmup-only {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 58px;
+    min-height: 44px;
+    border-radius: 8px;
+    border: 2px dashed #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #b45309;
+    padding: 6px 8px;
+    box-sizing: border-box;
+}
+.set-wrapper-warmup-only:hover .set-label-warmup-only {
+    background: rgba(245, 158, 11, 0.18);
+}
+.warmup-list li.warmup-intro {
+    list-style: none;
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin-bottom: 6px;
+}
 
 /* --- CHRONO EFFORT (Active Timer) --- */
 .active-timer-btn {
@@ -1253,7 +1309,34 @@ main {
     gap: 8px;
 }
 .rpe-modal-slider-wrap label { font-size: 0.8rem; font-weight: 600; color: var(--text-main); }
-.rpe-modal-slider { width: 100%; accent-color: var(--primary); }
+.rpe-modal-slider {
+    width: 100%;
+    height: 28px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(to right, #22c55e 0%, #84cc16 25%, #eab308 50%, #f59e0b 75%, #ef4444 100%);
+    border-radius: 14px;
+    outline: none;
+}
+.rpe-modal-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--text-main);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    cursor: pointer;
+}
+.rpe-modal-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--text-main);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    cursor: pointer;
+}
 .rpe-modal-value { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
 .rpe-modal-confirm {
     width: 100%;
@@ -1506,8 +1589,7 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     align-items: center;
 }
 .reset-session-wrap:empty { display: none; }
-.reset-session-btn,
-.btn-add-to-calendar {
+.reset-session-btn {
     display: inline-block;
     width: 100%;
     max-width: 280px;
@@ -1517,8 +1599,6 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
-}
-.reset-session-btn {
     background: #f5f5f5;
     border: 1px solid #e0e0e0;
     color: var(--text-main);
@@ -1527,16 +1607,6 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     background: #eee;
     border-color: var(--primary);
     color: var(--primary);
-}
-.btn-add-to-calendar {
-    background: var(--primary-soft);
-    border: 1px solid var(--primary);
-    color: var(--primary-dark);
-}
-.btn-add-to-calendar:hover {
-    background: rgba(183, 110, 121, 0.2);
-    border-color: var(--primary-dark);
-    color: var(--primary-dark);
 }
 
 /* --- SLIDERS BILAN (0-10) --- */

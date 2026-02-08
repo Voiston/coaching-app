@@ -498,13 +498,6 @@ function renderSession(sessionIndex, dateStr) {
         resetBtn.setAttribute('aria-label', 'Recommencer la séance et décocher toutes les séries');
         resetBtn.textContent = "↺ Recommencer la séance";
         resetWrap.appendChild(resetBtn);
-        const addToCalendarBtn = document.createElement('button');
-        addToCalendarBtn.type = 'button';
-        addToCalendarBtn.className = 'btn-add-to-calendar';
-        addToCalendarBtn.setAttribute('data-add-to-calendar', '1');
-        addToCalendarBtn.setAttribute('aria-label', 'Ajouter cette séance à mon agenda');
-        addToCalendarBtn.textContent = "📅 Ajouter à mon agenda";
-        resetWrap.appendChild(addToCalendarBtn);
     }
 
     let currentSupersetBlock = null;
@@ -599,14 +592,15 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
 
     const idCharge = `charge-${sessionId}-${index}`;
     const safeExoName = (exo.name || '').replace(/"/g, '&quot;');
+    if (warmupSets > 0) {
+        checkboxesHtml += `<div class="set-wrapper set-wrapper-warmup-only" data-charge-id="${idCharge}" data-exo-name="${safeExoName}">
+            <span class="set-label set-label-warmup-only">Warm-up</span>
+        </div>`;
+    }
     for (let i = 1; i <= setsCount; i++) {
-        const isWarmup = i <= warmupSets;
-        const setClass = isWarmup ? ' set-label-warmup' : ' set-label-work';
-        const wrapperClass = isWarmup ? ' set-wrapper-warmup' : ' set-wrapper-work';
-        checkboxesHtml += `<div class="set-wrapper${wrapperClass}"${isWarmup ? ` data-charge-id="${idCharge}" data-exo-name="${safeExoName}"` : ''}>
-            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="${isWarmup ? 'Warm-up' : 'Série'} ${i} sur ${setsCount}">
-            <label for="set-${index}-${i}" class="set-label${setClass}" ${isWarmup ? 'data-warmup="1"' : ''}>
-                ${isWarmup ? '<span class="set-warmup-badge">Warm-up</span>' : ''}
+        checkboxesHtml += `<div class="set-wrapper set-wrapper-work">
+            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="Série ${i} sur ${setsCount}">
+            <label for="set-${index}-${i}" class="set-label set-label-work">
                 <span class="set-num">${i}</span>
                 ${checkIcon}
             </label>
@@ -651,8 +645,9 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
     const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${(exo.name || '').replace(/"/g, '&quot;')}" data-alt-name="${altName.replace(/"/g, '&quot;')}" title="Remplacer par : ${altName}" aria-label="Remplacer par ${altName}">${altIconSvg}</button>` : '';
     const activeTimerHtml = isTimeBased ? `<button type="button" class="active-timer-btn" data-target-seconds="${targetSeconds}" aria-label="Lancer le chrono d'effort"><span class="active-timer-text">▶ Go</span></button>` : '';
     const warmupClass = isWarmupExercise ? ' exercise-warmup' : '';
+    const warmupSectionAttr = isWarmupExercise ? ' data-warmup-section="1"' : '';
     return `
-    <div class="exercise-card open${warmupClass}" id="card-${index}" data-index="${index}"${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
+    <div class="exercise-card open${warmupClass}" id="card-${index}" data-index="${index}"${warmupSectionAttr}${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
                 <div class="exercise-title-row"><span class="exercise-title">${exo.name}</span>${altBtnHtml}</div>
@@ -807,9 +802,14 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
                 }, 300);
             }
         };
-        setTimeout(() => {
-            showRpeModal(cardIndex, currentSessionId, exoName, doScroll);
-        }, 400);
+        const isWarmupSection = card?.dataset.warmupSection === '1';
+        if (isWarmupSection) {
+            setTimeout(doScroll, 400);
+        } else {
+            setTimeout(() => {
+                showRpeModal(cardIndex, currentSessionId, exoName, doScroll);
+            }, 400);
+        }
     }
 }
 
@@ -1013,10 +1013,12 @@ function showWarmupGenerator(chargeId, exoName) {
     const s1 = Math.round(target * 0.4 / 2.5) * 2.5 || 20;
     const s2 = Math.round(target * 0.6 / 2.5) * 2.5;
     const s3 = Math.round(target * 0.8 / 2.5) * 2.5;
+    const fmt = (x) => (x % 1 === 0 ? String(x) : x.toFixed(1));
     const lines = [
-        `${s1}kg (40%) x 8 reps`,
-        `${s2}kg (60%) x 5 reps`,
-        `${s3}kg (80%) x 3 reps`,
+        `Sans pause :`,
+        `${fmt(s1)}kg (40%) x 8 reps`,
+        `${fmt(s2)}kg (60%) x 5 reps`,
+        `${fmt(s3)}kg (80%) x 3 reps`,
         `➜ Go ${target}kg !`
     ];
     let el = document.getElementById('warmup-overlay');
@@ -1029,8 +1031,8 @@ function showWarmupGenerator(chargeId, exoName) {
         el.querySelector('.warmup-close').onclick = () => el.classList.remove('active');
         el.onclick = (e) => { if (e.target === el) el.classList.remove('active'); };
     }
-    el.querySelector('h3').textContent = `🔥 Échauffement ${exoName}`;
-    el.querySelector('.warmup-list').innerHTML = lines.map(l => `<li>${l}</li>`).join('');
+    el.querySelector('h3').textContent = `Échauffement ${exoName}`;
+    el.querySelector('.warmup-list').innerHTML = lines.map((l, i) => `<li class="${i === 0 ? 'warmup-intro' : ''}">${l}</li>`).join('');
     el.classList.add('active');
 }
 
@@ -1104,6 +1106,8 @@ function showRpeTooltip(btn) {
     pop.className = 'rpe-tooltip-popover';
     pop.innerHTML = `
         <div class="rpe-scale-title">Échelle RPE (effort ressenti)</div>
+        <div class="rpe-scale-bar"><span class="rpe-seg rpe-seg-low"></span><span class="rpe-seg rpe-seg-mid"></span><span class="rpe-seg rpe-seg-high"></span></div>
+        <div class="rpe-scale-labels"><span>1-2</span><span>3-4</span><span>5-6</span><span>7-8</span><span>9-10</span></div>
         <div class="rpe-scale-items rpe-scale-items-new">
             <div class="rpe-scale-row"><span class="rpe-range">1/2</span><span class="rpe-desc">Très facile</span></div>
             <div class="rpe-scale-row"><span class="rpe-range">3/4</span><span class="rpe-desc">Facile</span></div>
@@ -1604,11 +1608,6 @@ document.body.addEventListener('click', (e) => {
         return;
     }
     if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }
-    if (e.target.closest('[data-add-to-calendar]')) {
-        const btn = e.target.closest('[data-add-to-calendar]');
-        if (btn) showAddToCalendarMenu(btn);
-        return;
-    }
     const headerAgendaBtn = e.target.closest('#btn-add-to-agenda');
     if (headerAgendaBtn) {
         e.preventDefault();
@@ -1623,12 +1622,11 @@ document.body.addEventListener('click', (e) => {
     }
     const altBtn = e.target.closest('.btn-alternative');
     if (altBtn) { e.stopPropagation(); swapExerciseAlternative(altBtn); return; }
-    const warmupLabel = e.target.closest('.set-label-warmup');
-    if (warmupLabel) {
+    const warmupCell = e.target.closest('.set-wrapper-warmup-only');
+    if (warmupCell) {
         e.preventDefault();
         e.stopPropagation();
-        const wrapper = warmupLabel.closest('.set-wrapper-warmup');
-        if (wrapper) { showWarmupGenerator(wrapper.dataset.chargeId, wrapper.dataset.exoName || 'cet exercice'); }
+        showWarmupGenerator(warmupCell.dataset.chargeId, warmupCell.dataset.exoName || 'cet exercice');
         return;
     }
     const rpeBtn = e.target.closest('.btn-rpe-badge');
