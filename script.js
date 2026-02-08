@@ -636,6 +636,12 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
                 if(header) toggleCard(header); 
             }, 300);
         }
+        const nextCard = document.getElementById(`card-${cardIndex + 1}`);
+        if (nextCard) {
+            setTimeout(() => {
+                nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 400);
+        }
     }
 }
 
