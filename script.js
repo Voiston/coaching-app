@@ -356,6 +356,12 @@ function renderSession(sessionIndex, dateStr) {
     let supersetPos = 0;
     let inWarmupSection = false;
 
+    const sessionIntro = (session.session_intro || session.objectives || session.coach_notes || '').toString().trim();
+    if (sessionIntro) {
+        const safe = sessionIntro.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><span class="coach-notes-icon">💡</span><div class="coach-notes-text">${safe}</div></div>`);
+    }
+
     session.exercises.forEach((exo, index) => {
         if (exo.type === "section") {
             if (currentSupersetBlock) {
@@ -365,10 +371,12 @@ function renderSession(sessionIndex, dateStr) {
             }
             const titleNorm = (exo.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const isWarmupSection = titleNorm.includes('echauffement');
-            if (isWarmupSection && exo.coach_notes) {
-                const notes = String(exo.coach_notes).trim() || 'Les notes du coach';
-                const safe = notes.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><span class="coach-notes-icon">💡</span><span class="coach-notes-text">${safe}</span></div>`);
+            if (exo.coach_notes) {
+                const notes = String(exo.coach_notes).trim();
+                if (notes) {
+                    const safe = notes.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                    container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><span class="coach-notes-icon">💡</span><div class="coach-notes-text">${safe}</div></div>`);
+                }
             }
             container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
             inWarmupSection = isWarmupSection;

@@ -8,12 +8,12 @@
       "id": "s_1jambes",
       "date": "2026-02-10",
       "name": "Hypertrophie: Courbes & Galbe",
+      "session_intro": "Séance axée renforcement musculaire (fessiers en priorité). Objectif : développer la force et la masse musculaire de ces zones.",
       "nutrition_tip": "Consomme des protéines dans les 2h après la séance pour la récupération.",
       "exercises": [
         {
           "type": "section",
-          "title": "Échauffement Spécifique",
-          "coach_notes": "Séance axée renforcement musculaire ( Fessiers en priorité ). L'objectif est de développer la force et la masse musculaire de ces zones."
+          "title": "Échauffement Spécifique"
         },
         {
           "name": "Rotations Thoraciques + Wall Slides + Glute Bridge",

@@ -765,10 +765,10 @@ main {
 /* --- ENCADRÉ "LES NOTES DU COACH" (avant premier exo échauffement) --- */
 .coach-notes-intro {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 20px;
-    margin: 16px 0 20px 0;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    margin: 0 0 24px 0;
     background: linear-gradient(135deg, rgba(229, 163, 42, 0.12) 0%, rgba(229, 163, 42, 0.06) 100%);
     border: 1px solid rgba(229, 163, 42, 0.35);
     border-radius: var(--radius);
@@ -778,7 +778,8 @@ main {
     color: #b8860b;
     box-shadow: 0 2px 8px rgba(229, 163, 42, 0.1);
 }
-.coach-notes-icon { font-size: 1.3rem; }
+.coach-notes-icon { font-size: 1.3rem; flex-shrink: 0; }
+.coach-notes-text { flex: 1; line-height: 1.5; white-space: pre-wrap; }
 
 /* --- SECTIONS (Échauffement, etc.) --- */
 .section-title {
