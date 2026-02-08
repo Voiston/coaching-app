@@ -1,10 +1,11 @@
 {
   "clientName": "Océane",
   "programTitle": "Wedding Countdown: Shape & Burn",
+  "recovery_url": "https://www.youtube.com/watch?v=4BOTvaRaDjI",
   "weeklyGoal": 3,
   "sessions": [
     {
-      "id": "s_1",
+      "id": "s_1jambes",
       "date": "2026-02-10",
       "name": "Hypertrophie: Courbes & Galbe",
       "nutrition_tip": "Consomme des protéines dans les 2h après la séance pour la récupération.",
