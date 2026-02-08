@@ -43,6 +43,8 @@
 [data-theme="dark"] .detail-box { background: rgba(212, 137, 148, 0.15); border-color: rgba(212, 137, 148, 0.3); }
 [data-theme="dark"] .detail-label { color: var(--primary); }
 [data-theme="dark"] .coach-note { background: var(--primary-soft); border-left-color: var(--primary); }
+[data-theme="dark"] .coach-notes-intro { background: rgba(229, 163, 42, 0.15); border-color: rgba(229, 163, 42, 0.4); color: #e5b84d; }
+[data-theme="dark"] .exercise-card.exercise-warmup.open { border-left-color: #e5b84d; }
 [data-theme="dark"] #progress-container { background: #251e20; }
 [data-theme="dark"] .btn-copy-link,
 [data-theme="dark"] .btn-dark-mode,
@@ -781,6 +783,24 @@ main {
     padding: 10px 20px;
 }
 
+/* --- ENCADRÉ "LES NOTES DU COACH" (avant premier exo échauffement) --- */
+.coach-notes-intro {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    margin: 16px 0 20px 0;
+    background: linear-gradient(135deg, rgba(229, 163, 42, 0.12) 0%, rgba(229, 163, 42, 0.06) 100%);
+    border: 1px solid rgba(229, 163, 42, 0.35);
+    border-radius: var(--radius);
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #b8860b;
+    box-shadow: 0 2px 8px rgba(229, 163, 42, 0.1);
+}
+.coach-notes-icon { font-size: 1.3rem; }
+
 /* --- SECTIONS (Échauffement, etc.) --- */
 .section-title {
     font-family: 'Playfair Display', serif;
@@ -894,6 +914,7 @@ main {
 .exercise-card.open .toggle-icon { transform: rotate(180deg); }
 .exercise-card.open .exercise-header { border-bottom: 1px solid #f0f0f0; }
 .exercise-card.open { border-left: 5px solid var(--primary); }
+.exercise-card.exercise-warmup.open { border-left-color: #e5a32a; }
 
 /* Contenu Caché (Corps de l'exo) */
 .exercise-content {
@@ -918,7 +939,8 @@ main {
 .detail-label { display: block; font-size: 0.6rem; color: var(--primary-dark); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 .detail-value { font-size: 1rem; font-weight: 700; color: var(--text-main); }
 
-.timer-btn { grid-column: span 3; background: #333; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; gap: 10px; margin-top:5px; position: relative; }
+.timer-btn { grid-column: span 3; display: none; background: #333; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Poppins', sans-serif; justify-content: center; align-items: center; gap: 10px; margin-top:5px; position: relative; }
+.timer-btn.timer-floating { display: flex !important; }
 .timer-btn.active { background: var(--primary); }
 .timer-close {
     display: none;
@@ -943,11 +965,12 @@ main {
     bottom: 100px;
     right: 20px;
     z-index: 150;
-    padding: 12px 40px 12px 20px;
+    padding: 16px 48px 16px 24px;
     border-radius: 50px;
     box-shadow: 0 8px 24px rgba(183, 110, 121, 0.4);
-    min-width: 160px;
+    min-width: 180px;
 }
+.timer-btn.timer-floating .timer-text { font-size: 1.5rem; font-weight: 700; }
 .timer-btn.timer-floating .timer-close {
     display: flex;
     align-items: center;

@@ -355,6 +355,8 @@ function renderSession(sessionIndex, dateStr) {
 
     let currentSupersetBlock = null;
     let supersetPos = 0;
+    let inWarmupSection = false;
+    let warmupNotesShown = false;
 
     session.exercises.forEach((exo, index) => {
         if (exo.type === "section") {
@@ -364,18 +366,26 @@ function renderSession(sessionIndex, dateStr) {
                 supersetPos = 0;
             }
             container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
+            inWarmupSection = /échauffement|echauffement/i.test(exo.title || '');
+            warmupNotesShown = false;
             return;
+        }
+
+        if (currentSupersetBlock) supersetPos++;
+        const isWarmupExercise = inWarmupSection;
+        if (inWarmupSection && !warmupNotesShown) {
+            container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><span class="coach-notes-icon">💡</span> Les notes du coach</div>`);
+            warmupNotesShown = true;
         }
 
         if (exo.superset_type === "start") {
             currentSupersetBlock = document.createElement('div');
             currentSupersetBlock.className = "superset-block";
             currentSupersetBlock.innerHTML = '<div class="superset-label">Superset</div><div class="superset-row"></div>';
-            supersetPos = 0;
+            supersetPos = 1;
         }
 
-        if (currentSupersetBlock) supersetPos++;
-        const cardHtml = createExerciseCard(exo, index, currentSessionId, supersetPos > 0 ? supersetPos : null);
+        const cardHtml = createExerciseCard(exo, index, currentSessionId, supersetPos > 0 ? supersetPos : null, isWarmupExercise);
         const row = currentSupersetBlock ? currentSupersetBlock.querySelector('.superset-row') : null;
 
         if (row) {
@@ -408,7 +418,7 @@ function renderSession(sessionIndex, dateStr) {
     }
 }
 
-function createExerciseCard(exo, index, sessionId, supersetRoleNum) {
+function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExercise) {
     let mediaHtml = '';
     if (exo.image && (exo.image.includes('youtube') || exo.image.includes('youtu.be'))) {
         mediaHtml = `<a href="${exo.image}" target="_blank" class="video-btn">▶ Voir la démo vidéo</a>`;
@@ -477,8 +487,9 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum) {
     const altIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>`;
     const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${(exo.name || '').replace(/"/g, '&quot;')}" data-alt-name="${altName.replace(/"/g, '&quot;')}" title="Remplacer par : ${altName}" aria-label="Remplacer par ${altName}">${altIconSvg}</button>` : '';
     const activeTimerHtml = isTimeBased ? `<button type="button" class="active-timer-btn" data-target-seconds="${targetSeconds}" aria-label="Lancer le chrono d'effort"><span class="active-timer-text">▶ Go</span></button>` : '';
+    const warmupClass = isWarmupExercise ? ' exercise-warmup' : '';
     return `
-    <div class="exercise-card open" id="card-${index}" data-index="${index}"${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
+    <div class="exercise-card open${warmupClass}" id="card-${index}" data-index="${index}"${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
                 <div class="exercise-title-row"><span class="exercise-title">${exo.name}</span>${altBtnHtml}</div>
@@ -496,8 +507,8 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum) {
                     <div class="detail-box"><span class="detail-label">Reps</span><span class="detail-value detail-reps">${repsDisplayInit}</span></div>
                     <div class="detail-box"><span class="detail-label">Repos</span><span class="detail-value detail-rest">${restDisplayInit}</span></div>
                     ${tempoHtml}
-                    <button type="button" class="timer-btn" data-rest="${restSec}" aria-label="Lancer le chronomètre de repos de ${exo.rest}">
-                        <span class="timer-icon">⏱️</span><span class="timer-text">Lancer le repos</span>
+                    <button type="button" class="timer-btn" data-rest="${restSec}" aria-label="Chronomètre de repos (déclenché par les séries)">
+                        <span class="timer-icon">⏱️</span><span class="timer-text">Repos</span>
                         <span class="timer-close" aria-label="Arrêter le chronomètre">×</span>
                     </button>
                     ${activeTimerHtml}
