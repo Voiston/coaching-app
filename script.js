@@ -356,7 +356,6 @@ function renderSession(sessionIndex, dateStr) {
     let currentSupersetBlock = null;
     let supersetPos = 0;
     let inWarmupSection = false;
-    let warmupNotesShown = false;
 
     session.exercises.forEach((exo, index) => {
         if (exo.type === "section") {
@@ -365,18 +364,18 @@ function renderSession(sessionIndex, dateStr) {
                 currentSupersetBlock = null;
                 supersetPos = 0;
             }
+            const isWarmupSection = /échauffement|echauffement/i.test(exo.title || '');
+            if (isWarmupSection) {
+                const notes = (exo.coach_notes != null ? String(exo.coach_notes) : 'Les notes du coach').trim() || 'Les notes du coach';
+                const safe = notes.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><span class="coach-notes-icon">💡</span><span class="coach-notes-text">${safe}</span></div>`);
+            }
             container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
-            inWarmupSection = /échauffement|echauffement/i.test(exo.title || '');
-            warmupNotesShown = false;
+            inWarmupSection = isWarmupSection;
             return;
         }
 
         if (currentSupersetBlock) supersetPos++;
-        const isWarmupExercise = inWarmupSection;
-        if (inWarmupSection && !warmupNotesShown) {
-            container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><span class="coach-notes-icon">💡</span> Les notes du coach</div>`);
-            warmupNotesShown = true;
-        }
 
         if (exo.superset_type === "start") {
             currentSupersetBlock = document.createElement('div');
@@ -570,7 +569,7 @@ function updateAllExerciseDetails() {
     document.querySelectorAll('.exercise-card').forEach(card => updateExerciseDetails(card));
 }
 
-function updateSupersetHighlight() {
+function updateSupersetHighlight(shouldScrollToCurrent) {
     document.querySelectorAll('.set-wrapper').forEach(w => w.classList.remove('superset-next-set'));
     document.querySelectorAll('.superset-block').forEach((block) => {
         const cards = Array.from(block.querySelectorAll('.exercise-card[data-superset-role]'))
@@ -584,7 +583,12 @@ function updateSupersetHighlight() {
         if (totalChecked < totalSets) {
             const currentIndex = totalChecked % numCards;
             const currentCard = cards[currentIndex];
-            if (currentCard) currentCard.classList.add('superset-current');
+            if (currentCard) {
+                currentCard.classList.add('superset-current');
+                if (shouldScrollToCurrent && window.matchMedia('(max-width: 768px)').matches) {
+                    currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
             const nextCardIndex = totalChecked % numCards;
             const nextSetIndex = Math.floor(totalChecked / numCards) + 1;
             const nextCard = cards[nextCardIndex];
@@ -602,7 +606,7 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
     if (sessionStartTime === null) sessionStartTime = Date.now();
     updateProgress(true); 
     saveData(); 
-    updateSupersetHighlight();
+    updateSupersetHighlight(true);
     if (document.body.classList.contains('guided-mode')) {
         guidedViewIndex = getFirstIncompleteIndex();
         updateGuidedMode();
