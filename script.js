@@ -354,12 +354,14 @@ function renderSession(sessionIndex, dateStr) {
     }
 
     let currentSupersetBlock = null;
+    let supersetPos = 0;
 
     session.exercises.forEach((exo, index) => {
         if (exo.type === "section") {
             if (currentSupersetBlock) {
                 container.appendChild(currentSupersetBlock);
                 currentSupersetBlock = null;
+                supersetPos = 0;
             }
             container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
             return;
@@ -369,9 +371,11 @@ function renderSession(sessionIndex, dateStr) {
             currentSupersetBlock = document.createElement('div');
             currentSupersetBlock.className = "superset-block";
             currentSupersetBlock.innerHTML = '<div class="superset-label">Superset</div><div class="superset-row"></div>';
+            supersetPos = 0;
         }
 
-        const cardHtml = createExerciseCard(exo, index, currentSessionId);
+        if (currentSupersetBlock) supersetPos++;
+        const cardHtml = createExerciseCard(exo, index, currentSessionId, supersetPos > 0 ? supersetPos : null);
         const row = currentSupersetBlock ? currentSupersetBlock.querySelector('.superset-row') : null;
 
         if (row) {
@@ -379,6 +383,7 @@ function renderSession(sessionIndex, dateStr) {
             if (exo.superset_type === "end") {
                 container.appendChild(currentSupersetBlock);
                 currentSupersetBlock = null;
+                supersetPos = 0;
             }
         } else {
             container.insertAdjacentHTML('beforeend', cardHtml);
@@ -403,7 +408,7 @@ function renderSession(sessionIndex, dateStr) {
     }
 }
 
-function createExerciseCard(exo, index, sessionId) {
+function createExerciseCard(exo, index, sessionId, supersetRoleNum) {
     let mediaHtml = '';
     if (exo.image && (exo.image.includes('youtube') || exo.image.includes('youtu.be'))) {
         mediaHtml = `<a href="${exo.image}" target="_blank" class="video-btn">▶ Voir la démo vidéo</a>`;
@@ -466,7 +471,7 @@ function createExerciseCard(exo, index, sessionId) {
         : '';
 
     const restSec = parseInt(String(exo.rest).replace(/\D/g, ''), 10) || 60;
-    const supersetRole = exo.superset_type === 'start' ? '1' : exo.superset_type === 'end' ? '2' : '';
+    const supersetRole = supersetRoleNum != null ? String(supersetRoleNum) : '';
     const altData = exo.alternative ? (typeof exo.alternative === 'string' ? { name: exo.alternative } : exo.alternative) : null;
     const altName = altData ? (altData.name || String(exo.alternative)) : '';
     const altIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>`;
@@ -557,22 +562,26 @@ function updateAllExerciseDetails() {
 function updateSupersetHighlight() {
     document.querySelectorAll('.set-wrapper').forEach(w => w.classList.remove('superset-next-set'));
     document.querySelectorAll('.superset-block').forEach((block) => {
-        const cards = block.querySelectorAll('.exercise-card[data-superset-role]');
-        if (cards.length !== 2) return;
-        const [card1, card2] = Array.from(cards);
+        const cards = Array.from(block.querySelectorAll('.exercise-card[data-superset-role]'))
+            .sort((a, b) => parseInt(a.dataset.supersetRole, 10) - parseInt(b.dataset.supersetRole, 10));
+        const numCards = cards.length;
+        if (numCards < 2) return;
         const checkboxes = block.querySelectorAll('.set-checkbox');
         const totalChecked = block.querySelectorAll('.set-checkbox:checked').length;
         const totalSets = checkboxes.length;
-        if (totalChecked >= totalSets) {
-            card1.classList.remove('superset-current');
-            card2.classList.remove('superset-current');
-        } else {
-            card1.classList.toggle('superset-current', totalChecked % 2 === 0);
-            card2.classList.toggle('superset-current', totalChecked % 2 === 1);
-            const nextCb = Array.from(checkboxes).find(cb => !cb.checked);
-            if (nextCb) {
-                const wrapper = nextCb.closest('.set-wrapper');
-                if (wrapper) wrapper.classList.add('superset-next-set');
+        cards.forEach(c => c.classList.remove('superset-current'));
+        if (totalChecked < totalSets) {
+            const currentIndex = totalChecked % numCards;
+            const currentCard = cards[currentIndex];
+            if (currentCard) currentCard.classList.add('superset-current');
+            const nextCardIndex = totalChecked % numCards;
+            const nextSetIndex = Math.floor(totalChecked / numCards) + 1;
+            const nextCard = cards[nextCardIndex];
+            if (nextCard) {
+                const nextWrapper = nextCard.querySelector(`.set-checkbox[data-set-num="${nextSetIndex}"]`)?.closest('.set-wrapper');
+                if (nextWrapper && !nextWrapper.querySelector('.set-checkbox:checked')) {
+                    nextWrapper.classList.add('superset-next-set');
+                }
             }
         }
     });
@@ -781,6 +790,7 @@ function startActiveTimer(btn) {
         }
     }, 1000);
     btn.dataset.activeTimerInterval = interval;
+        
     if (textEl) textEl.textContent = '0s';
 }
 
