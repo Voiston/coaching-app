@@ -645,7 +645,7 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
             const target = nextHeader || nextCard;
             setTimeout(() => {
                 target.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
-            }, 400);
+            }, 900);
         }
     }
 }
