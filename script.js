@@ -449,9 +449,9 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
         const setClass = isWarmup ? ' set-label-warmup' : ' set-label-work';
         const wrapperClass = isWarmup ? ' set-wrapper-warmup' : ' set-wrapper-work';
         checkboxesHtml += `<div class="set-wrapper${wrapperClass}"${isWarmup ? ` data-charge-id="${idCharge}" data-exo-name="${safeExoName}"` : ''}>
-            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="${isWarmup ? 'Chauffe' : 'Série'} ${i} sur ${setsCount}">
+            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="${isWarmup ? 'Warm-up' : 'Série'} ${i} sur ${setsCount}">
             <label for="set-${index}-${i}" class="set-label${setClass}" ${isWarmup ? 'data-warmup="1"' : ''}>
-                ${isWarmup ? '<span class="set-warmup-badge">Chauffe</span>' : ''}
+                ${isWarmup ? '<span class="set-warmup-badge">Warm-up</span>' : ''}
                 <span class="set-num">${i}</span>
                 ${checkIcon}
             </label>
@@ -855,15 +855,13 @@ function showWarmupGenerator(chargeId, exoName) {
         showToast('Saisis ta charge de travail (kg) pour générer l\'échauffement.');
         return;
     }
-    const bar = 20;
-    const s1 = Math.round(target * 0.4 / 2.5) * 2.5 || bar;
+    const s1 = Math.round(target * 0.4 / 2.5) * 2.5 || 20;
     const s2 = Math.round(target * 0.6 / 2.5) * 2.5;
     const s3 = Math.round(target * 0.8 / 2.5) * 2.5;
     const lines = [
-        `Barre à vide (${bar}kg) x 10 reps`,
-        `${s1}kg x 8 reps`,
-        `${s2}kg x 5 reps`,
-        `${s3}kg x 3 reps`,
+        `${s1}kg (40%) x 8 reps`,
+        `${s2}kg (60%) x 5 reps`,
+        `${s3}kg (80%) x 3 reps`,
         `➜ Go ${target}kg !`
     ];
     let el = document.getElementById('warmup-overlay');

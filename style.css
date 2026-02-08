@@ -1046,9 +1046,11 @@ main {
 }
 .set-wrapper-warmup {
     position: relative;
+    min-width: 52px;
 }
 .set-label-warmup {
     cursor: pointer;
+    min-width: 48px;
 }
 .set-label .set-warmup-badge {
     display: block;
@@ -1058,6 +1060,7 @@ main {
     letter-spacing: 0.5px;
     color: #b45309;
     margin-bottom: 2px;
+    white-space: nowrap;
 }
 .set-label .set-num { display: inline-block; }
 
