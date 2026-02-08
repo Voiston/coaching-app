@@ -984,7 +984,7 @@ function toggleTimerPause(btn) {
     if (timeLeft <= 0) return;
     btn.dataset.timerPaused = timeLeft;
     timerText.textContent = `Repos : ${timeLeft}s (pause)`;
-    btn.classList.remove('timer-floating');
+    /* Garder le timer flottant en pause pour qu’un clic = pause, croix = supprimer */
 }
 
 function stopTimer(btn) {
@@ -1684,17 +1684,17 @@ document.body.addEventListener('click', (e) => {
     }
     const header = e.target.closest('.exercise-header');
     if (header) { toggleCard(header); return; }
-    const timerClose = e.target.closest('.timer-close');
-    if (timerClose) {
-        const timerBtn = timerClose.closest('.timer-btn');
-        if (timerBtn && timerBtn.classList.contains('active')) {
-            e.stopPropagation();
-            stopTimer(timerBtn);
-        }
-        return;
-    }
     const timerBtn = e.target.closest('.timer-btn');
-    if (timerBtn && timerBtn.dataset.rest !== undefined && !e.target.closest('.timer-close')) {
+    if (timerBtn && timerBtn.dataset.rest !== undefined) {
+        const clickedClose = e.target.closest('.timer-close');
+        if (clickedClose) {
+            /* Vrai clic sur la croix = arrêter / supprimer le chrono */
+            e.stopPropagation();
+            if (timerBtn.classList.contains('active')) stopTimer(timerBtn);
+            return;
+        }
+        /* Clic sur le timer (pas sur la croix) = pause ou démarrer */
+        e.stopPropagation();
         if (timerBtn.classList.contains('active')) {
             if (timerBtn.dataset.timerPaused) startTimer(timerBtn, parseInt(timerBtn.dataset.timerPaused, 10) || 60);
             else toggleTimerPause(timerBtn);
