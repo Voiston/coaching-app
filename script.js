@@ -584,7 +584,7 @@ function updateSupersetHighlight(shouldScrollToCurrent) {
             const currentCard = cards[currentIndex];
             if (currentCard) {
                 currentCard.classList.add('superset-current');
-                if (shouldScrollToCurrent && window.matchMedia('(max-width: 768px)').matches) {
+                if (shouldScrollToCurrent && totalChecked >= 1) {
                     currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             }
