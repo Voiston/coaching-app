@@ -2,7 +2,7 @@
 const COACH_PHONE_NUMBER = "33662110786"; // TON NUMÉRO
 const COACH_NAME = "David";
 const DEFAULT_RECOVERY_VIDEO_URL = "https://www.youtube.com/watch?v=4BOTvaRaDjI"; // Stretching générique 10min
-const APP_VERSION = "2.5";
+const APP_VERSION = "2.6";
 const PAST_DAYS = 3;
 const DAYS_AHEAD = 21;
 
@@ -449,9 +449,10 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
         const setClass = isWarmup ? ' set-label-warmup' : ' set-label-work';
         const wrapperClass = isWarmup ? ' set-wrapper-warmup' : ' set-wrapper-work';
         checkboxesHtml += `<div class="set-wrapper${wrapperClass}"${isWarmup ? ` data-charge-id="${idCharge}" data-exo-name="${safeExoName}"` : ''}>
-            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="Série ${i} sur ${setsCount}">
-            <label for="set-${index}-${i}" class="set-label${setClass}">
-                ${i}
+            <input type="checkbox" id="set-${index}-${i}" class="set-checkbox" data-card-index="${index}" data-set-num="${i}" data-total-sets="${setsCount}" aria-label="${isWarmup ? 'Chauffe' : 'Série'} ${i} sur ${setsCount}">
+            <label for="set-${index}-${i}" class="set-label${setClass}" ${isWarmup ? 'data-warmup="1"' : ''}>
+                ${isWarmup ? '<span class="set-warmup-badge">Chauffe</span>' : ''}
+                <span class="set-num">${i}</span>
                 ${checkIcon}
             </label>
         </div>`;
@@ -531,7 +532,7 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
                                 <span class="charge-suffix">kg</span>
                             </span>
                         </span>
-                        <span class="input-with-btn"><input type="number" id="${idRpe}" placeholder="RPE" min="1" max="10" aria-label="RPE ressenti" title="Échelle 1-10 de l'effort ressenti (1=facile, 10=maximum)"></span>
+                        <input type="hidden" id="${idRpe}" data-rpe-value="">
                     </div>
                     <input type="text" id="${idCom}" placeholder="Note..." aria-label="Note personnelle">
                 </div>
@@ -636,15 +637,24 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
                 if(header) toggleCard(header); 
             }, 300);
         }
-        const container = document.getElementById('workout-container');
-        const cards = container ? Array.from(container.querySelectorAll('.exercise-card')) : [];
-        const idx = cards.findIndex(c => c.id === `card-${cardIndex}`);
-        const nextCard = idx >= 0 && idx < cards.length - 1 ? cards[idx + 1] : null;
-        if (nextCard) {
-            setTimeout(() => {
-                nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 1200);
-        }
+        const exoName = card?.querySelector('.exercise-title')?.textContent?.trim() || 'Exercice';
+        const doScroll = () => {
+            if (!card) return;
+            const shouldScroll = isLastCardOfSuperset(card);
+            if (!shouldScroll) return;
+            const container = document.getElementById('workout-container');
+            const cards = container ? Array.from(container.querySelectorAll('.exercise-card')) : [];
+            const idx = cards.findIndex(c => c.id === `card-${cardIndex}`);
+            const nextCard = idx >= 0 && idx < cards.length - 1 ? cards[idx + 1] : null;
+            if (nextCard) {
+                setTimeout(() => {
+                    nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        };
+        setTimeout(() => {
+            showRpeModal(cardIndex, currentSessionId, exoName, doScroll);
+        }, 400);
     }
 }
 
@@ -817,19 +827,17 @@ function startActiveTimer(btn) {
     const textEl = btn.querySelector('.active-timer-text');
     const interval = setInterval(() => {
         elapsed++;
-        if (textEl) textEl.textContent = `${elapsed}s`;
         const remaining = targetSec - elapsed;
+        if (textEl) textEl.textContent = remaining > 0 ? `${remaining}s` : 'Terminé !';
         if (remaining > 0 && remaining <= 3) playBeep();
         if (elapsed >= targetSec) {
             clearInterval(interval);
             btn.classList.remove('active');
-            if (textEl) textEl.textContent = 'Terminé !';
             if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
         }
     }, 1000);
     btn.dataset.activeTimerInterval = interval;
-        
-    if (textEl) textEl.textContent = '0s';
+    if (textEl) textEl.textContent = `${targetSec}s`;
 }
 
 function stopActiveTimer(btn) {
@@ -871,6 +879,68 @@ function showWarmupGenerator(chargeId, exoName) {
     el.querySelector('h3').textContent = `🔥 Échauffement ${exoName}`;
     el.querySelector('.warmup-list').innerHTML = lines.map(l => `<li>${l}</li>`).join('');
     el.classList.add('active');
+}
+
+function isLastCardOfSuperset(card) {
+    const block = card.closest('.superset-block');
+    if (!block) return true;
+    const cards = Array.from(block.querySelectorAll('.exercise-card[data-superset-role]'))
+        .sort((a, b) => parseInt(a.dataset.supersetRole, 10) - parseInt(b.dataset.supersetRole, 10));
+    const lastCard = cards[cards.length - 1];
+    return lastCard && card.id === lastCard.id;
+}
+
+function showRpeModal(cardIndex, sessionId, exoName, onConfirm) {
+    const idRpe = `rpe-${sessionId}-${cardIndex}`;
+    let el = document.getElementById('rpe-modal-overlay');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'rpe-modal-overlay';
+        el.className = 'rpe-modal-overlay';
+        el.innerHTML = `
+            <div class="rpe-modal" role="dialog" aria-labelledby="rpe-modal-title" aria-modal="true">
+                <button type="button" class="rpe-modal-close" aria-label="Fermer">×</button>
+                <h3 id="rpe-modal-title">Noter ton RPE</h3>
+                <p class="rpe-modal-exo"></p>
+                <div class="rpe-modal-slider-wrap">
+                    <label for="rpe-modal-slider">Effort ressenti (1 = facile, 10 = max)</label>
+                    <input type="range" id="rpe-modal-slider" class="rpe-modal-slider" min="1" max="10" value="7">
+                    <span class="rpe-modal-value">7</span>
+                </div>
+                <button type="button" class="rpe-modal-confirm">Valider</button>
+            </div>`;
+        document.body.appendChild(el);
+        const closeRpeModal = () => {
+            el.classList.remove('active');
+            if (el._onConfirm) { el._onConfirm(); el._onConfirm = null; }
+        };
+        el.querySelector('.rpe-modal-close').onclick = closeRpeModal;
+        el.onclick = (e) => { if (e.target === el) closeRpeModal(); };
+        el.querySelector('.rpe-modal-slider').addEventListener('input', (e) => {
+            el.querySelector('.rpe-modal-value').textContent = e.target.value;
+        });
+        el.querySelector('.rpe-modal-confirm').onclick = () => {
+            const id = el._currentRpeId;
+            if (id) {
+                const val = el.querySelector('.rpe-modal-slider').value;
+                const input = document.getElementById(id);
+                if (input) input.value = val;
+                if (input && input.dataset) input.dataset.rpeValue = val;
+                saveData();
+            }
+            closeRpeModal();
+        };
+    }
+    el._currentRpeId = idRpe;
+    const existingVal = document.getElementById(idRpe)?.value || '';
+    const slider = el.querySelector('.rpe-modal-slider');
+    const valueSpan = el.querySelector('.rpe-modal-value');
+    if (slider) { slider.value = existingVal || '7'; slider.dispatchEvent(new Event('input')); }
+    if (valueSpan) valueSpan.textContent = slider?.value || '7';
+    el.querySelector('.rpe-modal-exo').textContent = exoName || 'Exercice';
+    el._onConfirm = onConfirm;
+    el.classList.add('active');
+    slider?.focus();
 }
 
 function showRpeTooltip(btn) {
@@ -1426,6 +1496,8 @@ document.body.addEventListener('click', (e) => {
     if (altBtn) { e.stopPropagation(); swapExerciseAlternative(altBtn); return; }
     const warmupLabel = e.target.closest('.set-label-warmup');
     if (warmupLabel) {
+        e.preventDefault();
+        e.stopPropagation();
         const wrapper = warmupLabel.closest('.set-wrapper-warmup');
         if (wrapper) { showWarmupGenerator(wrapper.dataset.chargeId, wrapper.dataset.exoName || 'cet exercice'); }
         return;
