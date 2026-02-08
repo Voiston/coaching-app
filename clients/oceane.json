@@ -1,6 +1,6 @@
 {
   "clientName": "Océane",
-  "programTitle": "Wedding Countdown: Shape & Burn",
+  "programTitle": "Objectif mariage !",
   "recovery_url": "https://www.youtube.com/watch?v=4BOTvaRaDjI",
   "weeklyGoal": 3,
   "sessions": [
@@ -9,20 +9,20 @@
       "date": "2026-02-10",
       "name": "Hypertrophie: Courbes & Galbe",
       "session_intro": "Séance axée renforcement musculaire (fessiers en priorité). Objectif : développer la force et la masse musculaire de ces zones.",
-      "nutrition_tip": "Consomme des protéines dans les 2h après la séance pour la récupération.",
+      "nutrition_tip": "Consomme des protéines dans les heures suivant la séance pour optimiser la récupération.",
       "exercises": [
         {
           "type": "section",
           "title": "Échauffement Spécifique"
         },
         {
-          "name": "Rotations articulaires + burpees lent + squats profond lent",
-          "sets": "2",
+          "name": "Rotations articulaires 2min + 10 burpees lent + 15 squats profond lent",
+          "sets": "1",
           "reps": "Circuit",
           "rest": "0s",
           "rpe_target": "3",
           "check_technique": false,
-          "note_coach": "Focus ouverture cage thoracique."
+          "note_coach": " On monte tranquillement en cardio. Sur les squats, descend bien le plus bas possible."
         },
         {
           "type": "section",
@@ -54,6 +54,7 @@
           "sets": "3",
           "reps": "12",
           "rest": "0s",
+          "charge": "30",
           "rpe_target": "7",
           "check_technique": true,
           "warmup_sets": "1",
@@ -86,8 +87,20 @@
       "date": "2026-02-12",
       "session_intro": " On est toujours sur une séance plutôt renfo, avec un peu de cardio en début de séance.",
       "name": "Hybride: Posture & Force",
-      
       "exercises": [
+        {
+          "type": "section",
+          "title": "Échauffement Spécifique"
+        },
+        {
+          "name": "15 squats profonds lents + 30sec gainage superman +20 fentes avants alternées + 30 pont fessiers",
+          "sets": "1",
+          "reps": "Circuit",
+          "rest": "0s",
+          "rpe_target": "3",
+          "check_technique": false,
+          "note_coach": "Sur les squats, descend bien le plus bas possible."
+        },
         {
           "type": "section",
           "title": "Corps de Séance"
@@ -153,6 +166,19 @@
       "session_intro": " Séance cardio, vas-y à fond !",
       "nutrition_tip": "N'oublie pas de bien boire, tu peux même utiliser une boisson d'effort où ajouter une pincer de sel à ton eau.",
       "exercises": [
+        {
+          "type": "section",
+          "title": "Échauffement Spécifique"
+        },
+        {
+          "name": "Faire 2 tours du circuit lentement et avec des haltère de 3kg",
+          "sets": "1",
+          "reps": "Circuit",
+          "rest": "0s",
+          "rpe_target": "3",
+          "check_technique": false,
+          "note_coach": "Sur les thrusters, descend bien le plus bas possible, tend bien les bras en haut et les poids au dessus de la tête, pas en avant."
+        },
         {
           "type": "section",
           "title": "Circuit Training (4 Tours)"
