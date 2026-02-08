@@ -35,7 +35,7 @@
           "rest": "90s",
 		      "charge": "20",
           "rpe_target": "8",
-          "warmum_sets": "1",
+          "warmup_sets": "1",
           "check_technique": true,
           "note_coach": "Contraction maximale des fessiers en haut. Pousse plutôt avec l'arrière des pieds."
         },
@@ -56,7 +56,7 @@
           "rest": "0s",
           "rpe_target": "7",
           "check_technique": true,
-          "warmum_sets": "1",
+          "warmup_sets": "1",
           "superset_type": "start",
           "note_coach": "Sors la poitrine."
         },
@@ -100,7 +100,7 @@
 		  "charge": "12",
           "rpe_target": "8",
           "check_technique": true, 
-          "warmum_sets": "1",
+          "warmup_sets": "1",
           "note_coach": "Focus chaîne postérieure. Garde le dos bien droit et monte la Kettlebel au moins à hauteur de tes yeux. Contraction des fessiers en fin de mouvement."
         },
         {
@@ -122,7 +122,7 @@
 		  "charge": "10 par haltère",
           "rpe_target": "7",
           "check_technique": true, 
-          "warmum_sets": "1",
+          "warmup_sets": "1",
           "superset_type": "end",
           "note_coach": "Avant-bras verticaux. Les pieds bien ancrés au sol pour la stabilité."
         },
