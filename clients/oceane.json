@@ -82,6 +82,7 @@
     {
       "id": "s_2",
       "date": "2026-02-12",
+      "session_intro": " On est toujours sur une séance plutôt renfo, avec un peu de cardio en début de séance.",
       "name": "Hybride: Posture & Force",
       
       "exercises": [
@@ -145,6 +146,7 @@
       "id": "s_3",
       "date": "2026-02-14",
       "name": "Cardio: Metabolic Fat Burner",
+      "session_intro": " Séance cardio, vas-y à fond !",
       "nutrition_tip": "N'oublie pas de bien boire, tu peux même utiliser une boisson d'effort où ajouter une pincer de sel à ton eau.",
       "exercises": [
         {
