@@ -865,7 +865,7 @@ main {
 
 /* En-tête de la carte (Toujours visible) */
 .exercise-header {
-    scroll-margin-top: 180px;
+    scroll-margin-top: 10px;
     padding: 20px 48px 20px 20px;
     cursor: pointer;
     display: flex;
