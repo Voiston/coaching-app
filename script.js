@@ -70,7 +70,17 @@ function isSessionCompleted(sessionId, dateStr) {
     return getCompletedSessions().some(e => e.sessionId === sessionId && e.date === dateStr);
 }
 
-// --- EXPORT VERS AGENDA (Google Calendar) ---
+// --- EXPORT VERS AGENDA (Google, Apple / .ics) ---
+function getCurrentSessionCalendarData() {
+    if (!globalData || !globalData.sessions || !currentSessionDate) return null;
+    const session = globalData.sessions.find(s => (s.id || '').toString() === (currentSessionId || '').toString())
+        || globalData.sessions.find((_, i) => `session_${i}` === currentSessionId);
+    const name = (session && session.name) ? session.name : 'Séance';
+    const intro = session?.session_intro || session?.objectives || '';
+    const details = [globalData.programTitle, intro].filter(Boolean).join('\n\n');
+    return { name, dateStr: currentSessionDate, details };
+}
+
 function getGoogleCalendarAddUrl(sessionName, dateStr, details, durationMinutes) {
     if (!dateStr || !sessionName) return null;
     const duration = durationMinutes || 60;
@@ -95,19 +105,119 @@ function getGoogleCalendarAddUrl(sessionName, dateStr, details, durationMinutes)
     return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
-function addSessionToGoogleCalendar() {
-    if (!globalData || !globalData.sessions || !currentSessionDate) {
-        showToast('Aucune séance à ajouter.');
+function getIcsContent(sessionName, dateStr, details, durationMinutes) {
+    const duration = durationMinutes || 60;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const start = new Date(y, m - 1, d, 10, 0, 0);
+    const end = new Date(start.getTime() + duration * 60 * 1000);
+    const format = (date) => {
+        const Y = date.getFullYear();
+        const M = String(date.getMonth() + 1).padStart(2, '0');
+        const D = String(date.getDate()).padStart(2, '0');
+        const h = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        const s = String(date.getSeconds()).padStart(2, '0');
+        return `${Y}${M}${D}T${h}${min}${s}`;
+    };
+    const escapeIcs = (s) => String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+    const summary = escapeIcs(sessionName);
+    const description = escapeIcs(details || '');
+    const uid = `seance-${dateStr}-${Date.now()}@mon-coaching`;
+    const dtstamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    return [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Mon Coaching//FR',
+        'CALSCALE:GREGORIAN',
+        'BEGIN:VEVENT',
+        'UID:' + uid,
+        'DTSTAMP:' + dtstamp,
+        'DTSTART:' + format(start),
+        'DTEND:' + format(end),
+        'SUMMARY:' + summary,
+        (description ? 'DESCRIPTION:' + description : ''),
+        'END:VEVENT',
+        'END:VCALENDAR'
+    ].filter(Boolean).join('\r\n');
+}
+
+function downloadIcsFile(sessionName, dateStr, details) {
+    const ics = getIcsContent(sessionName, dateStr, details, 60);
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Seance-${dateStr}.ics`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function openAddToCalendarGoogle() {
+    const data = getCurrentSessionCalendarData();
+    if (!data) { showToast('Ouvre une séance pour l\'ajouter à ton agenda.'); return; }
+    const url = getGoogleCalendarAddUrl(data.name, data.dateStr, data.details || undefined, 60);
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function openAddToCalendarApple() {
+    const data = getCurrentSessionCalendarData();
+    if (!data) { showToast('Ouvre une séance pour l\'ajouter à ton agenda.'); return; }
+    downloadIcsFile(data.name, data.dateStr, data.details);
+    showToast('Fichier .ics téléchargé. Ouvre-le pour l\'ajouter à Apple Calendrier ou un autre agenda.');
+}
+
+function showAddToCalendarMenu(anchorEl) {
+    const data = getCurrentSessionCalendarData();
+    if (!data) {
+        showToast('Ouvre une séance pour l\'ajouter à ton agenda.');
         return;
     }
-    const session = globalData.sessions.find(s => (s.id || '').toString() === (currentSessionId || '').toString())
-        || globalData.sessions.find((_, i) => `session_${i}` === currentSessionId);
-    const name = (session && session.name) ? session.name : 'Séance';
-    const intro = session?.session_intro || session?.objectives || '';
-    const details = [globalData.programTitle, intro].filter(Boolean).join('\n\n');
-    const url = getGoogleCalendarAddUrl(name, currentSessionDate, details || undefined, 60);
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
-    else showToast('Impossible de générer le lien agenda.');
+    const existing = document.getElementById('add-to-calendar-popover');
+    if (existing) { existing.remove(); return; }
+
+    const pop = document.createElement('div');
+    pop.id = 'add-to-calendar-popover';
+    pop.className = 'add-to-calendar-popover';
+    pop.setAttribute('role', 'menu');
+    pop.innerHTML = `
+        <button type="button" class="add-to-calendar-option" data-calendar="google" role="menuitem">Google Agenda</button>
+        <button type="button" class="add-to-calendar-option" data-calendar="apple" role="menuitem">Apple Calendrier</button>
+    `;
+
+    const rect = anchorEl.getBoundingClientRect();
+    const vw = window.innerWidth;
+    pop.style.left = Math.min(rect.left, vw - 220) + 'px';
+    pop.style.top = (rect.bottom + 6) + 'px';
+
+    const close = () => {
+        pop.remove();
+        document.removeEventListener('click', closeOut);
+        document.removeEventListener('touchstart', closeOut);
+        const btn = document.getElementById('btn-add-to-agenda');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    };
+    const closeOut = (e) => {
+        if (!pop.contains(e.target) && e.target !== anchorEl && !anchorEl.contains(e.target)) close();
+    };
+
+    pop.querySelectorAll('.add-to-calendar-option').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (opt.dataset.calendar === 'google') openAddToCalendarGoogle();
+            else if (opt.dataset.calendar === 'apple') openAddToCalendarApple();
+            close();
+        });
+    });
+
+    document.body.appendChild(pop);
+    document.getElementById('header-actions')?.classList.remove('open');
+    document.getElementById('header-menu-btn')?.setAttribute('aria-expanded', 'false');
+    setTimeout(() => { document.addEventListener('click', closeOut); document.addEventListener('touchstart', closeOut); }, 10);
+    const btn = document.getElementById('btn-add-to-agenda');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
 }
 
 // --- CHARGEMENT INITIAL ---
@@ -394,8 +504,8 @@ function renderSession(sessionIndex, dateStr) {
         addToCalendarBtn.type = 'button';
         addToCalendarBtn.className = 'btn-add-to-calendar';
         addToCalendarBtn.setAttribute('data-add-to-calendar', '1');
-        addToCalendarBtn.setAttribute('aria-label', 'Ajouter cette séance à Google Agenda');
-        addToCalendarBtn.textContent = "📅 Ajouter à Google Agenda";
+        addToCalendarBtn.setAttribute('aria-label', 'Ajouter cette séance à mon agenda');
+        addToCalendarBtn.textContent = "📅 Ajouter à mon agenda";
         resetWrap.appendChild(addToCalendarBtn);
     }
 
@@ -1531,7 +1641,17 @@ document.body.addEventListener('click', (e) => {
         return;
     }
     if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }
-    if (e.target.closest('[data-add-to-calendar]')) { addSessionToGoogleCalendar(); return; }
+    if (e.target.closest('[data-add-to-calendar]')) {
+        const btn = e.target.closest('[data-add-to-calendar]');
+        if (btn) showAddToCalendarMenu(btn);
+        return;
+    }
+    const headerAgendaBtn = e.target.closest('#btn-add-to-agenda');
+    if (headerAgendaBtn) {
+        e.preventDefault();
+        showAddToCalendarMenu(headerAgendaBtn);
+        return;
+    }
     const checkTechniqueBtn = e.target.closest('.btn-check-technique');
     if (checkTechniqueBtn) {
         const msg = checkTechniqueBtn.getAttribute('data-wa-msg') || '';

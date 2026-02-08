@@ -46,10 +46,12 @@
 [data-theme="dark"] .coach-notes-intro { background: rgba(160, 140, 180, 0.2); border-color: rgba(180, 160, 200, 0.4); color: #c4b8d4; }
 [data-theme="dark"] .exercise-card.exercise-warmup.open { border-left-color: #e5b84d; }
 [data-theme="dark"] #progress-container { background: #251e20; }
+[data-theme="dark"] .btn-add-to-agenda,
 [data-theme="dark"] .btn-copy-link,
 [data-theme="dark"] .btn-dark-mode,
 [data-theme="dark"] .btn-focus-mode,
 [data-theme="dark"] .btn-settings { background: rgba(255,255,255,0.08); color: var(--text-main); border-color: rgba(255,255,255,0.1); }
+[data-theme="dark"] .btn-add-to-agenda:hover,
 [data-theme="dark"] .btn-copy-link:hover,
 [data-theme="dark"] .btn-dark-mode:hover,
 [data-theme="dark"] .btn-focus-mode:hover,
@@ -382,6 +384,7 @@ body {
         visibility: visible;
         transform: translateY(0);
     }
+    .header-actions .btn-add-to-agenda,
     .header-actions .btn-copy-link,
     .header-actions .btn-guided-mode,
     .header-actions .btn-dark-mode,
@@ -393,6 +396,7 @@ body {
     }
 }
 .logo-area { font-size: 0.7rem; letter-spacing: 3px; color: var(--primary); font-weight: 600; text-transform: uppercase; }
+.btn-add-to-agenda,
 .btn-copy-link,
 .btn-guided-mode,
 .btn-dark-mode,
@@ -409,6 +413,7 @@ body {
     cursor: pointer;
     transition: var(--transition);
 }
+.btn-add-to-agenda:hover,
 .btn-copy-link:hover,
 .btn-guided-mode:hover,
 .btn-dark-mode:hover,
@@ -419,6 +424,7 @@ body {
     color: var(--primary-dark);
     transform: translateY(-1px);
 }
+.btn-add-to-agenda:focus-visible,
 .btn-copy-link:focus-visible,
 .btn-guided-mode:focus-visible,
 .btn-dark-mode:focus-visible,
@@ -1152,6 +1158,35 @@ main {
 .warmup-list { margin: 0; padding-left: 20px; }
 .warmup-list li { margin-bottom: 8px; color: var(--text-main); }
 
+/* --- Popover Ajouter à mon agenda (Google / Apple) --- */
+.add-to-calendar-popover {
+    position: fixed;
+    z-index: 2400;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 8px 0;
+    min-width: 200px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    border: 1px solid rgba(183, 110, 121, 0.2);
+}
+.add-to-calendar-option {
+    display: block;
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    background: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.add-to-calendar-option:hover {
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+}
+
 /* --- TOOLTIP RPE (soigné + mobile) --- */
 .rpe-tooltip-popover {
     position: fixed;
@@ -1546,7 +1581,7 @@ button:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--prim
 /* --- IMPRESSION --- */
 @media print {
     body { background: #fff; padding: 0; }
-    #progress-container, #install-banner, .whatsapp-bottom, .btn-copy-link, .btn-guided-mode, .btn-dark-mode, .btn-focus-mode, .btn-settings,
+    #progress-container, #install-banner, .whatsapp-bottom, .btn-add-to-agenda, .btn-copy-link, .btn-guided-mode, .btn-dark-mode, .btn-focus-mode, .btn-settings,
     .reset-session-wrap, .reset-session-btn, .btn-progression-toggle, .progression-panel, .btn-print-session,
     .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video, .guided-nav { display: none !important; }
     .calendar-wrap.collapsed { max-height: none; opacity: 1; pointer-events: auto; }
