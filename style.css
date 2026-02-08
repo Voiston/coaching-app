@@ -47,12 +47,10 @@
 [data-theme="dark"] .exercise-card.exercise-warmup.open { border-left-color: #e5b84d; }
 [data-theme="dark"] #progress-container { background: #251e20; }
 [data-theme="dark"] .btn-add-to-agenda,
-[data-theme="dark"] .btn-copy-link,
 [data-theme="dark"] .btn-dark-mode,
 [data-theme="dark"] .btn-focus-mode,
 [data-theme="dark"] .btn-settings { background: rgba(255,255,255,0.08); color: var(--text-main); border-color: rgba(255,255,255,0.1); }
 [data-theme="dark"] .btn-add-to-agenda:hover,
-[data-theme="dark"] .btn-copy-link:hover,
 [data-theme="dark"] .btn-dark-mode:hover,
 [data-theme="dark"] .btn-focus-mode:hover,
 [data-theme="dark"] .btn-settings:hover { background: var(--primary-soft); border-color: var(--primary); }
@@ -385,8 +383,6 @@ body {
         transform: translateY(0);
     }
     .header-actions .btn-add-to-agenda,
-    .header-actions .btn-copy-link,
-    .header-actions .btn-guided-mode,
     .header-actions .btn-dark-mode,
     .header-actions .btn-focus-mode,
     .header-actions .btn-settings {
@@ -397,8 +393,6 @@ body {
 }
 .logo-area { font-size: 0.7rem; letter-spacing: 3px; color: var(--primary); font-weight: 600; text-transform: uppercase; }
 .btn-add-to-agenda,
-.btn-copy-link,
-.btn-guided-mode,
 .btn-dark-mode,
 .btn-focus-mode,
 .btn-settings {
@@ -414,8 +408,6 @@ body {
     transition: var(--transition);
 }
 .btn-add-to-agenda:hover,
-.btn-copy-link:hover,
-.btn-guided-mode:hover,
 .btn-dark-mode:hover,
 .btn-focus-mode:hover,
 .btn-settings:hover {
@@ -425,8 +417,6 @@ body {
     transform: translateY(-1px);
 }
 .btn-add-to-agenda:focus-visible,
-.btn-copy-link:focus-visible,
-.btn-guided-mode:focus-visible,
 .btn-dark-mode:focus-visible,
 .btn-focus-mode:focus-visible,
 .btn-settings:focus-visible {
@@ -557,10 +547,9 @@ body {
 }
 .progression-sparkline-bar:last-child { opacity: 1; }
 
-/* --- MODE SÉANCE GUIDÉE --- */
+/* --- MODE FOCUS (un exercice à la fois) --- */
 body.guided-mode .calendar-wrap,
 body.guided-mode .stats-bar,
-body.guided-mode .btn-print-session,
 body.guided-mode .btn-progression-toggle,
 body.guided-mode .progression-panel,
 body.guided-mode .reset-session-wrap,
@@ -589,24 +578,6 @@ body.guided-mode .guided-nav { display: flex !important; }
 }
 .guided-nav-btn:hover { background: rgba(183, 110, 121, 0.2); transform: translateY(-1px); }
 .guided-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-/* --- IMPRIMER SÉANCE --- */
-.btn-print-session {
-    display: block;
-    margin: 0 auto 20px auto;
-    padding: 10px 20px;
-    background: transparent;
-    border: 1px solid rgba(183, 110, 121, 0.3);
-    border-radius: 50px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.85rem;
-    color: var(--primary-dark);
-    cursor: pointer;
-    transition: var(--transition);
-}
-.btn-print-session:hover {
-    background: var(--primary-soft);
-}
 
 /* --- SIGNATURE COACH --- */
 .coach-signature {
@@ -1052,11 +1023,11 @@ main {
 }
 .set-wrapper-warmup {
     position: relative;
-    min-width: 52px;
+    min-width: 62px;
 }
 .set-label-warmup {
     cursor: pointer;
-    min-width: 48px;
+    min-width: 58px;
 }
 .set-label .set-warmup-badge {
     display: block;
@@ -1198,14 +1169,25 @@ main {
     border: 1px solid rgba(183, 110, 121, 0.15);
     max-width: min(320px, calc(100vw - 24px));
 }
-.rpe-scale-title { font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.rpe-scale-title { font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.rpe-scale-items { margin-bottom: 12px; }
+.rpe-scale-items-new .rpe-scale-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.95rem;
+    border-bottom: 1px solid rgba(183, 110, 121, 0.1);
+}
+.rpe-scale-items-new .rpe-scale-row:last-child { border-bottom: none; }
+.rpe-scale-items-new .rpe-range { font-weight: 700; color: var(--primary); min-width: 2.5em; }
+.rpe-scale-items-new .rpe-desc { color: var(--text-main); }
 .rpe-scale-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
 .rpe-seg { flex: 1; }
 .rpe-seg-low { background: linear-gradient(90deg, #22c55e, #84cc16); }
 .rpe-seg-mid { background: linear-gradient(90deg, #84cc16, #eab308); }
 .rpe-seg-high { background: linear-gradient(90deg, #eab308, #ef4444); }
 .rpe-scale-labels { display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-light); margin-bottom: 12px; }
-.rpe-scale-items { margin-bottom: 12px; }
 .rpe-scale-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.9rem; line-height: 1.3; }
 .rpe-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .rpe-dot-green { background: #22c55e; }
@@ -1581,8 +1563,8 @@ button:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--prim
 /* --- IMPRESSION --- */
 @media print {
     body { background: #fff; padding: 0; }
-    #progress-container, #install-banner, .whatsapp-bottom, .btn-add-to-agenda, .btn-copy-link, .btn-guided-mode, .btn-dark-mode, .btn-focus-mode, .btn-settings,
-    .reset-session-wrap, .reset-session-btn, .btn-progression-toggle, .progression-panel, .btn-print-session,
+    #progress-container, #install-banner, .whatsapp-bottom, .btn-add-to-agenda, .btn-dark-mode, .btn-focus-mode, .btn-settings,
+    .reset-session-wrap, .reset-session-btn, .btn-progression-toggle, .progression-panel,
     .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video, .guided-nav { display: none !important; }
     .calendar-wrap.collapsed { max-height: none; opacity: 1; pointer-events: auto; }
     .header-top { margin-bottom: 8px; }

@@ -281,10 +281,8 @@ function initApp(data) {
     renderProgressionPanel();
     initFocusMode();
     initSettings();
-    initPrintButton();
     initProgressionToggle();
     initInstallPrompt();
-    initGuidedMode();
     maybeShowNotification(globalData && globalData.sessions ? globalData.sessions : []);
 }
 
@@ -1106,12 +1104,12 @@ function showRpeTooltip(btn) {
     pop.className = 'rpe-tooltip-popover';
     pop.innerHTML = `
         <div class="rpe-scale-title">Échelle RPE (effort ressenti)</div>
-        <div class="rpe-scale-bar"><span class="rpe-seg rpe-seg-low"></span><span class="rpe-seg rpe-seg-mid"></span><span class="rpe-seg rpe-seg-high"></span></div>
-        <div class="rpe-scale-labels"><span>1-4</span><span>5-6</span><span>7-8</span><span>9-10</span></div>
-        <div class="rpe-scale-items">
-            <div class="rpe-scale-item rpe-green"><span class="rpe-dot rpe-dot-green"></span>RPE 5-6 : Échauffement / Facile</div>
-            <div class="rpe-scale-item rpe-yellow"><span class="rpe-dot rpe-dot-yellow"></span>RPE 7-8 : Difficile (reste 2-3 reps)</div>
-            <div class="rpe-scale-item rpe-red"><span class="rpe-dot rpe-dot-red"></span>RPE 9-10 : Échec ou limite</div>
+        <div class="rpe-scale-items rpe-scale-items-new">
+            <div class="rpe-scale-row"><span class="rpe-range">1/2</span><span class="rpe-desc">Très facile</span></div>
+            <div class="rpe-scale-row"><span class="rpe-range">3/4</span><span class="rpe-desc">Facile</span></div>
+            <div class="rpe-scale-row"><span class="rpe-range">5/6</span><span class="rpe-desc">Moyen</span></div>
+            <div class="rpe-scale-row"><span class="rpe-range">7/8</span><span class="rpe-desc">Difficile</span></div>
+            <div class="rpe-scale-row"><span class="rpe-range">9/10</span><span class="rpe-desc">Très difficile</span></div>
         </div>
         <button type="button" class="rpe-tooltip-close">Fermer</button>
     `;
@@ -1323,27 +1321,6 @@ function showToast(message) {
     setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
-function copyProgramLink() {
-    const url = window.location.href;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(() => showToast("Lien copié !")).catch(() => fallbackCopy(url));
-    } else fallbackCopy(url);
-}
-function fallbackCopy(url) {
-    const ta = document.createElement('textarea');
-    ta.value = url;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    try {
-        document.execCommand('copy');
-        showToast("Lien copié !");
-    } catch (_) {
-        showToast("Copie impossible");
-    }
-    document.body.removeChild(ta);
-}
 
 function renderCoachSignature() {
     const footer = document.getElementById('coach-signature');
@@ -1400,14 +1377,50 @@ function initProgressionToggle() {
 
 function initFocusMode() {
     const btn = document.getElementById('btn-focus-mode');
-    const wrap = document.getElementById('calendar-wrap');
-    if (!btn || !wrap) return;
+    const btnPrev = document.getElementById('btn-guided-prev');
+    const btnNext = document.getElementById('btn-guided-next');
+    if (!btn) return;
+    if (isGuidedMode()) {
+        document.body.classList.add('guided-mode');
+        guidedViewIndex = 0;
+        setTimeout(() => { guidedViewIndex = getFirstIncompleteIndex(); updateGuidedMode(); }, 100);
+        btn.textContent = 'Vue complète';
+        btn.setAttribute('aria-label', 'Revenir à la vue complète');
+        btn.title = 'Sortir du mode focus';
+    }
     btn.addEventListener('click', () => {
-        wrap.classList.toggle('collapsed');
-        const on = wrap.classList.contains('collapsed');
-        btn.textContent = on ? '◑ Calendrier' : '◐ Focus';
-        btn.setAttribute('aria-label', on ? 'Afficher le calendrier' : 'Réduire le calendrier');
-        btn.title = on ? 'Afficher le calendrier' : 'Mode focus';
+        const on = !document.body.classList.contains('guided-mode');
+        document.body.classList.toggle('guided-mode', on);
+        setGuidedMode(on);
+        if (on) {
+            guidedViewIndex = getFirstIncompleteIndex();
+            updateGuidedMode();
+            btn.textContent = 'Vue complète';
+            btn.setAttribute('aria-label', 'Revenir à la vue complète');
+            btn.title = 'Sortir du mode focus';
+        } else {
+            const nav = document.getElementById('guided-nav');
+            if (nav) nav.hidden = true;
+            document.querySelectorAll('.exercise-card').forEach(c => c.classList.remove('guided-current'));
+            btn.textContent = '◐ Focus';
+            btn.setAttribute('aria-label', 'Mode focus : un exercice à la fois, valide tes séries en un clic');
+            btn.title = 'Un exercice à la fois, idéal en plein effort';
+        }
+    });
+    if (btnPrev) btnPrev.addEventListener('click', () => {
+        if (guidedViewIndex > 0) {
+            guidedViewIndex--;
+            updateGuidedMode();
+            document.querySelector('.exercise-card.guided-current')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+    if (btnNext) btnNext.addEventListener('click', () => {
+        const cards = document.querySelectorAll('#workout-container .exercise-card');
+        if (guidedViewIndex < cards.length - 1) {
+            guidedViewIndex++;
+            updateGuidedMode();
+            document.querySelector('.exercise-card.guided-current')?.scrollIntoView({ behavior: 'smooth' });
+        }
     });
 }
 
@@ -1474,11 +1487,6 @@ function initSettings() {
     });
 }
 
-function initPrintButton() {
-    const btn = document.getElementById('btn-print-session');
-    if (btn) btn.addEventListener('click', () => { window.print(); showToast('Ouverture de l\'impression...'); });
-}
-
 let deferredInstallPrompt = null;
 function initInstallPrompt() {
     const banner = document.getElementById('install-banner');
@@ -1535,46 +1543,6 @@ function updateGuidedMode() {
     }
 }
 
-function initGuidedMode() {
-    const btn = document.getElementById('btn-guided-mode');
-    const btnPrev = document.getElementById('btn-guided-prev');
-    const btnNext = document.getElementById('btn-guided-next');
-    if (!btn) return;
-    if (isGuidedMode()) {
-        document.body.classList.add('guided-mode');
-        guidedViewIndex = 0;
-        setTimeout(() => { guidedViewIndex = getFirstIncompleteIndex(); updateGuidedMode(); }, 100);
-    }
-    btn.addEventListener('click', () => {
-        const on = !document.body.classList.contains('guided-mode');
-        document.body.classList.toggle('guided-mode', on);
-        setGuidedMode(on);
-        if (on) updateGuidedMode();
-        else {
-            const nav = document.getElementById('guided-nav');
-            if (nav) nav.hidden = true;
-            document.querySelectorAll('.exercise-card').forEach(c => c.classList.remove('guided-current'));
-        }
-        btn.textContent = on ? '◎ Vue complète' : '◎ Guidé';
-        btn.setAttribute('title', on ? 'Revenir à la vue complète' : 'Mode séance guidée');
-    });
-    if (btnPrev) btnPrev.addEventListener('click', () => {
-        if (guidedViewIndex > 0) {
-            guidedViewIndex--;
-            updateGuidedMode();
-            document.querySelector('.exercise-card.guided-current')?.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-    if (btnNext) btnNext.addEventListener('click', () => {
-        const cards = document.querySelectorAll('#workout-container .exercise-card');
-        if (guidedViewIndex < cards.length - 1) {
-            guidedViewIndex++;
-            updateGuidedMode();
-            document.querySelector('.exercise-card.guided-current')?.scrollIntoView({ behavior: 'smooth' });
-        }
-    });
-}
-
 function maybeShowNotification(sessions) {
     if (!sessions || !sessions.length || !isNotificationEnabled() || !('Notification' in window)) return;
     const today = new Date();
@@ -1623,11 +1591,6 @@ function updateDarkModeButton() {
     btn.textContent = isDark ? '☀️' : '🌙';
     btn.setAttribute('aria-label', isDark ? 'Activer le mode clair' : 'Activer le mode sombre');
     btn.title = isDark ? 'Mode clair' : 'Mode sombre';
-}
-
-function initCopyLink() {
-    const btn = document.getElementById('btn-copy-link');
-    if (btn) btn.addEventListener('click', copyProgramLink);
 }
 
 // --- DÉLÉGATION D'ÉVÉNEMENTS (remplace les onclick inline) ---
@@ -1750,9 +1713,8 @@ function initHeaderMenu() {
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { initDarkMode(); initCopyLink(); initHeaderMenu(); });
+    document.addEventListener('DOMContentLoaded', () => { initDarkMode(); initHeaderMenu(); });
 } else {
     initDarkMode();
-    initCopyLink();
     initHeaderMenu();
 }
