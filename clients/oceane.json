@@ -16,7 +16,7 @@
           "title": "Échauffement Spécifique"
         },
         {
-          "name": "Rotations Thoraciques + Wall Slides + Glute Bridge",
+          "name": "Rotations articulaires + burpees lent + squats profond lent",
           "sets": "2",
           "reps": "Circuit",
           "rest": "0s",
@@ -35,6 +35,7 @@
           "rest": "90s",
 		      "charge": "20",
           "rpe_target": "8",
+          "warmum_set": "1",
           "check_technique": true,
           "note_coach": "Contraction maximale des fessiers en haut. Pousse plutôt avec l'arrière des pieds."
         },
@@ -189,7 +190,7 @@
           "name": "Mountain Climbers",
           "sets": "4",
           "reps": "30 sec",
-          "rest": "90s",
+          "rest": "60s",
           "rpe_target": "10",
           "check_technique": false,
           "superset_type": "end",
