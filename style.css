@@ -45,6 +45,7 @@
 [data-theme="dark"] .coach-note { background: rgba(160, 140, 180, 0.15); border-left-color: rgba(180, 160, 200, 0.5); color: #c4b8d4; }
 [data-theme="dark"] .coach-notes-intro { background: rgba(160, 140, 180, 0.2); border-color: rgba(180, 160, 200, 0.4); color: #c4b8d4; }
 [data-theme="dark"] .exercise-card.exercise-warmup.open { border-left-color: #e5b84d; }
+[data-theme="dark"] .exercise-card.exercise-finishers.open { border-left-color: #60a5fa; }
 [data-theme="dark"] #progress-container { background: #251e20; }
 [data-theme="dark"] .btn-add-to-agenda,
 [data-theme="dark"] .btn-dark-mode,
@@ -1011,6 +1012,11 @@ main {
     text-align: left;
 }
 
+.section-title-finishers {
+    color: #2563eb;
+    border-bottom-color: rgba(37, 99, 235, 0.3);
+}
+
 /* --- SUPERSET (structure côte à côte) --- */
 .superset-block {
     margin-bottom: 28px;
@@ -1144,6 +1150,7 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
 .exercise-card.open .exercise-header { border-bottom: 1px solid #f0f0f0; }
 .exercise-card.open { border-left: 5px solid var(--primary); }
 .exercise-card.exercise-warmup.open { border-left-color: #e5a32a; }
+.exercise-card.exercise-finishers.open { border-left-color: #2563eb; }
 
 /* Contenu Caché (Corps de l'exo) */
 .exercise-content {

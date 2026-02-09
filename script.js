@@ -589,6 +589,7 @@ function renderSession(sessionIndex, dateStr) {
     let currentSupersetBlock = null;
     let supersetPos = 0;
     let inWarmupSection = false;
+    let inFinishersSection = false;
 
     const sessionIntro = (session.session_intro || session.objectives || session.coach_notes || '').toString().trim();
     if (sessionIntro) {
@@ -605,6 +606,8 @@ function renderSession(sessionIndex, dateStr) {
             }
             const titleNorm = (exo.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const isWarmupSection = titleNorm.includes('echauffement');
+            const isFinishersSection = titleNorm.includes('finisher') || exo.section_style === 'finishers';
+            const sectionClass = isFinishersSection ? 'section-title section-title-finishers' : 'section-title';
             if (exo.coach_notes) {
                 const notes = String(exo.coach_notes).trim();
                 if (notes) {
@@ -612,8 +615,9 @@ function renderSession(sessionIndex, dateStr) {
                     container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><div class="coach-notes-text">${safe}</div></div>`);
                 }
             }
-            container.insertAdjacentHTML('beforeend', `<h2 class="section-title">${exo.title}</h2>`);
+            container.insertAdjacentHTML('beforeend', `<h2 class="${sectionClass}">${exo.title}</h2>`);
             inWarmupSection = isWarmupSection;
+            inFinishersSection = isFinishersSection;
             return;
         }
 
@@ -626,7 +630,7 @@ function renderSession(sessionIndex, dateStr) {
             supersetPos = 1;
         }
 
-        const cardHtml = createExerciseCard(exo, index, currentSessionId, supersetPos > 0 ? supersetPos : null, inWarmupSection);
+        const cardHtml = createExerciseCard(exo, index, currentSessionId, supersetPos > 0 ? supersetPos : null, inWarmupSection, inFinishersSection);
         const row = currentSupersetBlock ? currentSupersetBlock.querySelector('.superset-row') : null;
 
         if (row) {
@@ -659,7 +663,7 @@ function renderSession(sessionIndex, dateStr) {
     }
 }
 
-function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExercise) {
+function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExercise, isFinishersExercise) {
     let mediaHtml = '';
     if (exo.image && (exo.image.includes('youtube') || exo.image.includes('youtu.be'))) {
         mediaHtml = `<a href="${exo.image}" target="_blank" class="video-btn">▶ Voir la démo vidéo</a>`;
@@ -743,9 +747,10 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
     const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${(exo.name || '').replace(/"/g, '&quot;')}" data-alt-name="${altName.replace(/"/g, '&quot;')}" title="Remplacer par : ${altName}" aria-label="Remplacer par ${altName}">${altIconSvg}</button>` : '';
     const activeTimerHtml = isTimeBased ? `<button type="button" class="active-timer-btn" data-target-seconds="${targetSeconds}" aria-label="Lancer le chrono d'effort"><span class="active-timer-text">▶ Go</span></button>` : '';
     const warmupClass = isWarmupExercise ? ' exercise-warmup' : '';
+    const finishersClass = isFinishersExercise ? ' exercise-finishers' : '';
     const warmupSectionAttr = isWarmupExercise ? ' data-warmup-section="1"' : '';
     return `
-    <div class="exercise-card open${warmupClass}" id="card-${index}" data-index="${index}"${warmupSectionAttr}${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
+    <div class="exercise-card open${warmupClass}${finishersClass}" id="card-${index}" data-index="${index}"${warmupSectionAttr}${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
                 <div class="exercise-title-row"><span class="exercise-title">${exo.name}</span>${altBtnHtml}</div>
