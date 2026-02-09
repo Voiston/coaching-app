@@ -243,6 +243,32 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+/* Bouton discret pour déplacer la séance */
+.session-move-wrap {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 20px 0;
+}
+.btn-move-session {
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    padding: 4px 0;
+}
+.btn-move-session:hover {
+    color: var(--primary);
+}
+
+/* Mode déplacement : mettre légèrement en avant le calendrier */
+body.calendar-move-mode #calendar-wrap {
+    box-shadow: 0 0 0 1px rgba(183, 110, 121, 0.25);
+}
 .rest-icon {
     font-size: 3.5rem;
     display: inline-block;
@@ -372,6 +398,13 @@
     color: #6B5B5F;
     margin: 0 0 24px 0;
 }
+.breathing-modal-instructions {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #8B7A7E;
+    margin: -8px 0 20px 0;
+}
 .btn-breathing-start {
     font-family: 'Josefin Sans', sans-serif;
     font-size: 1rem;
@@ -428,6 +461,12 @@
     font-size: 0.9rem;
     color: #8B7A7E;
     margin: 0 0 20px 0;
+}
+.breathing-finish-text {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    color: #6B5B5F;
+    margin: 0 0 18px 0;
 }
 .breathing-close {
     font-family: 'Lato', sans-serif;

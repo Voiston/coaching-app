@@ -24,6 +24,9 @@ let currentSessionId = "default";
 let currentSessionDate = "";
 let sessionStartTime = null;
 let sessionEndTime = null;
+let moveSessionMode = false;
+let moveSessionSourceId = null;
+let moveSessionSourceIndex = -1;
 
 // --- PARAMÈTRES (localStorage) ---
 const KEY_SOUND = 'fitapp_sound_' + clientID;
@@ -301,7 +304,6 @@ function initApp(data) {
         renderSession(0, new Date().toISOString().slice(0, 10));
         updateWeekAndNextSession(globalData.sessions);
     }
-    initSessionDatePicker();
     initBreathingModal();
     renderCoachSignature();
     renderProgressionPanel();
@@ -473,6 +475,38 @@ function renderCalendar(sessions, skipAutoSelect) {
         `;
 
         dayEl.addEventListener('click', () => {
+            if (moveSessionMode && globalData && globalData.sessions) {
+                // Mode déplacement de séance : on ne peut choisir qu'un jour sans autre séance
+                const sessionsList = globalData.sessions;
+                const hasOtherSession = sessionsList.some((s, idxSession) => {
+                    const sid = s.id || `session_${idxSession}`;
+                    if (!moveSessionSourceId || sid === moveSessionSourceId) return false;
+                    const overrideDate = overrides[sid];
+                    if (overrideDate) return overrideDate === dateString;
+                    if (s.date) return s.date === dateString;
+                    if (s.day) return s.day.toLowerCase() === dayNameFR;
+                    return false;
+                });
+                if (hasOtherSession) {
+                    showToast('Une séance est déjà prévue ce jour-là.');
+                    return;
+                }
+                // Déplacer la séance sélectionnée vers cette nouvelle date
+                const sid = moveSessionSourceId;
+                const sourceIndex = moveSessionSourceIndex;
+                if (sid != null && sourceIndex != null && sourceIndex >= 0) {
+                    setSessionDateOverride(sid, dateString);
+                    moveSessionMode = false;
+                    moveSessionSourceId = null;
+                    moveSessionSourceIndex = -1;
+                    document.body.classList.remove('calendar-move-mode');
+                    renderCalendar(sessionsList, true);
+                    syncCalendarActiveToDate(dateString);
+                    renderSession(sourceIndex, dateString);
+                    updateWeekAndNextSession(sessionsList);
+                }
+                return;
+            }
             document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('active'));
             dayEl.classList.add('active');
             if (hasSession) renderSession(sessionIndex, dateString);
@@ -486,63 +520,11 @@ function renderCalendar(sessions, skipAutoSelect) {
     if (todayEl && !skipAutoSelect) setTimeout(() => todayEl.click(), 50);
 }
 
-function getCalendarDateRange() {
-    const today = new Date();
-    const min = new Date(today);
-    min.setDate(min.getDate() - PAST_DAYS);
-    const max = new Date(today);
-    max.setDate(max.getDate() + DAYS_AHEAD);
-    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return { min: fmt(min), max: fmt(max) };
-}
-
 function syncCalendarActiveToDate(dateStr) {
     if (!dateStr) return;
     document.querySelectorAll('.calendar-day').forEach((d) => {
         d.classList.toggle('active', d.dataset.dateString === dateStr);
     });
-}
-
-function initSessionDatePicker() {
-    const input = document.getElementById('session-date-input');
-    if (!input) return;
-    input.addEventListener('change', function () {
-        const newDate = this.value;
-        if (!newDate) return;
-        currentSessionDate = newDate;
-        // Si on a un programme avec sessions datées, on "déplace" la séance dans le calendrier
-        if (globalData && globalData.sessions && globalData.sessions.length > 0) {
-            const sessions = globalData.sessions;
-            const currentIdx = sessions.findIndex((s, idx) => (s.id || `session_${idx}`) === currentSessionId);
-            if (currentIdx !== -1) {
-                const sid = sessions[currentIdx].id || `session_${currentIdx}`;
-                setSessionDateOverride(sid, newDate);
-                // Re-construire le calendrier avec la nouvelle date de séance
-                renderCalendar(sessions, true);
-                syncCalendarActiveToDate(newDate);
-                // Recharger la même séance avec sa nouvelle date "effective"
-                renderSession(currentIdx, newDate);
-                updateWeekAndNextSession(sessions);
-            } else {
-                syncCalendarActiveToDate(newDate);
-            }
-        } else {
-            // Cas "séance unique" sans calendrier structuré : on ne fait qu'ajuster la date courante
-            syncCalendarActiveToDate(newDate);
-        }
-        saveData();
-    });
-}
-
-function updateSessionDateRow() {
-    const row = document.getElementById('session-date-row');
-    const input = document.getElementById('session-date-input');
-    if (!row || !input) return;
-    row.hidden = false;
-    input.value = currentSessionDate || new Date().toISOString().slice(0, 10);
-    const range = getCalendarDateRange();
-    input.min = range.min;
-    input.max = range.max;
 }
 
 function showRestDay(dayName) {
@@ -596,6 +578,12 @@ function renderSession(sessionIndex, dateStr) {
         resetBtn.textContent = "↺ Recommencer la séance";
         resetWrap.appendChild(resetBtn);
     }
+
+    // Bouton discret pour déplacer la séance dans le calendrier
+    const moveBtnWrap = document.createElement('div');
+    moveBtnWrap.className = 'session-move-wrap';
+    moveBtnWrap.innerHTML = `<button type="button" class="btn-move-session" aria-label="Déplacer cette séance à un autre jour">Déplacer la séance</button>`;
+    container.appendChild(moveBtnWrap);
 
     let currentSupersetBlock = null;
     let supersetPos = 0;
@@ -664,7 +652,6 @@ function renderSession(sessionIndex, dateStr) {
     renderProgressionPanel();
     updateSupersetHighlight();
     updateAllExerciseDetails();
-    updateSessionDateRow();
     if (document.body.classList.contains('guided-mode')) {
         guidedViewIndex = 0;
         setTimeout(() => { guidedViewIndex = getFirstIncompleteIndex(); updateGuidedMode(); }, 150);
@@ -1774,6 +1761,44 @@ function updateDarkModeButton() {
 let breathingPhaseInterval = null;
 let breathingCountdownInterval = null;
 let breathingCountdownSeconds = 300; // 5 min
+let breathingAudioCtx = null;
+const BREATHING_PHASE_DURATION_MS = 4000;
+const BREATHING_PHASES = [
+    { label: 'Inspire...', scale: 1.35, beepType: 'normal' },
+    { label: 'Retiens...', scale: 1.35, beepType: 'hold' },
+    { label: 'Expire...', scale: 1.0, beepType: 'normal' },
+    { label: 'Retiens...', scale: 1.0, beepType: 'hold' },
+];
+let breathingPhaseIndex = 0;
+
+function playBreathingBeep(type) {
+    if (!getSettingSound()) return;
+    try {
+        if (!breathingAudioCtx) {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            breathingAudioCtx = new Ctx();
+        }
+        const ctx = breathingAudioCtx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const now = ctx.currentTime;
+        const isHold = type === 'hold';
+        const duration = isHold ? 0.18 : 0.12;
+        const freq = isHold ? 520 : 620;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+        gain.gain.linearRampToValueAtTime(0.0, now + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+    } catch (_) {
+        // ignore audio errors gracefully
+    }
+}
 
 function openBreathingModal() {
     const overlay = document.getElementById('breathing-modal-overlay');
@@ -1782,15 +1807,20 @@ function openBreathingModal() {
     const bubble = document.getElementById('breathing-bubble');
     const phaseText = document.getElementById('breathing-phase-text');
     const timerEl = document.getElementById('breathing-timer');
+    const finishEl = document.getElementById('breathing-finish-text');
     if (!overlay || !stepIntro || !stepExercise) return;
     overlay.classList.add('active');
     overlay.setAttribute('aria-hidden', 'false');
     stepIntro.hidden = false;
     stepExercise.hidden = true;
-    if (bubble) bubble.classList.remove('breathing-active');
+    if (bubble) {
+        bubble.classList.remove('breathing-active');
+        bubble.style.transform = 'scale(1)';
+    }
     if (phaseText) phaseText.textContent = 'Inspire...';
     breathingCountdownSeconds = 300;
     if (timerEl) timerEl.textContent = '5:00';
+    if (finishEl) { finishEl.hidden = true; }
     if (breathingPhaseInterval) clearInterval(breathingPhaseInterval);
     if (breathingCountdownInterval) clearInterval(breathingCountdownInterval);
 }
@@ -1805,7 +1835,10 @@ function closeBreathingModal() {
     overlay.setAttribute('aria-hidden', 'true');
     if (stepIntro) stepIntro.hidden = false;
     if (stepExercise) stepExercise.hidden = true;
-    if (bubble) bubble.classList.remove('breathing-active');
+    if (bubble) {
+        bubble.classList.remove('breathing-active');
+        bubble.style.transform = 'scale(1)';
+    }
     if (breathingPhaseInterval) { clearInterval(breathingPhaseInterval); breathingPhaseInterval = null; }
     if (breathingCountdownInterval) { clearInterval(breathingCountdownInterval); breathingCountdownInterval = null; }
 }
@@ -1819,6 +1852,7 @@ function initBreathingModal() {
     const bubble = document.getElementById('breathing-bubble');
     const phaseText = document.getElementById('breathing-phase-text');
     const timerEl = document.getElementById('breathing-timer');
+    const finishEl = document.getElementById('breathing-finish-text');
     if (!overlay || !btnStart || !btnClose) return;
 
     overlay.addEventListener('click', (e) => {
@@ -1828,21 +1862,34 @@ function initBreathingModal() {
         stepIntro.hidden = true;
         stepExercise.hidden = true;
         stepExercise.hidden = false;
-        if (bubble) bubble.classList.add('breathing-active');
-        if (phaseText) phaseText.textContent = 'Inspire...';
+        breathingPhaseIndex = 0;
+        if (bubble) {
+            bubble.classList.add('breathing-active');
+            bubble.style.transition = 'transform 4s ease-in-out';
+            bubble.style.transform = `scale(${BREATHING_PHASES[breathingPhaseIndex].scale})`;
+        }
+        if (phaseText) phaseText.textContent = BREATHING_PHASES[breathingPhaseIndex].label;
         breathingCountdownSeconds = 300;
         if (timerEl) timerEl.textContent = '5:00';
+        if (finishEl) { finishEl.hidden = true; }
         if (breathingPhaseInterval) clearInterval(breathingPhaseInterval);
+        playBreathingBeep(BREATHING_PHASES[breathingPhaseIndex].beepType);
         breathingPhaseInterval = setInterval(() => {
-            if (!phaseText) return;
-            phaseText.textContent = phaseText.textContent.trim().startsWith('Inspire') ? 'Expire...' : 'Inspire...';
-        }, 5000);
+            breathingPhaseIndex = (breathingPhaseIndex + 1) % BREATHING_PHASES.length;
+            const phase = BREATHING_PHASES[breathingPhaseIndex];
+            if (phaseText) phaseText.textContent = phase.label;
+            if (bubble) bubble.style.transform = `scale(${phase.scale})`;
+            playBreathingBeep(phase.beepType);
+        }, BREATHING_PHASE_DURATION_MS);
         if (breathingCountdownInterval) clearInterval(breathingCountdownInterval);
         breathingCountdownInterval = setInterval(() => {
             breathingCountdownSeconds--;
             if (breathingCountdownSeconds <= 0) {
+                breathingCountdownSeconds = 0;
                 clearInterval(breathingCountdownInterval);
                 breathingCountdownInterval = null;
+                if (breathingPhaseInterval) { clearInterval(breathingPhaseInterval); breathingPhaseInterval = null; }
+                if (finishEl) finishEl.hidden = false;
             }
             if (timerEl) {
                 const m = Math.floor(breathingCountdownSeconds / 60);
@@ -1871,6 +1918,25 @@ document.body.addEventListener('click', (e) => {
     if (pauseRespirationBtn) {
         e.preventDefault();
         openBreathingModal();
+        return;
+    }
+    const moveSessionBtn = e.target.closest('.btn-move-session');
+    if (moveSessionBtn && globalData && globalData.sessions) {
+        e.preventDefault();
+        const sessions = globalData.sessions;
+        const idx = sessions.findIndex((s, i) => (s.id || `session_${i}`) === currentSessionId);
+        if (idx === -1) return;
+        moveSessionMode = !moveSessionMode;
+        if (moveSessionMode) {
+            moveSessionSourceIndex = idx;
+            moveSessionSourceId = sessions[idx].id || `session_${idx}`;
+            document.body.classList.add('calendar-move-mode');
+            showToast('Choisis un jour libre pour déplacer la séance.');
+        } else {
+            moveSessionSourceIndex = -1;
+            moveSessionSourceId = null;
+            document.body.classList.remove('calendar-move-mode');
+        }
         return;
     }
     if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }
