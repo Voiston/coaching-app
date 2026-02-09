@@ -38,6 +38,7 @@ const KEY_INSTALL_DISMISSED = 'fitapp_install_dismissed_' + clientID;
 const KEY_GUIDED_MODE = 'fitapp_guided_' + clientID;
 const KEY_CHARGE_HISTORY = 'fitapp_charge_history_' + clientID;
 const KEY_SESSION_DATE_OVERRIDES = 'fitapp_session_dates_' + clientID;
+const KEY_COUNTERS = 'fitapp_counters_' + clientID;
 
 function getSettingSound() { return localStorage.getItem(KEY_SOUND) !== '0'; }
 function setSettingSound(on) { localStorage.setItem(KEY_SOUND, on ? '1' : '0'); }
@@ -874,6 +875,20 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
     updateProgress(true); 
     saveData(); 
     updateSupersetHighlight(true);
+    if (checkbox.checked) {
+        const card = document.getElementById(`card-${cardIndex}`);
+        const exoName = card?.querySelector('.exercise-title')?.textContent?.trim() || '';
+        const detailsEl = card?.querySelector('.details-dynamic[data-card-index]');
+        let repsForSet = '';
+        if (detailsEl && detailsEl.dataset.reps) {
+            try {
+                const arr = JSON.parse(detailsEl.dataset.reps.replace(/&quot;/g, '"'));
+                repsForSet = Array.isArray(arr) ? (arr[setNumber - 1] ?? arr[0] ?? '') : String(arr);
+            } catch (_) { repsForSet = detailsEl.dataset.reps || ''; }
+        }
+        const counter = getCounterTypeAndValue(exoName, repsForSet);
+        if (counter) incrementCounter(counter.type, counter.value);
+    }
     if (document.body.classList.contains('guided-mode')) {
         const card = document.getElementById(`card-${cardIndex}`);
         const inSuperset = !!(card && card.closest('.superset-block'));
@@ -912,7 +927,9 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
             }
             if (nextCard) {
                 setTimeout(() => {
-                    nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    const supersetBlock = nextCard.closest('.superset-block');
+                    const scrollTarget = supersetBlock || nextCard;
+                    scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }, 300);
             }
         };
@@ -988,6 +1005,39 @@ function getChargeHistory() {
     try {
         return JSON.parse(localStorage.getItem(KEY_CHARGE_HISTORY) || '[]');
     } catch { return []; }
+}
+
+/** Compteurs (burpees, squats, gainage_seconds, pompes, fentes). */
+function getCounters() {
+    try {
+        return JSON.parse(localStorage.getItem(KEY_COUNTERS) || '{}');
+    } catch { return {}; }
+}
+function setCounters(obj) {
+    localStorage.setItem(KEY_COUNTERS, JSON.stringify(obj));
+}
+function incrementCounter(type, value) {
+    const c = getCounters();
+    c[type] = (c[type] || 0) + value;
+    setCounters(c);
+}
+
+/** Détecte le type de compteur et la valeur (reps ou secondes) à partir du nom d'exo et des reps. */
+function getCounterTypeAndValue(exoName, repsForSet) {
+    const name = (exoName || '').toLowerCase();
+    const repsStr = String(repsForSet ?? '').trim();
+    const matchNum = repsStr.match(/(\d+)/);
+    const num = matchNum ? parseInt(matchNum[1], 10) : 1;
+    const matchSec = repsStr.match(/(\d+)\s*(s|sec|secondes?|min|mn)?/i);
+    const seconds = matchSec
+        ? (matchSec[2] && matchSec[2].toLowerCase().startsWith('min') ? parseInt(matchSec[1], 10) * 60 : parseInt(matchSec[1], 10))
+        : (/gainage|planche|plank/i.test(name) ? num : 0);
+    if (/burpee/i.test(name)) return { type: 'burpees', value: num, isTime: false };
+    if (/squat/i.test(name)) return { type: 'squats', value: num, isTime: false };
+    if (/gainage|planche|plank/i.test(name)) return { type: 'gainage_seconds', value: seconds || num, isTime: true };
+    if (/pompe/i.test(name)) return { type: 'pompes', value: num, isTime: false };
+    if (/fente/i.test(name)) return { type: 'fentes', value: num, isTime: false };
+    return null;
 }
 
 /** Volume d'une entrée (kg) = charge × reps × sets. Anciennes entrées sans reps/sets : 1. */
@@ -1618,6 +1668,22 @@ function renderProgressionPanel() {
             });
             html += '</div>';
         }
+    }
+
+    const counters = getCounters();
+    const counterLabels = { burpees: 'Burpees', squats: 'Squats', gainage_seconds: 'Gainage', pompes: 'Pompes', fentes: 'Fentes' };
+    const counterOrder = ['burpees', 'squats', 'gainage_seconds', 'pompes', 'fentes'];
+    const hasCounters = counterOrder.some(k => (counters[k] || 0) > 0);
+    if (hasCounters) {
+        html += '<p class="progression-intro progression-section">Compteurs</p><ul class="progression-list progression-counters">';
+        counterOrder.forEach(k => {
+            const v = counters[k] || 0;
+            if (v <= 0) return;
+            const label = counterLabels[k] || k;
+            const display = k === 'gainage_seconds' ? (v >= 60 ? (v / 60).toFixed(1) + ' min' : v + ' s') : v;
+            html += '<li class="progression-item"><span class="progression-item-name">' + label + '</span> : <strong>' + display + '</strong></li>';
+        });
+        html += '</ul>';
     }
 
     if (!html) html = '<p class="progression-intro">Aucune donnée de progression pour l’instant.</p>';
