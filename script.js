@@ -302,6 +302,7 @@ function initApp(data) {
         updateWeekAndNextSession(globalData.sessions);
     }
     initSessionDatePicker();
+    initBreathingModal();
     renderCoachSignature();
     renderProgressionPanel();
     initFocusMode();
@@ -561,7 +562,7 @@ function showRestDay(dayName) {
             <h2>Jour de récup' — ${(dayName || '').replace(/"/g, '&quot;')}</h2>
             <p class="rest-lead">La récupération fait partie de la progression. Ton corps construit pendant le repos.</p>
             <p class="rest-tip">Hydrate-toi bien, mange équilibré et dors à ta soif. La prochaine séance t'attend ! 💪</p>
-            <button type="button" class="btn-recovery-video" data-recovery-url="${String(recoveryUrl).replace(/"/g, '&quot;')}" aria-label="Lancer la routine Récupération (10 minutes)">🧘‍♀️ Lancer ma routine Récupération (10min)</button>
+            <button type="button" class="btn-pause-respiration" id="btn-pause-respiration" aria-label="Ouvrir la pause respiration (cohérence cardiaque)">🌬️ Pause Respiration</button>
         </div>
     `;
     const bar = document.getElementById('progress-bar');
@@ -1769,6 +1770,93 @@ function updateDarkModeButton() {
     btn.title = isDark ? 'Mode clair' : 'Mode sombre';
 }
 
+// --- MODAL COHÉRENCE CARDIAQUE (Pause Respiration) ---
+let breathingPhaseInterval = null;
+let breathingCountdownInterval = null;
+let breathingCountdownSeconds = 300; // 5 min
+
+function openBreathingModal() {
+    const overlay = document.getElementById('breathing-modal-overlay');
+    const stepIntro = document.getElementById('breathing-step-intro');
+    const stepExercise = document.getElementById('breathing-step-exercise');
+    const bubble = document.getElementById('breathing-bubble');
+    const phaseText = document.getElementById('breathing-phase-text');
+    const timerEl = document.getElementById('breathing-timer');
+    if (!overlay || !stepIntro || !stepExercise) return;
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+    stepIntro.hidden = false;
+    stepExercise.hidden = true;
+    if (bubble) bubble.classList.remove('breathing-active');
+    if (phaseText) phaseText.textContent = 'Inspire...';
+    breathingCountdownSeconds = 300;
+    if (timerEl) timerEl.textContent = '5:00';
+    if (breathingPhaseInterval) clearInterval(breathingPhaseInterval);
+    if (breathingCountdownInterval) clearInterval(breathingCountdownInterval);
+}
+
+function closeBreathingModal() {
+    const overlay = document.getElementById('breathing-modal-overlay');
+    const stepIntro = document.getElementById('breathing-step-intro');
+    const stepExercise = document.getElementById('breathing-step-exercise');
+    const bubble = document.getElementById('breathing-bubble');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    overlay.setAttribute('aria-hidden', 'true');
+    if (stepIntro) stepIntro.hidden = false;
+    if (stepExercise) stepExercise.hidden = true;
+    if (bubble) bubble.classList.remove('breathing-active');
+    if (breathingPhaseInterval) { clearInterval(breathingPhaseInterval); breathingPhaseInterval = null; }
+    if (breathingCountdownInterval) { clearInterval(breathingCountdownInterval); breathingCountdownInterval = null; }
+}
+
+function initBreathingModal() {
+    const overlay = document.getElementById('breathing-modal-overlay');
+    const btnStart = document.getElementById('btn-breathing-start');
+    const btnClose = document.getElementById('breathing-close');
+    const stepIntro = document.getElementById('breathing-step-intro');
+    const stepExercise = document.getElementById('breathing-step-exercise');
+    const bubble = document.getElementById('breathing-bubble');
+    const phaseText = document.getElementById('breathing-phase-text');
+    const timerEl = document.getElementById('breathing-timer');
+    if (!overlay || !btnStart || !btnClose) return;
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeBreathingModal();
+    });
+    btnStart.addEventListener('click', () => {
+        stepIntro.hidden = true;
+        stepExercise.hidden = true;
+        stepExercise.hidden = false;
+        if (bubble) bubble.classList.add('breathing-active');
+        if (phaseText) phaseText.textContent = 'Inspire...';
+        breathingCountdownSeconds = 300;
+        if (timerEl) timerEl.textContent = '5:00';
+        if (breathingPhaseInterval) clearInterval(breathingPhaseInterval);
+        breathingPhaseInterval = setInterval(() => {
+            if (!phaseText) return;
+            phaseText.textContent = phaseText.textContent.trim().startsWith('Inspire') ? 'Expire...' : 'Inspire...';
+        }, 5000);
+        if (breathingCountdownInterval) clearInterval(breathingCountdownInterval);
+        breathingCountdownInterval = setInterval(() => {
+            breathingCountdownSeconds--;
+            if (breathingCountdownSeconds <= 0) {
+                clearInterval(breathingCountdownInterval);
+                breathingCountdownInterval = null;
+            }
+            if (timerEl) {
+                const m = Math.floor(breathingCountdownSeconds / 60);
+                const s = breathingCountdownSeconds % 60;
+                timerEl.textContent = `${m}:${String(s).padStart(2, '0')}`;
+            }
+        }, 1000);
+    });
+    btnClose.addEventListener('click', closeBreathingModal);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.classList.contains('active')) closeBreathingModal();
+    });
+}
+
 // --- DÉLÉGATION D'ÉVÉNEMENTS (remplace les onclick inline) ---
 document.body.addEventListener('click', (e) => {
     if (e.target.closest('.close-modal')) { closeModal(); return; }
@@ -1777,6 +1865,12 @@ document.body.addEventListener('click', (e) => {
     if (recoveryBtn) {
         const url = recoveryBtn.getAttribute('data-recovery-url') || DEFAULT_RECOVERY_VIDEO_URL;
         if (url) window.open(url, '_blank');
+        return;
+    }
+    const pauseRespirationBtn = e.target.closest('.btn-pause-respiration');
+    if (pauseRespirationBtn) {
+        e.preventDefault();
+        openBreathingModal();
         return;
     }
     if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }

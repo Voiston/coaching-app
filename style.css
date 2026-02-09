@@ -62,6 +62,15 @@
 [data-theme="dark"] .close-modal { color: var(--text-light); }
 [data-theme="dark"] .close-modal:hover { color: var(--primary); }
 [data-theme="dark"] .toast { background: #2a2224; border: 1px solid var(--primary); color: var(--text-main); }
+[data-theme="dark"] .breathing-modal-overlay { background: rgba(20, 18, 19, 0.75); }
+[data-theme="dark"] .breathing-modal { background: linear-gradient(145deg, rgba(60, 45, 50, 0.95) 0%, rgba(45, 38, 40, 0.98) 100%); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .breathing-modal-title,
+[data-theme="dark"] .breathing-phase-text { color: var(--primary); }
+[data-theme="dark"] .breathing-modal-text,
+[data-theme="dark"] .breathing-timer,
+[data-theme="dark"] .breathing-close { color: var(--text-light); }
+[data-theme="dark"] .breathing-close:hover { background: var(--primary-soft); color: var(--primary); }
+[data-theme="dark"] .breathing-bubble { background: linear-gradient(145deg, rgba(70, 50, 55, 0.9) 0%, rgba(50, 42, 45, 0.95) 100%); border-color: rgba(212, 137, 148, 0.3); }
 
 /* --- CALENDRIER ROULANT (V3 - PREMIUM) --- */
 .calendar-container {
@@ -286,6 +295,165 @@
     outline: none;
     box-shadow: 0 6px 20px rgba(183, 110, 121, 0.3), var(--focus-ring);
 }
+
+/* --- PAUSE RESPIRATION (trigger sur jour de repos) --- */
+.btn-pause-respiration {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #FCE4EC 0%, rgba(255, 255, 255, 0.95) 100%);
+    color: #8B5A6A;
+    border: 1px solid rgba(183, 110, 121, 0.2);
+    border-radius: 50px;
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(252, 228, 236, 0.5);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+.btn-pause-respiration:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(252, 228, 236, 0.6);
+}
+.btn-pause-respiration:focus-visible {
+    outline: none;
+    box-shadow: 0 6px 20px rgba(252, 228, 236, 0.5), var(--focus-ring);
+}
+
+/* --- MODAL COHÉRENCE CARDIAQUE (Clean Girl) --- */
+.breathing-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(60, 50, 52, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.breathing-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+.breathing-modal {
+    font-family: 'Lato', sans-serif;
+    width: 100%;
+    max-width: 360px;
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(252, 228, 236, 0.85) 0%, rgba(255, 250, 248, 0.9) 50%, rgba(245, 235, 230, 0.85) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 20px 50px rgba(140, 100, 110, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+    padding: 28px 24px;
+    text-align: center;
+}
+.breathing-modal-title {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #8B5A6A;
+    margin: 0 0 12px 0;
+    letter-spacing: 0.02em;
+}
+.breathing-modal-text {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #6B5B5F;
+    margin: 0 0 24px 0;
+}
+.btn-breathing-start {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(135deg, #D4A5B0 0%, #B76E79 100%);
+    border: none;
+    border-radius: 50px;
+    padding: 12px 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(183, 110, 121, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-breathing-start:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(183, 110, 121, 0.35);
+}
+.btn-breathing-start:focus-visible {
+    outline: none;
+    box-shadow: 0 4px 16px rgba(183, 110, 121, 0.3), 0 0 0 3px rgba(183, 110, 121, 0.25);
+}
+.breathing-step-exercise .breathing-bubble-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0 16px 0;
+    min-height: 180px;
+}
+.breathing-bubble {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(252, 228, 236, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+    border: 2px solid rgba(183, 110, 121, 0.2);
+    box-shadow: 0 8px 32px rgba(183, 110, 121, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    transform: scale(1);
+}
+.breathing-bubble.breathing-active {
+    animation: breathing-bubble-cycle 10s ease-in-out infinite;
+}
+@keyframes breathing-bubble-cycle {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+}
+.breathing-phase-text {
+    font-family: 'Josefin Sans', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #8B5A6A;
+    margin: 0 0 8px 0;
+}
+.breathing-timer {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.9rem;
+    color: #8B7A7E;
+    margin: 0 0 20px 0;
+}
+.breathing-close {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    color: #8B7A7E;
+    background: transparent;
+    border: 1px solid rgba(139, 122, 126, 0.3);
+    border-radius: 50px;
+    padding: 8px 20px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.breathing-close:hover {
+    background: rgba(139, 122, 126, 0.08);
+    color: #6B5B5F;
+}
+.breathing-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(139, 122, 126, 0.3);
+}
+@media (max-width: 480px) {
+    .breathing-modal { padding: 24px 20px; }
+    .breathing-step-exercise .breathing-bubble-wrap { min-height: 160px; }
+    .breathing-bubble { width: 100px; height: 100px; }
+}
+
 @keyframes float {
     0% { transform: translateY(0); }
     50% { transform: translateY(-10px); }

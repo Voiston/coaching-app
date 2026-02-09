@@ -11,7 +11,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#B76E79">
-    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600&family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600&family=Lato:wght@400;700&family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -143,6 +143,25 @@
             </div>
             <div class="settings-item">
                 <label><input type="checkbox" id="setting-notifications"> Rappel « Séance aujourd'hui »</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cohérence Cardiaque (Pause Respiration) -->
+    <div id="breathing-modal-overlay" class="breathing-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="breathing-modal-title" aria-hidden="true">
+        <div class="breathing-modal">
+            <div class="breathing-step breathing-step-intro" id="breathing-step-intro">
+                <h2 id="breathing-modal-title" class="breathing-modal-title">Reconnexion & Calme</h2>
+                <p class="breathing-modal-text">Inspire 5 secondes, expire 5 secondes. Idéal pour réduire le cortisol.</p>
+                <button type="button" class="btn-breathing-start" id="btn-breathing-start">Commencer</button>
+            </div>
+            <div class="breathing-step breathing-step-exercise" id="breathing-step-exercise" hidden>
+                <div class="breathing-bubble-wrap">
+                    <div class="breathing-bubble" id="breathing-bubble" aria-hidden="true"></div>
+                </div>
+                <p class="breathing-phase-text" id="breathing-phase-text">Inspire...</p>
+                <p class="breathing-timer" id="breathing-timer" aria-live="polite">5:00</p>
+                <button type="button" class="breathing-close" id="breathing-close">Fermer</button>
             </div>
         </div>
     </div>
