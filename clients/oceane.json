@@ -80,6 +80,19 @@
           "rpe_target": "N/A",
           "check_technique": false,
           "note_coach": "Lombaires plaquées au sol. Jambes qui frolent le sol."
+        },
+        {
+          "type": "section",
+          "title": "Finishers optionnel"
+        },
+        {
+          "name": "Escalier",
+          "sets": "1",
+          "reps": "6min",
+          "rest": "0s",
+          "rpe_target": "6",
+          "check_technique": false,
+          "note_coach": "Si tu as encore de l'energie, profite-en. Rythme moyen, tu dois être essouflé mais pouvoir tenir à peu près une conversation."
         }
       ]
     },
@@ -158,6 +171,19 @@
           "rpe_target": "6",
           "check_technique": false,
           "note_coach": "Anti-rotation. Reste statique, les bras bien horizontaux et tendus. Trouve une charge qui te mets en difficulté sur 30s mais où tu arrives à maintenir une bonne position."
+        },
+        {
+          "type": "section",
+          "title": "Finishers optionnel"
+        },
+        {
+          "name": "Escalier",
+          "sets": "1",
+          "reps": "6min",
+          "rest": "0s",
+          "rpe_target": "6",
+          "check_technique": false,
+          "note_coach": "Si tu as encore de l'energie, profite-en. Rythme moyen, tu dois être essouflé mais pouvoir tenir à peu près une conversation."
         }
       ]
     },
@@ -226,13 +252,26 @@
           "check_technique": false,
           "superset_type": "end",
           "note_coach": "Intensité maximale. Vide le réservoir."
+        },
+        {
+          "type": "section",
+          "title": "Finishers optionnel"
+        },
+        {
+          "name": "Escalier",
+          "sets": "1",
+          "reps": "6min",
+          "rest": "0s",
+          "rpe_target": "6",
+          "check_technique": false,
+          "note_coach": "Si tu as encore de l'energie, profite-en. Rythme moyen, tu dois être essouflé mais pouvoir tenir à peu près une conversation."
         }
         
       ]
     },
     {
       "id": "s_4",
-      "date": "2026-02-17",
+      "date": "2026-02-16",
       "name": "Legs & Arms Toning ✨",
       "nutrition_tip": "Hydrate-toi bien pendant la séance, surtout avec la corde à sauter.",
       "exercises": [
@@ -255,7 +294,7 @@
           "reps": "12-15",
           "rest": "90s",
           "rpe_target": "8",
-          "charge": ["35", "35", "30", "60kg"],
+          "charge": ["35", "35", "30", "30"],
           "check_technique": true,
           "note_coach": "Pieds largeur bassin.",
           "alternative": "Goblet Squat",
@@ -306,19 +345,32 @@
           "check_technique": false,
           "note_coach": "Bassin en retroversion, lombaire plaqué au sol.",
           "alternative": "Planche"
+        },
+        {
+          "type": "section",
+          "title": "Finishers optionnel"
+        },
+        {
+          "name": "Escalier",
+          "sets": "1",
+          "reps": "6min",
+          "rest": "0s",
+          "rpe_target": "6",
+          "check_technique": false,
+          "note_coach": "Si tu as encore de l'energie, profite-en. Rythme moyen, tu dois être essouflé mais pouvoir tenir à peu près une conversation."
         }
       ]
     },
     {
       "id": "s_5",
-      "date": "2026-02-19",
+      "date": "2026-02-18",
       "name": "Glutes & Shoulders 🍑",
       "nutrition_tip": "Mange un fruit 1h avant la séance pour l'énergie.",
       "exercises": [
         { "type": "section", "title": "Échauffement & Cardio" },
         {
-          "name": "Mobilité + Corde à Sauter",
-          "sets": "5",
+          "name": "Corde à Sauter 45sec + 10 squats profonds lents",
+          "sets": "2",
           "reps": "45 sec",
           "rest": "30s",
           "rpe_target": "7",
@@ -396,8 +448,82 @@
           "check_technique": false,
           "note_coach": "Gainage total.",
           "alternative": "Planche genoux"
+        },
+        {
+          "type": "section",
+          "title": "Finishers optionnel"
+        },
+        {
+          "name": "Escalier",
+          "sets": "1",
+          "reps": "6min",
+          "rest": "0s",
+          "rpe_target": "6",
+          "check_technique": false,
+          "note_coach": "Si tu as encore de l'energie, profite-en. Rythme moyen, tu dois être essouflé mais pouvoir tenir à peu près une conversation."
+        }
+      ]
+    },
+    {
+      "id": "s_6",
+      "date": "2026-02-21",
+      "name": " To the moon ! 🚀",
+      "nutrition_tip": "Mange un fruit 1h avant la séance pour l'énergie.",
+      "exercises": [
+        
+        { "type": "section", "title": "Cardio" },
+        {
+          "name": "Escalier",
+          "sets": "3",
+          "reps": "8min",
+          "rest": "60s",
+          "rpe_target": "7",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": " Vitesse moyenne, il faut tenir les 8 minutes trois fois. "
+          
+        },
+        {
+          "name": "Coude-Genoux croisés",
+          "sets": "3",
+          "reps": "45",
+          "rest": "60s",
+          "rpe_target": "6",
+          "check_technique": false,
+          "superset_type": "end"
+ 
         }
       ]
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   ]
 }
