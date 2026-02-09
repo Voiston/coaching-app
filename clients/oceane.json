@@ -13,7 +13,7 @@
       "exercises": [
         {
           "type": "section",
-          "title": "Échauffement Spécifique"
+          "title": "Échauffement"
         },
         {
           "name": "Rotations articulaires 2min + 10 burpees lent + 15 squats profond lent",
@@ -33,7 +33,7 @@
           "sets": "4",
           "reps": "10-12",
           "rest": "90s",
-		      "charge": ["25", "25", "20", "20"],
+		      "charge": "25",
           "rpe_target": "8",
           "warmup_sets": "1",
           "check_technique": true,
@@ -97,14 +97,14 @@
       ]
     },
     {
-      "id": "s_2",
-      "date": "2026-02-12",
+      "id": "s_3",
+      "date": "2026-02-14",
       "session_intro": " Séance plutôt renfo, avec un peu de cardio en début de séance.",
       "name": "Hybride: Posture & Force",
       "exercises": [
         {
           "type": "section",
-          "title": "Échauffement Spécifique"
+          "title": "Échauffement"
         },
         {
           "name": "15 squats profonds lents + 30sec gainage superman +20 fentes avants alternées + 30 pont fessiers",
@@ -188,15 +188,15 @@
       ]
     },
     {
-      "id": "s_3",
-      "date": "2026-02-14",
+      "id": "s_2",
+      "date": "2026-02-12",
       "name": "Cardio: Metabolic Fat Burner",
       "session_intro": " Séance hybride, le cardio va bien monter si tu y met du rythme et le côté musculaire ne sera pas mis de côté non plus ! ",
       "nutrition_tip": "N'oublie pas de bien boire, tu peux même utiliser une boisson d'effort où ajouter une pincer de sel à ton eau.",
       "exercises": [
         {
           "type": "section",
-          "title": "Échauffement Spécifique"
+          "title": "Échauffement"
         },
         {
           "name": "Corde à sauter 60 tours + 10 burpees",
@@ -276,7 +276,7 @@
       "session_intro": " On lâche toujours pas les jambes et on poursuit le travail sur le haut du corps, en travaillant toujours un peu plus le dos pour l'instant.",
       "nutrition_tip": "",
       "exercises": [
-        { "type": "section", "title": "Échauffement & Cardio" },
+        { "type": "section", "title": "Échauffement" },
         {
           "name": "Corde à Sauter 45sec + 10 squats profonds lents",
           "sets": "2",
@@ -368,7 +368,7 @@
       "name": " Focus jambes",
       "nutrition_tip": "",
       "exercises": [
-        { "type": "section", "title": "Échauffement & Cardio" },
+        { "type": "section", "title": "Échauffement" },
         {
           "name": "Corde à Sauter 45sec + 10 squats profonds lents",
           "sets": "2",
@@ -384,10 +384,10 @@
         {
           "name": "Hip Thrust",
           "sets": "4",
-          "reps": "10-12",
+          "reps": "8-10",
           "rest": "90s",
           "rpe_target": "9",
-          "charge": ["30", "35", "35", "30"],
+          "charge": "30",
           "check_technique": true,
           "note_coach": "Menton rentré, contraction fessiers en haut.",
           
@@ -437,7 +437,7 @@
           "charge": "",
           "check_technique": false,
           "note_coach": "",
-          "alternative": "Abductions élastique"
+          "alternative": "Machine abduction"
         },
         {
           "name": "Planche Statique",
@@ -447,7 +447,7 @@
           "rpe_target": "N/A",
           "charge": "Poids du corps",
           "check_technique": false,
-          "note_coach": "Gainage total.",
+          "note_coach": "",
           "alternative": "Planche genoux"
         },
         {
@@ -469,13 +469,13 @@
       "id": "s_6",
       "date": "2026-02-21",
       "name": " To the moon ! 🚀",
-      "nutrition_tip": "Mange un fruit 1h avant la séance pour l'énergie.",
+      "nutrition_tip": "",
       "exercises": [
         
         { "type": "section", "title": "Cardio" },
         {
           "name": "Escalier",
-          "sets": "3",
+          "sets": "4",
           "reps": "8min",
           "rest": "60s",
           "rpe_target": "7",
