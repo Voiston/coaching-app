@@ -284,9 +284,10 @@ function initApp(data) {
         updateWeekAndNextSession(data.sessions);
     } else if (data.exercises) {
         globalData.sessions = [{ id: "unique", name: "Séance Unique", exercises: data.exercises }];
-        renderSession(0);
+        renderSession(0, new Date().toISOString().slice(0, 10));
         updateWeekAndNextSession(globalData.sessions);
     }
+    initSessionDatePicker();
     renderCoachSignature();
     renderProgressionPanel();
     initFocusMode();
@@ -460,7 +461,49 @@ function renderCalendar(sessions) {
     if (todayEl) setTimeout(() => todayEl.click(), 50);
 }
 
+function getCalendarDateRange() {
+    const today = new Date();
+    const min = new Date(today);
+    min.setDate(min.getDate() - PAST_DAYS);
+    const max = new Date(today);
+    max.setDate(max.getDate() + DAYS_AHEAD);
+    const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return { min: fmt(min), max: fmt(max) };
+}
+
+function syncCalendarActiveToDate(dateStr) {
+    if (!dateStr) return;
+    document.querySelectorAll('.calendar-day').forEach((d) => {
+        d.classList.toggle('active', d.dataset.dateString === dateStr);
+    });
+}
+
+function initSessionDatePicker() {
+    const input = document.getElementById('session-date-input');
+    if (!input) return;
+    input.addEventListener('change', function () {
+        const newDate = this.value;
+        if (!newDate) return;
+        currentSessionDate = newDate;
+        syncCalendarActiveToDate(newDate);
+        saveData();
+    });
+}
+
+function updateSessionDateRow() {
+    const row = document.getElementById('session-date-row');
+    const input = document.getElementById('session-date-input');
+    if (!row || !input) return;
+    row.hidden = false;
+    input.value = currentSessionDate || new Date().toISOString().slice(0, 10);
+    const range = getCalendarDateRange();
+    input.min = range.min;
+    input.max = range.max;
+}
+
 function showRestDay(dayName) {
+    const dateRow = document.getElementById('session-date-row');
+    if (dateRow) dateRow.hidden = true;
     const resetWrap = document.getElementById('reset-session-wrap');
     if (resetWrap) resetWrap.innerHTML = "";
     const waBottom = document.getElementById('whatsapp-bottom');
@@ -488,7 +531,7 @@ function renderSession(sessionIndex, dateStr) {
     const container = document.getElementById('workout-container');
 
     currentSessionId = session.id || `session_${sessionIndex}`;
-    currentSessionDate = dateStr || (session.date || "");
+    currentSessionDate = dateStr || (session.date || "") || new Date().toISOString().slice(0, 10);
     sessionStartTime = null;
     sessionEndTime = null;
 
@@ -577,6 +620,7 @@ function renderSession(sessionIndex, dateStr) {
     renderProgressionPanel();
     updateSupersetHighlight();
     updateAllExerciseDetails();
+    updateSessionDateRow();
     if (document.body.classList.contains('guided-mode')) {
         guidedViewIndex = 0;
         setTimeout(() => { guidedViewIndex = getFirstIncompleteIndex(); updateGuidedMode(); }, 150);
