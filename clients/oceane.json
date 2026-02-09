@@ -33,7 +33,7 @@
           "sets": "4",
           "reps": "10-12",
           "rest": "90s",
-		      "charge": "30",
+		      "charge": ["25", "25", "20", "20"],
           "rpe_target": "8",
           "warmup_sets": "1",
           "check_technique": true,
@@ -99,7 +99,7 @@
     {
       "id": "s_2",
       "date": "2026-02-12",
-      "session_intro": " On est toujours sur une séance plutôt renfo, avec un peu de cardio en début de séance.",
+      "session_intro": " Séance plutôt renfo, avec un peu de cardio en début de séance.",
       "name": "Hybride: Posture & Force",
       "exercises": [
         {
@@ -191,7 +191,7 @@
       "id": "s_3",
       "date": "2026-02-14",
       "name": "Cardio: Metabolic Fat Burner",
-      "session_intro": " Séance cardio, vas-y à fond !",
+      "session_intro": " Séance hybride, le cardio va bien monter si tu y met du rythme et le côté musculaire ne sera pas mis de côté non plus ! ",
       "nutrition_tip": "N'oublie pas de bien boire, tu peux même utiliser une boisson d'effort où ajouter une pincer de sel à ton eau.",
       "exercises": [
         {
@@ -236,7 +236,7 @@
         {
           "name": "Squats sautés",
           "sets": "4",
-          "reps": "14",
+          "reps": "20",
           "rest": "0s",
           "rpe_target": "8",
           "check_technique": true,
@@ -248,7 +248,7 @@
           "sets": "4",
           "reps": "30 sec",
           "rest": "60s",
-          "rpe_target": "10",
+          "rpe_target": "8-9",
           "check_technique": false,
           "superset_type": "end",
           "note_coach": "Intensité maximale. Vide le réservoir."
@@ -272,8 +272,9 @@
     {
       "id": "s_4",
       "date": "2026-02-16",
-      "name": "Legs & Arms Toning ✨",
-      "nutrition_tip": "Hydrate-toi bien pendant la séance, surtout avec la corde à sauter.",
+      "name": " Jambes et bras ",
+      "session_intro": " On lâche toujours pas les jambes et on poursuit le travail sur le haut du corps, en travaillant toujours un peu plus le dos pour l'instant.",
+      "nutrition_tip": "",
       "exercises": [
         { "type": "section", "title": "Échauffement & Cardio" },
         {
@@ -297,7 +298,7 @@
           "charge": ["35", "35", "30", "30"],
           "check_technique": true,
           "note_coach": "Pieds largeur bassin.",
-          "alternative": "Goblet Squat",
+          
           "warmup_sets": 1
         },
         {
@@ -364,8 +365,8 @@
     {
       "id": "s_5",
       "date": "2026-02-18",
-      "name": "Glutes & Shoulders 🍑",
-      "nutrition_tip": "Mange un fruit 1h avant la séance pour l'énergie.",
+      "name": " Focus jambes",
+      "nutrition_tip": "",
       "exercises": [
         { "type": "section", "title": "Échauffement & Cardio" },
         {
@@ -480,7 +481,7 @@
           "rpe_target": "7",
           "check_technique": true,
           "superset_type": "start",
-          "note_coach": " Vitesse moyenne, il faut tenir les 8 minutes trois fois. "
+          "note_coach": " Trouve une vitesse qui te permet de tenir les 8 minutes trois fois, mais n'hésite pas à faire monter le cardio !"
           
         },
         {
