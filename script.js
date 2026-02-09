@@ -1764,10 +1764,10 @@ let breathingCountdownSeconds = 300; // 5 min
 let breathingAudioCtx = null;
 const BREATHING_PHASE_DURATION_MS = 4000;
 const BREATHING_PHASES = [
-    { label: 'Inspire...', scale: 1.35, beepType: 'normal' },
-    { label: 'Retiens...', scale: 1.35, beepType: 'hold' },
-    { label: 'Expire...', scale: 1.0, beepType: 'normal' },
-    { label: 'Retiens...', scale: 1.0, beepType: 'hold' },
+    { label: 'Inspire...', scale: 1.6, beepType: 'normal' },
+    { label: 'Retiens...', scale: 1.6, beepType: 'hold' },
+    { label: 'Expire...',  scale: 0.8, beepType: 'normal' },
+    { label: 'Retiens...', scale: 0.8, beepType: 'hold' },
 ];
 let breathingPhaseIndex = 0;
 
@@ -1814,7 +1814,6 @@ function openBreathingModal() {
     stepIntro.hidden = false;
     stepExercise.hidden = true;
     if (bubble) {
-        bubble.classList.remove('breathing-active');
         bubble.style.transform = 'scale(1)';
     }
     if (phaseText) phaseText.textContent = 'Inspire...';
@@ -1836,7 +1835,6 @@ function closeBreathingModal() {
     if (stepIntro) stepIntro.hidden = false;
     if (stepExercise) stepExercise.hidden = true;
     if (bubble) {
-        bubble.classList.remove('breathing-active');
         bubble.style.transform = 'scale(1)';
     }
     if (breathingPhaseInterval) { clearInterval(breathingPhaseInterval); breathingPhaseInterval = null; }
@@ -1864,8 +1862,6 @@ function initBreathingModal() {
         stepExercise.hidden = false;
         breathingPhaseIndex = 0;
         if (bubble) {
-            bubble.classList.add('breathing-active');
-            bubble.style.transition = 'transform 4s ease-in-out';
             bubble.style.transform = `scale(${BREATHING_PHASES[breathingPhaseIndex].scale})`;
         }
         if (phaseText) phaseText.textContent = BREATHING_PHASES[breathingPhaseIndex].label;

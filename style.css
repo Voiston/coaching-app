@@ -197,39 +197,6 @@
     box-shadow: 0 2px 5px rgba(76, 175, 80, 0.3);
 }
 
-/* --- DATE DE SÉANCE (modifiable par le client) --- */
-.session-date-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 8px 20px 16px;
-    flex-wrap: wrap;
-}
-.session-date-label {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    font-weight: 500;
-}
-.session-date-input {
-    font-family: 'Poppins', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--primary);
-    background: var(--primary-soft);
-    border: 1px solid rgba(183, 110, 121, 0.25);
-    border-radius: var(--radius-sm);
-    padding: 6px 12px;
-    cursor: pointer;
-    min-width: 140px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.session-date-input:hover { border-color: var(--primary); }
-.session-date-input:focus {
-    outline: none;
-    box-shadow: var(--focus-ring);
-}
-
 /* --- SECTION REPOS --- */
 .rest-day-message {
     background: var(--card-bg);
@@ -441,13 +408,7 @@ body.calendar-move-mode #calendar-wrap {
     border: 2px solid rgba(183, 110, 121, 0.2);
     box-shadow: 0 8px 32px rgba(183, 110, 121, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5) inset;
     transform: scale(1);
-}
-.breathing-bubble.breathing-active {
-    animation: breathing-bubble-cycle 10s ease-in-out infinite;
-}
-@keyframes breathing-bubble-cycle {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.35); }
+    transition: transform 4s ease-in-out;
 }
 .breathing-phase-text {
     font-family: 'Josefin Sans', sans-serif;
