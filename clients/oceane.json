@@ -66,6 +66,7 @@
           "sets": "3",
           "reps": "15-20",
           "rest": "60s",
+          "charge": "3",
           "rpe_target": "9",
           "check_technique": false,
           "superset_type": "end",
@@ -110,7 +111,7 @@
           "sets": "4",
           "reps": "45s",
           "rest": "45s",
-		  "charge": "12",
+		      "charge": "12",
           "rpe_target": "8",
           "check_technique": true, 
           "warmup_sets": "1",
@@ -135,7 +136,7 @@
 		  "charge": "8",
           "rpe_target": "7",
           "check_technique": true, 
-          "warmup_sets": "1",
+          
           "superset_type": "end",
           "note_coach": "Avant-bras verticaux. Les pieds bien ancrés au sol pour la stabilité."
         },
@@ -172,7 +173,7 @@
           "title": "Échauffement Spécifique"
         },
         {
-          "name": "Corde à sauter 30 tours + 10 burpees",
+          "name": "Corde à sauter 60 tours + 10 burpees",
           "sets": "2",
           "reps": "Circuit",
           "rest": "15s",
@@ -237,24 +238,24 @@
       "exercises": [
         { "type": "section", "title": "Échauffement & Cardio" },
         {
-          "name": "Mobilité + Corde à Sauter",
-          "sets": "5",
+          "name": "Corde à Sauter 45sec + 10 squats profonds lents",
+          "sets": "2",
           "reps": "45 sec",
           "rest": "30s",
-          "rpe_target": "7",
+          "rpe_target": "4-5",
           "charge": "Poids du corps",
           "check_technique": false,
-          "note_coach": "",
-          "alternative": "Marche Inclinée (Tapis)"
+          "note_coach": ""
+          
         },
         { "type": "section", "title": "Renforcement" },
         {
           "name": "Leg Press",
-          "sets": "4",
+          "sets": "3",
           "reps": "12-15",
           "rest": "90s",
           "rpe_target": "8",
-          "charge": ["50kg", "55kg", "60kg", "60kg"],
+          "charge": ["35", "35", "30", "60kg"],
           "check_technique": true,
           "note_coach": "Pieds largeur bassin.",
           "alternative": "Goblet Squat",
@@ -284,15 +285,15 @@
           "alternative": "Tirage Horizontal"
         },
         {
-          "name": "Triceps Poulie Haute (Corde)",
+          "name": "Extension triceps debout à l'haltère",
           "sets": "3",
-          "reps": "15",
+          "reps": "10-15",
           "rest": "60s",
           "rpe_target": "9",
-          "charge": "10kg",
+          "charge": "8kg",
           "check_technique": false,
           "superset_type": "end",
-          "note_coach": "Isole l'arrière du bras. Coudes fixes. Buste légèrement penché vers l'avant. Extension complète des coudes.",
+          "note_coach": "Isole l'arrière du bras. Coudes fixes et bien haut. Descend le plus bas possible pour bien étirer le triceps et ensuite extension complète des coudes.",
           "alternative": "Extension Triceps Haltère"
         },
         {
@@ -333,10 +334,10 @@
           "reps": "10-12",
           "rest": "90s",
           "rpe_target": "9",
-          "charge": ["30kg", "35kg", "40kg", "40kg"],
+          "charge": ["30", "35", "35", "30"],
           "check_technique": true,
           "note_coach": "Menton rentré, contraction fessiers en haut.",
-          "alternative": "Glute Bridge Machine",
+          
           "warmup_sets": 1
         },
         {
@@ -347,30 +348,19 @@
           "rpe_target": "8",
           "charge": "12",
           "check_technique": true,
-          "note_coach": "Poids sur le talon avant. Attention à l'équilibre.",
+          "note_coach": "",
           "alternative": "Fentes arrières"
         },
         {
-          "name": "Gainage oblique",
+          "name": "Thrusters deux haltères",
           "sets": "3",
-          "reps": "45s par côté",
-          "rest": "30s",
-          "rpe_target": "8",
-          "charge": "",
-          "check_technique": false,
-          "note_coach": "",
-          "alternative": "Abductions élastique"
-        },
-        {
-          "name": "Thrusters",
-          "sets": "3",
-          "reps": "12",
+          "reps": "16",
           "rest": "0s",
           "rpe_target": "9",
           "charge": "12",
           "check_technique": true,
           "superset_type": "start",
-          "note_coach": "Dos droit, ne cambre pas.",
+          "note_coach": "Dos droit, ne cambre pas. 6kg par haltère, rythme rapide.",
           "alternative": "Développé Machine"
         },
         {
@@ -382,8 +372,19 @@
           "charge": "12",
           "check_technique": false,
           "superset_type": "end",
-          "note_coach": "Genoux très légèrement fléchis, essaie de sentir léger étirement sur l'arrière des cuisses.",
+          "note_coach": "Genoux très légèrement fléchis, essaie de sentir léger étirement sur l'arrière des cuisses. Récupère un peu niveau cardio ici.",
           "alternative": ""
+        },
+        {
+          "name": "Gainage oblique",
+          "sets": "3",
+          "reps": "45s par côté",
+          "rest": "30s",
+          "rpe_target": "8",
+          "charge": "",
+          "check_technique": false,
+          "note_coach": "",
+          "alternative": "Abductions élastique"
         },
         {
           "name": "Planche Statique",
