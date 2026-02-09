@@ -39,6 +39,7 @@ const KEY_GUIDED_MODE = 'fitapp_guided_' + clientID;
 const KEY_CHARGE_HISTORY = 'fitapp_charge_history_' + clientID;
 const KEY_SESSION_DATE_OVERRIDES = 'fitapp_session_dates_' + clientID;
 const KEY_COUNTERS = 'fitapp_counters_' + clientID;
+const KEY_MILESTONES = 'fitapp_milestones_' + clientID;
 
 function getSettingSound() { return localStorage.getItem(KEY_SOUND) !== '0'; }
 function setSettingSound(on) { localStorage.setItem(KEY_SOUND, on ? '1' : '0'); }
@@ -590,6 +591,7 @@ function renderSession(sessionIndex, dateStr) {
     let supersetPos = 0;
     let inWarmupSection = false;
     let inFinishersSection = false;
+    let lastWasCircuit = false;
 
     const sessionIntro = (session.session_intro || session.objectives || session.coach_notes || '').toString().trim();
     if (sessionIntro) {
@@ -630,7 +632,11 @@ function renderSession(sessionIndex, dateStr) {
             supersetPos = 1;
         }
 
-        const cardHtml = createExerciseCard(exo, index, currentSessionId, supersetPos > 0 ? supersetPos : null, inWarmupSection, inFinishersSection);
+        const isCircuit = String(exo.reps || '').toLowerCase().includes('circuit');
+        const isFirstCircuit = isCircuit && !lastWasCircuit;
+        lastWasCircuit = isCircuit;
+
+        const cardHtml = createExerciseCard(exo, index, currentSessionId, supersetPos > 0 ? supersetPos : null, inWarmupSection, inFinishersSection, isCircuit, isFirstCircuit);
         const row = currentSupersetBlock ? currentSupersetBlock.querySelector('.superset-row') : null;
 
         if (row) {
@@ -659,11 +665,15 @@ function renderSession(sessionIndex, dateStr) {
     updateAllExerciseDetails();
     if (document.body.classList.contains('guided-mode')) {
         guidedViewIndex = 0;
-        setTimeout(() => { guidedViewIndex = getFirstIncompleteIndex(); updateGuidedMode(); }, 150);
+        setTimeout(() => {
+            guidedViewIndex = getFirstIncompleteIndex();
+            updateGuidedMode();
+            document.querySelector('.exercise-card.guided-current')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 150);
     }
 }
 
-function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExercise, isFinishersExercise) {
+function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExercise, isFinishersExercise, isCircuit, isFirstCircuit) {
     let mediaHtml = '';
     if (exo.image && (exo.image.includes('youtube') || exo.image.includes('youtu.be'))) {
         mediaHtml = `<a href="${exo.image}" target="_blank" class="video-btn">▶ Voir la démo vidéo</a>`;
@@ -749,8 +759,10 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
     const warmupClass = isWarmupExercise ? ' exercise-warmup' : '';
     const finishersClass = isFinishersExercise ? ' exercise-finishers' : '';
     const warmupSectionAttr = isWarmupExercise ? ' data-warmup-section="1"' : '';
+    const circuitAttr = isCircuit ? ' data-circuit="1"' : '';
+    const circuitStartAttr = isFirstCircuit ? ' data-circuit-start="1"' : '';
     return `
-    <div class="exercise-card open${warmupClass}${finishersClass}" id="card-${index}" data-index="${index}"${warmupSectionAttr}${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
+    <div class="exercise-card open${warmupClass}${finishersClass}" id="card-${index}" data-index="${index}"${warmupSectionAttr}${circuitAttr}${circuitStartAttr}${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
                 <div class="exercise-title-row"><span class="exercise-title">${exo.name}</span>${altBtnHtml}</div>
@@ -997,6 +1009,113 @@ function saveAndProgress() {
     saveData();
 }
 
+function getMilestonesShown() {
+    try { return JSON.parse(localStorage.getItem(KEY_MILESTONES) || '{}'); }
+    catch { return {}; }
+}
+function setMilestoneShown(key) {
+    const o = getMilestonesShown();
+    o[key] = true;
+    localStorage.setItem(KEY_MILESTONES, JSON.stringify(o));
+}
+
+/** Volume total (kg) pour les exercices dont le nom matche "hip thrust". */
+function getHipThrustVolume(byExo) {
+    let sum = 0;
+    Object.entries(byExo || {}).forEach(([name, data]) => {
+        if (/hip\s*[- ]?thrust/i.test(name)) sum += (data.volume || 0);
+    });
+    return sum;
+}
+
+/** Paliers : threshold croissant par catégorie, on affiche chaque palier franchi (non encore montré). */
+const MILESTONE_CONFIG = [
+    { key: 'burpees100', type: 'counter', counter: 'burpees', threshold: 100, label: '100 burpees', emoji: '💪' },
+    { key: 'burpees250', type: 'counter', counter: 'burpees', threshold: 250, label: '250 burpees', emoji: '🔥' },
+    { key: 'burpees1000', type: 'counter', counter: 'burpees', threshold: 1000, label: '1000 burpees', emoji: '🔥' },
+    { key: 'squats250', type: 'counter', counter: 'squats', threshold: 250, label: '250 squats', emoji: '🦵' },
+    { key: 'squats500', type: 'counter', counter: 'squats', threshold: 500, label: '500 squats', emoji: '🦵' },
+    { key: 'squats1000', type: 'counter', counter: 'squats', threshold: 1000, label: '1000 squats', emoji: '🦵' },
+    { key: 'squats2500', type: 'counter', counter: 'squats', threshold: 2500, label: '2500 squats', emoji: '🦵' },
+    { key: 'pompes50', type: 'counter', counter: 'pompes', threshold: 50, label: '50 pompes', emoji: '💪' },
+    { key: 'pompes100', type: 'counter', counter: 'pompes', threshold: 100, label: '100 pompes', emoji: '💪' },
+    { key: 'pompes200', type: 'counter', counter: 'pompes', threshold: 200, label: '200 pompes', emoji: '💪' },
+    { key: 'pompes500', type: 'counter', counter: 'pompes', threshold: 500, label: '500 pompes', emoji: '💪' },
+    { key: 'fentes250', type: 'counter', counter: 'fentes', threshold: 250, label: '250 fentes', emoji: '🦵' },
+    { key: 'fentes500', type: 'counter', counter: 'fentes', threshold: 500, label: '500 fentes', emoji: '🦵' },
+    { key: 'fentes1000', type: 'counter', counter: 'fentes', threshold: 1000, label: '1000 fentes', emoji: '🦵' },
+    { key: 'fentes2500', type: 'counter', counter: 'fentes', threshold: 2500, label: '2500 fentes', emoji: '🦵' },
+    { key: 'hipthrust1000', type: 'volume_hipthrust', threshold: 1000, label: '1000 kg en hip-thrust', emoji: '🏋️' },
+    { key: 'hipthrust2500', type: 'volume_hipthrust', threshold: 2500, label: '2500 kg en hip-thrust', emoji: '🏋️' },
+    { key: 'hipthrust5000', type: 'volume_hipthrust', threshold: 5000, label: '5000 kg en hip-thrust', emoji: '🏋️' },
+    { key: 'hipthrust10000', type: 'volume_hipthrust', threshold: 10000, label: '10 000 kg en hip-thrust', emoji: '🏋️' },
+    { key: 'volume5000', type: 'volume_total', threshold: 5000, label: '5000 kg de volume total', emoji: '📦' },
+    { key: 'volume10000', type: 'volume_total', threshold: 10000, label: '10 000 kg de volume total', emoji: '📦' },
+    { key: 'volume25000', type: 'volume_total', threshold: 25000, label: '25 000 kg de volume total', emoji: '📦' },
+    { key: 'volume50000', type: 'volume_total', threshold: 50000, label: '50 000 kg de volume total', emoji: '📦' },
+    { key: 'volume100000', type: 'volume_total', threshold: 100000, label: '100 000 kg de volume total', emoji: '📦' }
+];
+
+function showMilestoneModalIfNeeded(thenOpenCompletion) {
+    const counters = getCounters();
+    const { byExo, totalVolume } = getProgression1RMAndVolume();
+    const hipThrustVolume = getHipThrustVolume(byExo);
+    const shown = getMilestonesShown();
+    const achieved = [];
+    MILESTONE_CONFIG.forEach(({ key, type, counter, threshold, label, emoji }) => {
+        if (shown[key]) return;
+        let value = 0;
+        if (type === 'counter') value = counters[counter] || 0;
+        else if (type === 'volume_total') value = totalVolume || 0;
+        else if (type === 'volume_hipthrust') value = hipThrustVolume || 0;
+        if (value >= threshold) {
+            achieved.push({ key, label: label + ' !', emoji });
+            setMilestoneShown(key);
+        }
+    });
+    if (achieved.length === 0) {
+        thenOpenCompletion();
+        return;
+    }
+    const overlay = document.getElementById('milestone-overlay');
+    const body = document.getElementById('milestone-modal-body');
+    if (!overlay || !body) {
+        thenOpenCompletion();
+        return;
+    }
+    body.innerHTML = achieved.map(a => `<p class="milestone-item">${a.emoji} ${a.label}</p>`).join('') +
+        '<button type="button" class="btn-milestone-continue" id="btn-milestone-continue">Continuer</button>';
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    const onClose = () => {
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        document.getElementById('btn-milestone-continue')?.removeEventListener('click', onClose);
+        thenOpenCompletion();
+    };
+    document.getElementById('btn-milestone-continue')?.addEventListener('click', onClose);
+}
+
+function openCompletionOverlay() {
+    sessionEndTime = Date.now();
+    if (currentSessionDate) markSessionCompleted(currentSessionId, currentSessionDate);
+    saveChargeHistory();
+    fireConfetti();
+    document.body.classList.add('modal-open');
+    const overlay = document.getElementById('completion-overlay');
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+    injectNutritionCard();
+    const whatsappBtn = document.querySelector('#whatsapp-bottom button');
+    if (whatsappBtn) document.getElementById('modal-btn-container').appendChild(whatsappBtn);
+    if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+    loadCoachNoteIntoModal();
+    setupModalFocusTrap();
+    document.addEventListener('keydown', handleModalEscape);
+}
+
 function updateProgress(shouldOpenModal = false) {
     const total = document.querySelectorAll('.set-checkbox').length;
     const checked = document.querySelectorAll('.set-checkbox:checked').length;
@@ -1005,21 +1124,8 @@ function updateProgress(shouldOpenModal = false) {
     document.getElementById('progress-bar').style.width = percent + "%";
 
     if (percent === 100 && shouldOpenModal) {
-        sessionEndTime = Date.now();
-        if (currentSessionDate) markSessionCompleted(currentSessionId, currentSessionDate);
         saveChargeHistory();
-        fireConfetti();
-        document.body.classList.add('modal-open');
-        const overlay = document.getElementById('completion-overlay');
-        overlay.classList.add('active');
-        overlay.setAttribute('aria-hidden', 'false');
-        injectNutritionCard();
-        const whatsappBtn = document.querySelector('#whatsapp-bottom button');
-        if (whatsappBtn) document.getElementById('modal-btn-container').appendChild(whatsappBtn);
-        if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
-        loadCoachNoteIntoModal();
-        setupModalFocusTrap();
-        document.addEventListener('keydown', handleModalEscape);
+        showMilestoneModalIfNeeded(openCompletionOverlay);
     }
 }
 
@@ -1063,14 +1169,24 @@ function getCounterTypeAndValue(exoName, repsForSet) {
     const name = (exoName || '').toLowerCase();
     const repsStr = String(repsForSet ?? '').trim();
     const matchNum = repsStr.match(/(\d+)/);
-    const num = matchNum ? parseInt(matchNum[1], 10) : 1;
+    let num = matchNum ? parseInt(matchNum[1], 10) : 1;
     const matchSec = repsStr.match(/(\d+)\s*(s|sec|secondes?|min|mn)?/i);
     const seconds = matchSec
         ? (matchSec[2] && matchSec[2].toLowerCase().startsWith('min') ? parseInt(matchSec[1], 10) * 60 : parseInt(matchSec[1], 10))
         : (/gainage|planche|plank/i.test(name) ? num : 0);
-    if (/burpee/i.test(name)) return { type: 'burpees', value: num, isTime: false };
+    if (/burpee/i.test(name)) {
+        if (num <= 0) {
+            const nameMatch = (exoName || '').match(/(\d+)\s*burpee/i);
+            num = nameMatch ? parseInt(nameMatch[1], 10) : 1;
+        }
+        return { type: 'burpees', value: num, isTime: false };
+    }
     if (/squat/i.test(name)) return { type: 'squats', value: num, isTime: false };
     if (/gainage|planche|plank/i.test(name)) return { type: 'gainage_seconds', value: seconds || num, isTime: true };
+    if (/escalier/i.test(name)) {
+        const escSec = matchSec ? (matchSec[2] && matchSec[2].toLowerCase().startsWith('min') ? parseInt(matchSec[1], 10) * 60 : parseInt(matchSec[1], 10)) : num;
+        return { type: 'escalier_seconds', value: escSec || num, isTime: true };
+    }
     if (/pompe/i.test(name)) return { type: 'pompes', value: num, isTime: false };
     if (/fente/i.test(name)) return { type: 'fentes', value: num, isTime: false };
     return null;
@@ -1096,7 +1212,7 @@ function getProgression1RMAndVolume() {
         const rm = epley1RM(h.charge, reps);
         const name = h.exoName || `Exo ${h.exoIdx}`;
         if (!byExo[name]) byExo[name] = { best1RM: 0, volume: 0 };
-        if (rm > byExo[name].best1RM) byExo[name].best1RM = rm;
+        if (is1RMTrackedExercise(name) && rm > byExo[name].best1RM) byExo[name].best1RM = rm;
         if (!seen.has(key)) {
             seen.add(key);
             byExo[name].volume += vol;
@@ -1134,6 +1250,16 @@ function parseSetsFromExo(exo) {
     if (s == null) return 1;
     const n = parseInt(String(s).replace(/\D/g, ''), 10);
     return isNaN(n) || n < 1 ? 1 : n;
+}
+
+/** Noms d'exercices pour lesquels on affiche le 1RM théorique (normalisés : minuscules, sans accents). */
+function is1RMTrackedExercise(exoName) {
+    const n = (exoName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return (/squat[s]?\s*(a la barre|à la barre)/.test(n) || /squats?\s*barre/.test(n))
+        || /hip\s*[- ]?thrust/.test(n)
+        || /developpe\s+inclin[eé]\s+haltere/.test(n) || /d[eé]velopp[eé]\s+inclin/.test(n)
+        || /tirage\s+vertical.*poitrine/.test(n) || /tirage vertical poitrine/.test(n)
+        || /goblet\s+squat/.test(n);
 }
 
 /** 1RM théorique (formule d'Epley) : 1RM = Poids × (1 + 0,0333 × reps) */
@@ -1700,8 +1826,8 @@ function renderProgressionPanel() {
         if (!hasAny) html = '<p class="progression-intro">Aucune charge pour cette séance.</p>';
     }
 
-    const exoNames = Object.keys(byExo);
-    const sortedBy1RM = exoNames.sort((a, b) => (byExo[b].best1RM || 0) - (byExo[a].best1RM || 0)).slice(0, 4);
+    const exoNames1RM = Object.keys(byExo).filter(name => is1RMTrackedExercise(name) && (byExo[name].best1RM || 0) > 0);
+    const sortedBy1RM = exoNames1RM.sort((a, b) => (byExo[b].best1RM || 0) - (byExo[a].best1RM || 0));
     if (sortedBy1RM.length > 0) {
         html += '<p class="progression-intro progression-section">Records 1RM (théorique)</p><ul class="progression-list progression-1rm-list">';
         sortedBy1RM.forEach(name => {
@@ -1712,28 +1838,17 @@ function renderProgressionPanel() {
     }
 
     if (totalVolume > 0 || badges.totalSessions > 0 || badges.streakWeeks > 0) {
-        html += '<p class="progression-intro progression-section">Volume & badges</p>';
+        html += '<p class="progression-intro progression-section">Volume</p>';
         html += '<div class="progression-meta">';
-        if (totalVolume > 0) html += `<span class="progression-meta-item">Volume total : <strong>${(totalVolume / 1000).toFixed(1)} t</strong></span>`;
+        if (totalVolume > 0) html += `<span class="progression-meta-item">Poids total soulevé : <strong>${totalVolume} kg</strong></span>`;
         html += `<span class="progression-meta-item">Séances : <strong>${badges.totalSessions}</strong></span>`;
         if (badges.streakWeeks > 0) html += `<span class="progression-meta-item">Série : <strong>${badges.streakWeeks} sem.</strong></span>`;
         html += '</div>';
-        const allBadges = [];
-        badges.volumeBadges.forEach(t => allBadges.push({ type: 'volume', label: t >= 1000 ? (t / 1000) + ' t' : t + ' kg' }));
-        badges.exoBadges.slice(0, 3).forEach(e => allBadges.push({ type: 'exo', label: (e.volume / 1000).toFixed(1) + ' t', exo: e.exo }));
-        if (allBadges.length > 0) {
-            html += '<div class="progression-badges">';
-            allBadges.forEach(b => {
-                const title = b.type === 'exo' ? `${b.exo} : ${b.label}` : `Volume total : ${b.label}`;
-                html += `<span class="progression-badge" title="${title}">${b.type === 'volume' ? '📦' : '💪'} ${b.label}</span>`;
-            });
-            html += '</div>';
-        }
     }
 
     const counters = getCounters();
-    const counterLabels = { burpees: 'Burpees', squats: 'Squats', gainage_seconds: 'Gainage', pompes: 'Pompes', fentes: 'Fentes' };
-    const counterOrder = ['burpees', 'squats', 'gainage_seconds', 'pompes', 'fentes'];
+    const counterLabels = { burpees: 'Burpees', squats: 'Squats', gainage_seconds: 'Temps en gainage', pompes: 'Pompes', fentes: 'Fentes', escalier_seconds: 'Temps sur escalier' };
+    const counterOrder = ['burpees', 'squats', 'gainage_seconds', 'escalier_seconds', 'pompes', 'fentes'];
     const hasCounters = counterOrder.some(k => (counters[k] || 0) > 0);
     if (hasCounters) {
         html += '<p class="progression-intro progression-section">Compteurs</p><ul class="progression-list progression-counters">';
@@ -1741,7 +1856,7 @@ function renderProgressionPanel() {
             const v = counters[k] || 0;
             if (v <= 0) return;
             const label = counterLabels[k] || k;
-            const display = k === 'gainage_seconds' ? (v >= 60 ? (v / 60).toFixed(1) + ' min' : v + ' s') : v;
+            const display = (k === 'gainage_seconds' || k === 'escalier_seconds') ? (v >= 60 ? (v / 60).toFixed(1) + ' min' : v + ' s') : v;
             html += '<li class="progression-item"><span class="progression-item-name">' + label + '</span> : <strong>' + display + '</strong></li>';
         });
         html += '</ul>';
@@ -1797,6 +1912,7 @@ function initFocusMode() {
         if (on) {
             guidedViewIndex = getFirstIncompleteIndex();
             updateGuidedMode();
+            document.querySelector('.exercise-card.guided-current')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             btn.textContent = 'Vue complète';
             btn.setAttribute('aria-label', 'Revenir à la vue complète');
             btn.title = 'Sortir du mode focus';
@@ -1930,11 +2046,22 @@ function initInstallPrompt() {
 let guidedViewIndex = 0;
 function getFirstIncompleteIndex() {
     const cards = document.querySelectorAll('#workout-container .exercise-card');
+    let firstIncomplete = -1;
     for (let i = 0; i < cards.length; i++) {
         const cb = cards[i].querySelector('.set-checkbox:not(:checked)');
-        if (cb) return i;
+        if (cb) {
+            firstIncomplete = i;
+            break;
+        }
     }
-    return Math.max(0, cards.length - 1);
+    if (firstIncomplete < 0) return Math.max(0, cards.length - 1);
+    const card = cards[firstIncomplete];
+    if (card.dataset.circuit === '1') {
+        for (let j = firstIncomplete; j >= 0; j--) {
+            if (cards[j].dataset.circuitStart === '1') return j;
+        }
+    }
+    return firstIncomplete;
 }
 
 function updateGuidedMode() {

@@ -1753,6 +1753,59 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
 .whatsapp-bottom button:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(183, 110, 121, 0.45); }
 .whatsapp-bottom button:focus-visible { outline: none; box-shadow: 0 10px 25px rgba(183, 110, 121, 0.35), var(--focus-ring); }
 
+.milestone-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(60, 50, 52, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s ease;
+}
+.milestone-overlay.active { opacity: 1; visibility: visible; }
+.milestone-modal {
+    background: linear-gradient(145deg, rgba(252, 228, 236, 0.92) 0%, rgba(255, 250, 248, 0.96) 100%);
+    padding: 28px 22px 24px;
+    border-radius: 24px;
+    text-align: center;
+    max-width: 360px;
+    width: 92%;
+    box-shadow: 0 22px 45px rgba(140, 100, 110, 0.25);
+}
+.milestone-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+}
+.milestone-modal-body .milestone-item {
+    font-size: 1.1rem;
+    margin: 10px 0;
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+.btn-milestone-continue {
+    margin-top: 20px;
+    padding: 12px 28px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-milestone-continue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(183, 110, 121, 0.4);
+}
+
 .completion-overlay {
     position: fixed;
     top: 0;
@@ -2057,7 +2110,7 @@ button:focus-visible, .close-modal:focus-visible { outline: 2px solid var(--prim
     body { background: #fff; padding: 0; }
     #progress-container, #install-banner, .whatsapp-bottom, .btn-add-to-agenda, .btn-dark-mode, .btn-focus-mode, .btn-settings,
     .reset-session-wrap, .reset-session-btn, .btn-progression-toggle, .progression-panel,
-    .completion-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video, .guided-nav { display: none !important; }
+    .completion-overlay, .milestone-overlay, .settings-overlay, .toast, .timer-btn, .btn-check-technique, .confetti, .btn-recovery-video, .guided-nav { display: none !important; }
     .calendar-wrap.collapsed { max-height: none; opacity: 1; pointer-events: auto; }
     .header-top { margin-bottom: 8px; }
     .calendar-container { flex-wrap: wrap; justify-content: center; gap: 8px; padding: 10px; overflow: visible; mask: none; -webkit-mask: none; }
