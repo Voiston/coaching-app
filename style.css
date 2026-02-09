@@ -1807,29 +1807,70 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     box-shadow: 0 8px 20px rgba(183, 110, 121, 0.4);
 }
 
-/* --- SUIVI HEADER BAR (objectifs, discret à gauche) --- */
+/* --- SUIVI HEADER BAR (objectifs, visuel motivant) --- */
 .suivi-header-bar {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 6px 10px;
+    gap: 10px;
+    padding: 10px 12px;
     background: var(--primary-soft);
-    border-radius: 10px;
-    max-width: 140px;
+    border-radius: 12px;
+    max-width: 200px;
+    box-shadow: 0 2px 12px rgba(183, 110, 121, 0.15);
 }
-.suivi-header-item { font-size: 0.7rem; }
-.suivi-header-label { display: block; margin-bottom: 2px; color: var(--primary-dark); font-weight: 600; }
+.suivi-header-item {
+    font-size: 0.7rem;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(183, 110, 121, 0.15);
+}
+.suivi-header-item:last-child { border-bottom: none; }
+.suivi-header-item.suivi-header-vetement { border-bottom: none; }
+.suivi-header-label { display: block; margin-bottom: 4px; color: var(--primary-dark); font-weight: 600; }
+.suivi-header-pct {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--primary-dark);
+    margin-bottom: 2px;
+    letter-spacing: 0.02em;
+}
+.suivi-header-message {
+    font-size: 0.65rem;
+    margin: 0 0 6px 0;
+    color: var(--text-light);
+    font-weight: 500;
+    line-height: 1.25;
+}
 .suivi-header-track {
-    height: 6px;
-    background: rgba(183, 110, 121, 0.2);
-    border-radius: 3px;
+    height: 10px;
+    background: rgba(183, 110, 121, 0.18);
+    border-radius: 5px;
     overflow: hidden;
 }
 .suivi-header-fill {
     height: 100%;
+    min-width: 4px;
+    border-radius: 5px;
+    transition: width 0.5s ease, background 0.3s ease;
+}
+/* Couleurs selon la progression */
+.suivi-header-item--start .suivi-header-pct { color: var(--primary-dark); }
+.suivi-header-item--start .suivi-header-fill {
     background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
-    border-radius: 3px;
-    transition: width 0.4s ease;
+}
+.suivi-header-item--mid .suivi-header-pct { color: var(--primary-dark); }
+.suivi-header-item--mid .suivi-header-fill {
+    background: linear-gradient(90deg, #c97b87 0%, var(--primary-dark) 100%);
+}
+.suivi-header-item--close .suivi-header-pct { color: #2d7a5e; }
+.suivi-header-item--close .suivi-header-fill {
+    background: linear-gradient(90deg, #4a9d7a 0%, #2d7a5e 100%);
+}
+.suivi-header-item--done .suivi-header-pct { color: #1e6b4a; font-size: 0.95rem; }
+.suivi-header-item--done .suivi-header-message { color: #1e6b4a; font-weight: 700; }
+.suivi-header-item--done .suivi-header-fill {
+    background: linear-gradient(90deg, #5cb88a 0%, #2d7a5e 100%);
+    width: 100% !important;
 }
 
 /* --- MODAL MENSUATIONS & SUIVI --- */
