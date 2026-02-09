@@ -59,13 +59,23 @@
         <button type="button" class="guided-nav-btn" id="btn-guided-exit">Vue complète</button>
     </div>
     <div id="progression-panel" class="progression-panel" hidden></div>
-
+    
     <button type="button" class="btn-progression-toggle" id="btn-progression-toggle" aria-expanded="false" aria-controls="progression-panel">📈 Ma progression</button>
 
+    <!-- Modal progression (clean girl / aesthetics) -->
+    <div id="progression-overlay" class="progression-overlay" role="dialog" aria-modal="true" aria-labelledby="progression-title" aria-hidden="true">
+        <div class="progression-modal">
+            <span class="close-progression" tabindex="0" role="button" aria-label="Fermer la fenêtre">&times;</span>
+            <h2 id="progression-title" class="progression-title">Ma progression</h2>
+            <p class="progression-subtitle">Tes records, ton volume et tes petites victoires en un coup d'œil.</p>
+            <div id="progression-modal-body" class="progression-modal-body"></div>
+        </div>
+    </div>
+    
     <div id="reset-session-wrap" class="reset-session-wrap"></div>
 
     <div class="whatsapp-bottom" id="whatsapp-bottom">
-        <button type="button" aria-label="Terminer la séance et envoyer le rapport au coach par WhatsApp">
+        <button type="button" id="btn-send-whatsapp" aria-label="Terminer la séance et envoyer le rapport au coach par WhatsApp">
             Terminer & Envoyer au Coach 📤
         </button>
     </div>
