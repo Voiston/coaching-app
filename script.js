@@ -34,6 +34,7 @@ const KEY_NOTIF_ENABLED = 'fitapp_notif_enabled_' + clientID;
 const KEY_INSTALL_DISMISSED = 'fitapp_install_dismissed_' + clientID;
 const KEY_GUIDED_MODE = 'fitapp_guided_' + clientID;
 const KEY_CHARGE_HISTORY = 'fitapp_charge_history_' + clientID;
+const KEY_SESSION_DATE_OVERRIDES = 'fitapp_session_dates_' + clientID;
 
 function getSettingSound() { return localStorage.getItem(KEY_SOUND) !== '0'; }
 function setSettingSound(on) { localStorage.setItem(KEY_SOUND, on ? '1' : '0'); }
@@ -49,6 +50,19 @@ function isGuidedMode() { return localStorage.getItem(KEY_GUIDED_MODE) === '1'; 
 function setGuidedMode(on) { localStorage.setItem(KEY_GUIDED_MODE, on ? '1' : '0'); }
 function getLastNotifDate() { return localStorage.getItem(KEY_NOTIF_DAY) || ''; }
 function setLastNotifDate(d) { localStorage.setItem(KEY_NOTIF_DAY, d); }
+function getSessionDateOverrides() {
+    try { return JSON.parse(localStorage.getItem(KEY_SESSION_DATE_OVERRIDES) || '{}') || {}; }
+    catch { return {}; }
+}
+function setSessionDateOverrides(map) {
+    localStorage.setItem(KEY_SESSION_DATE_OVERRIDES, JSON.stringify(map || {}));
+}
+function setSessionDateOverride(sessionId, dateStr) {
+    if (!sessionId || !dateStr) return;
+    const map = getSessionDateOverrides();
+    map[sessionId] = dateStr;
+    setSessionDateOverrides(map);
+}
 
 // --- VALIDATION JSON ---
 function validateProgram(data) {
@@ -308,12 +322,18 @@ function getWeekLabel() {
 function getNextSessionInfo(sessions) {
     const today = new Date();
     const dayMap = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    const overrides = getSessionDateOverrides();
     for (let i = 1; i <= DAYS_AHEAD; i++) {
         const date = new Date();
         date.setDate(today.getDate() + i);
         const y = date.getFullYear(), mo = String(date.getMonth() + 1).padStart(2, '0'), da = String(date.getDate()).padStart(2, '0');
         const dateString = `${y}-${mo}-${da}`;
-        const idx = sessions.findIndex(s => s.date === dateString || (s.day && s.day.toLowerCase() === dayMap[date.getDay()]));
+        const idx = sessions.findIndex((s, idxSession) => {
+            const sid = s.id || `session_${idxSession}`;
+            const overrideDate = overrides[sid];
+            if (overrideDate) return overrideDate === dateString;
+            return s.date === dateString || (s.day && s.day.toLowerCase() === dayMap[date.getDay()]);
+        });
         if (idx !== -1) {
             const s = sessions[idx];
             const dayName = dayMap[date.getDay()];
@@ -397,7 +417,7 @@ function shortSessionName(name) {
     return name.replace(/^[^\w]*[\s:]/, "").trim().slice(0, 12) || name.slice(0, 12);
 }
 
-function renderCalendar(sessions) {
+function renderCalendar(sessions, skipAutoSelect) {
     const calendarContainer = document.getElementById('calendar-strip');
     calendarContainer.innerHTML = "";
 
@@ -417,7 +437,11 @@ function renderCalendar(sessions) {
         const day = String(date.getDate()).padStart(2, '0');
         const dateString = `${year}-${month}-${day}`;
 
-        const sessionIndex = sessions.findIndex(s => {
+        const overrides = getSessionDateOverrides();
+        const sessionIndex = sessions.findIndex((s, idx) => {
+            const sid = s.id || `session_${idx}`;
+            const overrideDate = overrides[sid];
+            if (overrideDate) return overrideDate === dateString;
             if (s.date) return s.date === dateString;
             if (s.day) return s.day.toLowerCase() === dayNameFR;
             return false;
@@ -458,7 +482,7 @@ function renderCalendar(sessions) {
         calendarContainer.appendChild(dayEl);
     }
 
-    if (todayEl) setTimeout(() => todayEl.click(), 50);
+    if (todayEl && !skipAutoSelect) setTimeout(() => todayEl.click(), 50);
 }
 
 function getCalendarDateRange() {
@@ -485,7 +509,26 @@ function initSessionDatePicker() {
         const newDate = this.value;
         if (!newDate) return;
         currentSessionDate = newDate;
-        syncCalendarActiveToDate(newDate);
+        // Si on a un programme avec sessions datées, on "déplace" la séance dans le calendrier
+        if (globalData && globalData.sessions && globalData.sessions.length > 0) {
+            const sessions = globalData.sessions;
+            const currentIdx = sessions.findIndex((s, idx) => (s.id || `session_${idx}`) === currentSessionId);
+            if (currentIdx !== -1) {
+                const sid = sessions[currentIdx].id || `session_${currentIdx}`;
+                setSessionDateOverride(sid, newDate);
+                // Re-construire le calendrier avec la nouvelle date de séance
+                renderCalendar(sessions, true);
+                syncCalendarActiveToDate(newDate);
+                // Recharger la même séance avec sa nouvelle date "effective"
+                renderSession(currentIdx, newDate);
+                updateWeekAndNextSession(sessions);
+            } else {
+                syncCalendarActiveToDate(newDate);
+            }
+        } else {
+            // Cas "séance unique" sans calendrier structuré : on ne fait qu'ajuster la date courante
+            syncCalendarActiveToDate(newDate);
+        }
         saveData();
     });
 }
