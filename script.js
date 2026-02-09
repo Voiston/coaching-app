@@ -2173,6 +2173,23 @@ function progressPct(start, current, goal) {
     return Math.min(100, Math.max(0, ((current - start) / (goal - start)) * 100));
 }
 
+function latestByDate(arr, dateKey) {
+    if (!arr || !arr.length) return null;
+    dateKey = dateKey || 'date';
+    return arr.reduce((best, cur) => {
+        const curDate = cur[dateKey] || '';
+        return (!best || (curDate || '').localeCompare(best[dateKey] || '') > 0) ? cur : best;
+    }, null);
+}
+function oldestByDate(arr, dateKey) {
+    if (!arr || !arr.length) return null;
+    dateKey = dateKey || 'date';
+    return arr.reduce((best, cur) => {
+        const curDate = cur[dateKey] || '';
+        return (!best || (curDate || '').localeCompare(best[dateKey] || '') < 0) ? cur : best;
+    }, null);
+}
+
 function renderSuiviHeaderBar() {
     const bar = document.getElementById('suivi-header-bar');
     if (!bar) return;
@@ -2180,11 +2197,11 @@ function renderSuiviHeaderBar() {
     const mensurations = getMensurations();
     const poidsArr = getPoids();
     const vetement = getVetementTest();
-    const lastM = mensurations.length ? mensurations[0] : null;
-    const lastP = poidsArr.length ? poidsArr[0] : null;
-    const firstP = poidsArr.length ? poidsArr[poidsArr.length - 1] : null;
-    const firstM = mensurations.length ? mensurations[mensurations.length - 1] : null;
-    const lastV = vetement.entries && vetement.entries.length ? vetement.entries[0] : null;
+    const lastM = latestByDate(mensurations);
+    const lastP = latestByDate(poidsArr);
+    const firstP = oldestByDate(poidsArr);
+    const firstM = oldestByDate(mensurations);
+    const lastV = vetement.entries && vetement.entries.length ? latestByDate(vetement.entries) : null;
     let html = '';
     if (prefs.show_poids && prefs.objectif_poids != null && lastP != null) {
         const current = lastP.poids_kg;
