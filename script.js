@@ -815,6 +815,15 @@ function updateSupersetHighlight(shouldScrollToCurrent) {
                 if (shouldScrollToCurrent && totalChecked >= 1) {
                     currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
+                // En mode Focus, aligner la carte guidée sur l'exercice courant du superset
+                if (document.body.classList.contains('guided-mode')) {
+                    const allCards = Array.from(document.querySelectorAll('#workout-container .exercise-card'));
+                    const idx = allCards.indexOf(currentCard);
+                    if (idx !== -1) {
+                        guidedViewIndex = idx;
+                        updateGuidedMode();
+                    }
+                }
             }
             const nextCardIndex = totalChecked % numCards;
             const nextSetIndex = Math.floor(totalChecked / numCards) + 1;
@@ -835,8 +844,13 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
     saveData(); 
     updateSupersetHighlight(true);
     if (document.body.classList.contains('guided-mode')) {
-        guidedViewIndex = getFirstIncompleteIndex();
-        updateGuidedMode();
+        const card = document.getElementById(`card-${cardIndex}`);
+        const inSuperset = !!(card && card.closest('.superset-block'));
+        // Dans un superset, on laisse updateSupersetHighlight choisir l'exercice courant (A/B/C...)
+        if (!inSuperset) {
+            guidedViewIndex = getFirstIncompleteIndex();
+            updateGuidedMode();
+        }
     }
     const card = document.getElementById(`card-${cardIndex}`);
     if (card) updateExerciseDetails(card);
@@ -1485,6 +1499,7 @@ function initFocusMode() {
     const btn = document.getElementById('btn-focus-mode');
     const btnPrev = document.getElementById('btn-guided-prev');
     const btnNext = document.getElementById('btn-guided-next');
+    const btnExit = document.getElementById('btn-guided-exit');
     if (!btn) return;
     if (isGuidedMode()) {
         document.body.classList.add('guided-mode');
@@ -1526,6 +1541,18 @@ function initFocusMode() {
             guidedViewIndex++;
             updateGuidedMode();
             document.querySelector('.exercise-card.guided-current')?.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
+    if (btnExit) btnExit.addEventListener('click', () => {
+        document.body.classList.remove('guided-mode');
+        setGuidedMode(false);
+        const nav = document.getElementById('guided-nav');
+        if (nav) nav.hidden = true;
+        document.querySelectorAll('.exercise-card').forEach(c => c.classList.remove('guided-current'));
+        if (btn) {
+            btn.textContent = '◐ Focus';
+            btn.setAttribute('aria-label', 'Mode focus : un exercice à la fois, valide tes séries en un clic');
+            btn.title = 'Un exercice à la fois, idéal en plein effort';
         }
     });
 }
