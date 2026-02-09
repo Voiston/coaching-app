@@ -903,11 +903,24 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
 
     if (checkbox.checked && setNumber === totalSets) {
         const card = document.getElementById(`card-${cardIndex}`);
-        if (card && card.classList.contains('open')) {
+        const supersetBlock = card ? card.closest('.superset-block') : null;
+        const inSuperset = !!supersetBlock;
+
+        if (!inSuperset && card && card.classList.contains('open')) {
             setTimeout(() => { 
                 const header = card.querySelector('.exercise-header');
                 if(header) toggleCard(header); 
             }, 300);
+        } else if (inSuperset && supersetBlock) {
+            const allDone = (() => {
+                const cbs = Array.from(supersetBlock.querySelectorAll('.set-checkbox'));
+                return cbs.length > 0 && cbs.every(cb => cb.checked);
+            })();
+            if (allDone) {
+                setTimeout(() => {
+                    supersetBlock.querySelectorAll('.exercise-card.open .exercise-header').forEach(h => toggleCard(h));
+                }, 500);
+            }
         }
         const exoName = card?.querySelector('.exercise-title')?.textContent?.trim() || 'Exercice';
         const doScroll = () => {
@@ -1603,7 +1616,7 @@ function renderCoachSignature() {
 }
 
 function renderProgressionPanel() {
-    const panel = document.getElementById('progression-panel');
+    const panel = document.getElementById('progression-modal-body') || document.getElementById('progression-panel');
     if (!panel || !globalData || !globalData.sessions) return;
     const saved = JSON.parse(localStorage.getItem('fitapp_' + clientID) || '{}');
     const history = getChargeHistory();
@@ -1692,15 +1705,27 @@ function renderProgressionPanel() {
 
 function initProgressionToggle() {
     const btn = document.getElementById('btn-progression-toggle');
-    const panel = document.getElementById('progression-panel');
-    if (!btn || !panel) return;
+    const overlay = document.getElementById('progression-overlay');
+    if (!btn || !overlay) return;
     btn.addEventListener('click', () => {
-        const open = !panel.hidden;
-        panel.hidden = open;
-        btn.setAttribute('aria-expanded', !open);
-        btn.textContent = open ? '📈 Ma progression' : '📈 Masquer la progression';
-        if (!open) renderProgressionPanel();
+        const isOpen = overlay.classList.contains('active');
+        const willOpen = !isOpen;
+        overlay.classList.toggle('active', willOpen);
+        overlay.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+        btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        if (willOpen) {
+            renderProgressionPanel();
+        }
     });
+}
+
+function closeProgressionModal() {
+    const overlay = document.getElementById('progression-overlay');
+    const btn = document.getElementById('btn-progression-toggle');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    overlay.setAttribute('aria-hidden', 'true');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
 }
 
 function initFocusMode() {
@@ -2099,7 +2124,7 @@ function initBreathingModal() {
 // --- DÉLÉGATION D'ÉVÉNEMENTS (remplace les onclick inline) ---
 document.body.addEventListener('click', (e) => {
     if (e.target.closest('.close-modal')) { closeModal(); return; }
-    if (e.target.closest('#whatsapp-bottom button')) { sendToWhatsapp(); return; }
+    if (e.target.closest('#btn-send-whatsapp')) { sendToWhatsapp(); return; }
     const recoveryBtn = e.target.closest('.btn-recovery-video');
     if (recoveryBtn) {
         const url = recoveryBtn.getAttribute('data-recovery-url') || DEFAULT_RECOVERY_VIDEO_URL;
@@ -2129,6 +2154,12 @@ document.body.addEventListener('click', (e) => {
             moveSessionSourceId = null;
             document.body.classList.remove('calendar-move-mode');
         }
+        return;
+    }
+    const closeProgBtn = e.target.closest('.close-progression');
+    const progOverlay = document.getElementById('progression-overlay');
+    if (closeProgBtn || (progOverlay && e.target === progOverlay)) {
+        closeProgressionModal();
         return;
     }
     if (e.target.closest('[data-reset-session]')) { resetCurrentSession(); return; }
@@ -2227,6 +2258,8 @@ document.body.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         const settings = document.getElementById('settings-overlay');
         if (settings && settings.classList.contains('active')) { closeSettings(); e.preventDefault(); }
+        const progOverlay = document.getElementById('progression-overlay');
+        if (progOverlay && progOverlay.classList.contains('active')) { closeProgressionModal(); e.preventDefault(); }
     }
 });
 
