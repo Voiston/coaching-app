@@ -1940,7 +1940,6 @@ function renderProgressionPanel() {
 
     if (!html) html = '<p class="progression-intro">Aucune donnée de progression pour l’instant.</p>';
     panel.innerHTML = html;
-    document.getElementById('btn-suivi-editer')?.addEventListener('click', openSuiviModal);
 }
 
 function initProgressionToggle() {
@@ -2001,6 +2000,12 @@ function loadSuiviIntoModal() {
     if (el('suivi-vetement-name')) el('suivi-vetement-name').value = vet.name || '';
 }
 function initSuiviModal() {
+    document.body.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-suivi-editer')) {
+            e.preventDefault();
+            openSuiviModal();
+        }
+    });
     const overlay = document.getElementById('suivi-overlay');
     const closeBtn = overlay?.querySelector('.suivi-close');
     if (closeBtn) closeBtn.addEventListener('click', closeSuiviModal);
