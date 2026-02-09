@@ -553,15 +553,15 @@ function showRestDay(dayName) {
     if (waBottom) waBottom.style.display = 'none';
     const recoveryUrl = (globalData && globalData.recovery_url && String(globalData.recovery_url).trim())
         ? globalData.recovery_url
-        : DEFAULT_RECOVERY_VIDEO_URL;
+        : (DEFAULT_RECOVERY_VIDEO_URL || '');
     const container = document.getElementById('workout-container');
     container.innerHTML = `
         <div class="rest-day-message">
             <span class="rest-icon" aria-hidden="true">🧘‍♀️</span>
-            <h2>Jour de récup' — ${dayName}</h2>
+            <h2>Jour de récup' — ${(dayName || '').replace(/"/g, '&quot;')}</h2>
             <p class="rest-lead">La récupération fait partie de la progression. Ton corps construit pendant le repos.</p>
             <p class="rest-tip">Hydrate-toi bien, mange équilibré et dors à ta soif. La prochaine séance t'attend ! 💪</p>
-            <button type="button" class="btn-recovery-video" data-recovery-url="${recoveryUrl.replace(/"/g, '&quot;')}" aria-label="Lancer la routine Récupération (10 minutes)">🧘‍♀️ Lancer ma routine Récupération (10min)</button>
+            <button type="button" class="btn-recovery-video" data-recovery-url="${String(recoveryUrl).replace(/"/g, '&quot;')}" aria-label="Lancer la routine Récupération (10 minutes)">🧘‍♀️ Lancer ma routine Récupération (10min)</button>
         </div>
     `;
     const bar = document.getElementById('progress-bar');
