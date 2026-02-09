@@ -40,6 +40,7 @@ const KEY_CHARGE_HISTORY = 'fitapp_charge_history_' + clientID;
 const KEY_SESSION_DATE_OVERRIDES = 'fitapp_session_dates_' + clientID;
 const KEY_COUNTERS = 'fitapp_counters_' + clientID;
 const KEY_MILESTONES = 'fitapp_milestones_' + clientID;
+const KEY_TRAINING_SECONDS = 'fitapp_training_seconds_' + clientID;
 
 function getSettingSound() { return localStorage.getItem(KEY_SOUND) !== '0'; }
 function setSettingSound(on) { localStorage.setItem(KEY_SOUND, on ? '1' : '0'); }
@@ -1049,11 +1050,16 @@ const MILESTONE_CONFIG = [
     { key: 'hipthrust2500', type: 'volume_hipthrust', threshold: 2500, label: '2500 kg en hip-thrust', emoji: '🏋️' },
     { key: 'hipthrust5000', type: 'volume_hipthrust', threshold: 5000, label: '5000 kg en hip-thrust', emoji: '🏋️' },
     { key: 'hipthrust10000', type: 'volume_hipthrust', threshold: 10000, label: '10 000 kg en hip-thrust', emoji: '🏋️' },
-    { key: 'volume5000', type: 'volume_total', threshold: 5000, label: '5000 kg de volume total', emoji: '📦' },
-    { key: 'volume10000', type: 'volume_total', threshold: 10000, label: '10 000 kg de volume total', emoji: '📦' },
-    { key: 'volume25000', type: 'volume_total', threshold: 25000, label: '25 000 kg de volume total', emoji: '📦' },
-    { key: 'volume50000', type: 'volume_total', threshold: 50000, label: '50 000 kg de volume total', emoji: '📦' },
-    { key: 'volume100000', type: 'volume_total', threshold: 100000, label: '100 000 kg de volume total', emoji: '📦' }
+    { key: 'volume5000', type: 'volume_total', threshold: 5000, label: '5000 kg soulevé au total', emoji: '📦' },
+    { key: 'volume10000', type: 'volume_total', threshold: 10000, label: '10 000 kg soulevé au total', emoji: '📦' },
+    { key: 'volume25000', type: 'volume_total', threshold: 25000, label: '25 000 kg soulevé au total', emoji: '📦' },
+    { key: 'volume50000', type: 'volume_total', threshold: 50000, label: '50 000 kg soulevé au total', emoji: '📦' },
+    { key: 'volume100000', type: 'volume_total', threshold: 100000, label: '100 000 kg soulevé au total', emoji: '📦' },
+    { key: 'training5h', type: 'training_seconds', threshold: 5 * 3600, label: '5 h d\'entraînement', emoji: '⏱️' },
+    { key: 'training15h', type: 'training_seconds', threshold: 15 * 3600, label: '15 h d\'entraînement', emoji: '⏱️' },
+    { key: 'training35h', type: 'training_seconds', threshold: 35 * 3600, label: '35 h d\'entraînement', emoji: '⏱️' },
+    { key: 'training70h', type: 'training_seconds', threshold: 70 * 3600, label: '70 h d\'entraînement', emoji: '⏱️' },
+    { key: 'training100h', type: 'training_seconds', threshold: 100 * 3600, label: '100 h d\'entraînement', emoji: '⏱️' }
 ];
 
 function showMilestoneModalIfNeeded(thenOpenCompletion) {
@@ -1062,12 +1068,14 @@ function showMilestoneModalIfNeeded(thenOpenCompletion) {
     const hipThrustVolume = getHipThrustVolume(byExo);
     const shown = getMilestonesShown();
     const achieved = [];
+    const trainingSeconds = getTrainingSeconds();
     MILESTONE_CONFIG.forEach(({ key, type, counter, threshold, label, emoji }) => {
         if (shown[key]) return;
         let value = 0;
         if (type === 'counter') value = counters[counter] || 0;
         else if (type === 'volume_total') value = totalVolume || 0;
         else if (type === 'volume_hipthrust') value = hipThrustVolume || 0;
+        else if (type === 'training_seconds') value = trainingSeconds || 0;
         if (value >= threshold) {
             achieved.push({ key, label: label + ' !', emoji });
             setMilestoneShown(key);
@@ -1100,6 +1108,9 @@ function showMilestoneModalIfNeeded(thenOpenCompletion) {
 
 function openCompletionOverlay() {
     sessionEndTime = Date.now();
+    if (sessionStartTime != null && sessionEndTime != null) {
+        addTrainingSeconds(Math.round((sessionEndTime - sessionStartTime) / 1000));
+    }
     if (currentSessionDate) markSessionCompleted(currentSessionId, currentSessionDate);
     saveChargeHistory();
     fireConfetti();
@@ -1149,6 +1160,17 @@ function getChargeHistory() {
     } catch { return []; }
 }
 
+function getTrainingSeconds() {
+    const v = localStorage.getItem(KEY_TRAINING_SECONDS);
+    const n = parseInt(v, 10);
+    return isNaN(n) || n < 0 ? 0 : n;
+}
+function addTrainingSeconds(sec) {
+    if (sec <= 0) return;
+    const current = getTrainingSeconds();
+    localStorage.setItem(KEY_TRAINING_SECONDS, String(current + Math.round(sec)));
+}
+
 /** Compteurs (burpees, squats, gainage_seconds, pompes, fentes). */
 function getCounters() {
     try {
@@ -1164,16 +1186,22 @@ function incrementCounter(type, value) {
     setCounters(c);
 }
 
-/** Détecte le type de compteur et la valeur (reps ou secondes) à partir du nom d'exo et des reps. */
+/**
+ * Détecte le type de compteur et la valeur à partir du nom d'exo et des reps.
+ * Ce qui compte : Squats = tout exo dont le nom contient "squat" (squat barre, goblet squat, etc.) ;
+ * Fentes = "fente" ; Pompes = "pompe" ; Burpees = "burpee" (reps ou chiffre dans le nom à l'échauffement) ;
+ * Gainage = "gainage", "planche", "plank" ou "hold" (en secondes) ; Escalier = "escalier" (en secondes).
+ */
 function getCounterTypeAndValue(exoName, repsForSet) {
     const name = (exoName || '').toLowerCase();
     const repsStr = String(repsForSet ?? '').trim();
     const matchNum = repsStr.match(/(\d+)/);
     let num = matchNum ? parseInt(matchNum[1], 10) : 1;
+    const isGainageLike = /gainage|planche|plank|hold/i.test(name);
     const matchSec = repsStr.match(/(\d+)\s*(s|sec|secondes?|min|mn)?/i);
     const seconds = matchSec
         ? (matchSec[2] && matchSec[2].toLowerCase().startsWith('min') ? parseInt(matchSec[1], 10) * 60 : parseInt(matchSec[1], 10))
-        : (/gainage|planche|plank/i.test(name) ? num : 0);
+        : (isGainageLike ? num : 0);
     if (/burpee/i.test(name)) {
         if (num <= 0) {
             const nameMatch = (exoName || '').match(/(\d+)\s*burpee/i);
@@ -1182,7 +1210,7 @@ function getCounterTypeAndValue(exoName, repsForSet) {
         return { type: 'burpees', value: num, isTime: false };
     }
     if (/squat/i.test(name)) return { type: 'squats', value: num, isTime: false };
-    if (/gainage|planche|plank/i.test(name)) return { type: 'gainage_seconds', value: seconds || num, isTime: true };
+    if (isGainageLike) return { type: 'gainage_seconds', value: seconds || num, isTime: true };
     if (/escalier/i.test(name)) {
         const escSec = matchSec ? (matchSec[2] && matchSec[2].toLowerCase().startsWith('min') ? parseInt(matchSec[1], 10) * 60 : parseInt(matchSec[1], 10)) : num;
         return { type: 'escalier_seconds', value: escSec || num, isTime: true };
@@ -1643,34 +1671,42 @@ function buildSessionReport() {
 
 function sendToWhatsapp() {
     const report = buildSessionReport();
-    let msg = `*Rapport Final - ${document.getElementById('client-name').innerText}*\n`;
-    msg += `📂 *${report.sessionName}*\n`;
-    if (report.durationMinutes != null) msg += `⏱️ Durée : ${report.durationMinutes} min\n`;
-    msg += `\n`;
+    const dateFormatted = report.date ? new Date(report.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+    let msg = `✨ *Rapport - ${report.sessionName}* ✨\n`;
+    msg += `📅 ${dateFormatted}`;
+    if (report.durationMinutes != null) msg += `  |  ⏱️ ${report.durationMinutes} min`;
+    msg += `\n\n`;
 
     report.exercises.forEach((ex) => {
-        msg += `🔹 *${ex.name}*\n`;
-        msg += `   Séries : ${ex.setsCompleted}/${ex.setsTotal}\n`;
-        if (ex.charge) msg += `   ⚖️ ${ex.charge}kg\n`;
-        if (ex.rpe) msg += `   🔥 RPE ${ex.rpe}\n`;
-        if (ex.note) msg += `   📝 ${ex.note}\n`;
+        const chargeStr = ex.charge ? (ex.charge.replace(/\s*kg\s*/gi, '').trim() + ' kg') : '';
+        const rpeStr = ex.rpe ? ` (RPE ${ex.rpe})` : '';
+        const noteStr = ex.note ? `  — ${ex.note}` : '';
+        msg += `✅ *${ex.name}* : ${ex.setsCompleted}/${ex.setsTotal}`;
+        if (chargeStr) msg += ` × ${chargeStr}`;
+        msg += rpeStr + noteStr + '\n';
     });
 
     const b = report.bilan;
-    if (b.muscle || b.cardio || b.fatigue || b.sommeil) {
-        msg += `\n📊 *BILAN GLOBAL*\n`;
-        if (b.muscle) msg += `💪 Muscle: ${b.muscle}/10${b.muscleCom ? ' (' + b.muscleCom + ')' : ''}\n`;
-        if (b.cardio) msg += `🫀 Cardio: ${b.cardio}/10${b.cardioCom ? ' (' + b.cardioCom + ')' : ''}\n`;
-        if (b.fatigue) msg += `😫 Fatigue: ${b.fatigue}/10${b.fatigueCom ? ' (' + b.fatigueCom + ')' : ''}\n`;
-        if (b.sommeil) msg += `💤 Sommeil: ${b.sommeil}/10${b.sommeilCom ? ' (' + b.sommeilCom + ')' : ''}\n`;
+    if (b.muscle != null && b.muscle !== '' || b.cardio != null && b.cardio !== '' || b.fatigue != null && b.fatigue !== '' || b.sommeil != null && b.sommeil !== '') {
+        msg += `\n📊 *BILAN :*`;
+        if (b.muscle != null && b.muscle !== '') msg += ` 💪 ${b.muscle}/10`;
+        if (b.cardio != null && b.cardio !== '') msg += ` 🫀 ${b.cardio}/10`;
+        if (b.fatigue != null && b.fatigue !== '') msg += ` 😫 ${b.fatigue}/10`;
+        if (b.sommeil != null && b.sommeil !== '') msg += ` 💤 ${b.sommeil}/10`;
+        msg += '\n';
+        if (b.muscleCom || b.cardioCom || b.fatigueCom || b.sommeilCom) {
+            if (b.muscleCom) msg += `   _Muscle : ${b.muscleCom}_\n`;
+            if (b.cardioCom) msg += `   _Cardio : ${b.cardioCom}_\n`;
+            if (b.fatigueCom) msg += `   _Fatigue : ${b.fatigueCom}_\n`;
+            if (b.sommeilCom) msg += `   _Sommeil : ${b.sommeilCom}_\n`;
+        }
     }
     if (report.coachNote) {
         setCoachNote(report.coachNote);
-        msg += `\n💬 *Message pour toi:*\n${report.coachNote}\n`;
+        msg += `\n💬 *Message pour toi :* ${report.coachNote}\n`;
     }
 
-    msg += `\n--- BILAN JSON ---\n${JSON.stringify(report, null, 2)}\n---\nEnvoyé depuis mon App Coaching 🏋️‍♀️`;
-
+    msg += `\n_Envoyé depuis mon App Coaching 🏋️‍♀️_`;
     window.open(`https://wa.me/${COACH_PHONE_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
@@ -1783,48 +1819,10 @@ function renderCoachSignature() {
 function renderProgressionPanel() {
     const panel = document.getElementById('progression-modal-body') || document.getElementById('progression-panel');
     if (!panel || !globalData || !globalData.sessions) return;
-    const saved = JSON.parse(localStorage.getItem('fitapp_' + clientID) || '{}');
-    const history = getChargeHistory();
-    const session = globalData.sessions.find(s => (s.id === currentSessionId) || s.id === currentSessionId);
     const { byExo, totalVolume } = getProgression1RMAndVolume();
     const badges = getProgressionBadges();
 
     let html = '';
-
-    if (session && session.exercises) {
-        html += '<p class="progression-intro">Charges pour cette séance</p><ul class="progression-list">';
-        let hasAny = false;
-        session.exercises.forEach((exo, idx) => {
-            if (exo.type === 'section') return;
-            const idCharge = `charge-${currentSessionId}-${idx}`;
-            let val = saved[idCharge];
-            if (val == null) {
-                const setsCount = parseInt(exo.sets) || 3;
-                const parts = [];
-                for (let s = 1; s <= setsCount; s++) {
-                    const v = saved[`charge-${currentSessionId}-${idx}-${s}`];
-                    if (v) parts.push(v);
-                }
-                if (parts.length) val = parts.join(', ');
-            }
-            const exoHistory = history.filter(h => h.sessionId === currentSessionId && h.exoIdx === idx).slice(-10);
-            const hasHistory = exoHistory.length > 0;
-            if (val || hasHistory) hasAny = true;
-            if (!val && !hasHistory) return;
-            const displayVal = val || (hasHistory ? exoHistory[exoHistory.length - 1].charge : '-');
-            const maxCharge = hasHistory ? Math.max(...exoHistory.map(h => h.charge)) : 1;
-            let sparkHtml = '';
-            if (hasHistory && maxCharge > 0) {
-                sparkHtml = '<div class="progression-sparkline">' + exoHistory.map(h => {
-                    const pct = Math.round((h.charge / maxCharge) * 100);
-                    return `<span class="progression-sparkline-bar" style="height:${Math.max(8, pct)}%" title="${h.date}: ${h.charge}kg"></span>`;
-                }).join('') + '</div>';
-            }
-            html += `<li class="progression-item"><span class="progression-item-name">${exo.name}</span> : ${displayVal} kg${sparkHtml}</li>`;
-        });
-        html += '</ul>';
-        if (!hasAny) html = '<p class="progression-intro">Aucune charge pour cette séance.</p>';
-    }
 
     const exoNames1RM = Object.keys(byExo).filter(name => is1RMTrackedExercise(name) && (byExo[name].best1RM || 0) > 0);
     const sortedBy1RM = exoNames1RM.sort((a, b) => (byExo[b].best1RM || 0) - (byExo[a].best1RM || 0));
@@ -1845,6 +1843,12 @@ function renderProgressionPanel() {
         if (badges.streakWeeks > 0) html += `<span class="progression-meta-item">Série : <strong>${badges.streakWeeks} sem.</strong></span>`;
         html += '</div>';
     }
+
+    const trainingSec = getTrainingSeconds();
+    html += '<p class="progression-intro progression-section">Temps à l\'entraînement</p>';
+    const trainingHours = (trainingSec / 3600).toFixed(1).replace(/\.0$/, '');
+    html += `<div class="progression-meta"><span class="progression-meta-item">Temps passé à l'entraînement : <strong>${trainingHours} h</strong></span></div>`;
+    html += '<p class="progression-objective">Objectif : 5 h / 15 h / 35 h / 70 h / 100 h</p>';
 
     const counters = getCounters();
     const counterLabels = { burpees: 'Burpees', squats: 'Squats', gainage_seconds: 'Temps en gainage', pompes: 'Pompes', fentes: 'Fentes', escalier_seconds: 'Temps sur escalier' };
