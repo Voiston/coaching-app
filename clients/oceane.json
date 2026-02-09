@@ -229,8 +229,8 @@
       ]
     },
     {
-      "id": "s_oceane_A",
-      "date": "Séance A",
+      "id": "s_4",
+      "date": "2026-02-17",
       "name": "Legs & Arms Toning ✨",
       "nutrition_tip": "Hydrate-toi bien pendant la séance, surtout avec la corde à sauter.",
       "exercises": [
@@ -255,7 +255,7 @@
           "rpe_target": "8",
           "charge": ["50kg", "55kg", "60kg", "60kg"],
           "check_technique": true,
-          "note_coach": "Pieds largeur bassin STRICTEMENT. Pas de pieds écartés (Adducteur safe).",
+          "note_coach": "Pieds largeur bassin.",
           "alternative": "Goblet Squat",
           "warmup_sets": 1
         },
@@ -308,8 +308,8 @@
       ]
     },
     {
-      "id": "s_oceane_B",
-      "date": "Séance B",
+      "id": "s_5",
+      "date": "2026-02-19",
       "name": "Glutes & Shoulders 🍑",
       "nutrition_tip": "Mange un fruit 1h avant la séance pour l'énergie.",
       "exercises": [
