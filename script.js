@@ -543,8 +543,8 @@ function showRestDay(dayName) {
         <div class="rest-day-message">
             <span class="rest-icon" aria-hidden="true">🧘‍♀️</span>
             <h2>Jour de récup' — ${(dayName || '').replace(/"/g, '&quot;')}</h2>
-            <p class="rest-lead">La récupération fait partie de la progression. Ton corps construit pendant le repos.</p>
-            <p class="rest-tip">Hydrate-toi bien, mange équilibré et dors à ta soif. La prochaine séance t'attend ! 💪</p>
+            <p class="rest-lead">Pas de séance aujourd'hui, la récupération fait partie de la progression. Tes résultats se contruisent pendant le repos.</p>
+            <p class="rest-tip">Hydrate-toi bien, mange équilibré et dors au mieux. La prochaine séance t'attend ! 💪</p>
             <button type="button" class="btn-pause-respiration" id="btn-pause-respiration" aria-label="Ouvrir la pause respiration (cohérence cardiaque)">🌬️ Pause Respiration</button>
         </div>
     `;
@@ -676,10 +676,15 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
     let checkboxesHtml = '<div class="sets-container">';
     const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check text-white" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>`;
 
+    const chargeArr = Array.isArray(exo.charge)
+        ? exo.charge.map(c => String(c).trim())
+        : null;
+    const chargePerSet = chargeArr && chargeArr.length >= 1;
     const idCharge = `charge-${sessionId}-${index}`;
+    const idChargeFirst = chargePerSet ? `charge-${sessionId}-${index}-1` : idCharge;
     const safeExoName = (exo.name || '').replace(/"/g, '&quot;');
     if (warmupSets > 0) {
-        checkboxesHtml += `<div class="set-wrapper set-wrapper-warmup-only" data-charge-id="${idCharge}" data-exo-name="${safeExoName}">
+        checkboxesHtml += `<div class="set-wrapper set-wrapper-warmup-only" data-charge-id="${idChargeFirst}" data-exo-name="${safeExoName}">
             <span class="set-label set-label-warmup-only">Warm-up</span>
         </div>`;
     }
@@ -769,13 +774,26 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
                 ${exo.note_coach ? `<div class="coach-note">"${exo.note_coach}"</div>` : ''}
                 <div class="client-input-zone">
                     <div class="input-row">
-                        <span class="input-with-btn charge-input-wrap">
-                            <label for="${idCharge}" class="charge-input-label">Charge (kg)</label>
-                            <span class="charge-input-row">
-                                <input type="text" id="${idCharge}" placeholder="—" value="${(exo.charge || exo.default_charge || '').toString().replace(/"/g, '&quot;')}" aria-label="Charge en kg">
-                                <span class="charge-suffix">kg</span>
-                            </span>
-                        </span>
+                        ${chargePerSet
+                            ? `<span class="input-with-btn charge-input-wrap charge-input-per-set">
+                                <span class="charge-input-label">Charge par série (kg)</span>
+                                <span class="charge-input-row charge-inputs-row">
+                                    ${Array.from({ length: setsCount }, (_, i) => {
+                                        const setId = i + 1;
+                                        const id = `charge-${sessionId}-${index}-${setId}`;
+                                        const val = (chargeArr[i] != null ? chargeArr[i] : '').replace(/"/g, '&quot;');
+                                        return `<span class="charge-set-wrap"><label for="${id}" class="charge-set-label">S${setId}</label><input type="text" id="${id}" placeholder="—" value="${val}" aria-label="Charge série ${setId} en kg"><span class="charge-suffix">kg</span></span>`;
+                                    }).join('')}
+                                </span>
+                            </span>`
+                            : `<span class="input-with-btn charge-input-wrap">
+                                <label for="${idCharge}" class="charge-input-label">Charge (kg)</label>
+                                <span class="charge-input-row">
+                                    <input type="text" id="${idCharge}" placeholder="—" value="${(exo.charge || exo.default_charge || '').toString().replace(/"/g, '&quot;')}" aria-label="Charge en kg">
+                                    <span class="charge-suffix">kg</span>
+                                </span>
+                            </span>`
+                        }
                         <input type="hidden" id="${idRpe}" data-rpe-value="">
                     </div>
                     <input type="text" id="${idCom}" placeholder="Note..." aria-label="Note personnelle">
@@ -1129,8 +1147,15 @@ function saveChargeHistory() {
     session.exercises.forEach((exo, idx) => {
         if (exo.type === 'section') return;
         const idCharge = `charge-${currentSessionId}-${idx}`;
+        let val = '';
         const chargeEl = document.getElementById(idCharge);
-        const val = chargeEl ? String(chargeEl.value || '').trim() : '';
+        if (chargeEl) {
+            val = String(chargeEl.value || '').trim();
+        } else {
+            const setsCount = parseInt(exo.sets) || 3;
+            const lastSetEl = document.getElementById(`charge-${currentSessionId}-${idx}-${setsCount}`);
+            if (lastSetEl) val = String(lastSetEl.value || '').trim();
+        }
         const numVal = parseFloat(val.replace(/[^\d.,]/g, '').replace(',', '.'));
         if (val && !isNaN(numVal)) {
             const reps = parseRepsFromExo(exo);
@@ -1441,11 +1466,20 @@ function buildSessionReport() {
         const idCharge = `charge-${currentSessionId}-${originalIndex}`;
         const idRpe = `rpe-${currentSessionId}-${originalIndex}`;
         const idCom = `comment-${currentSessionId}-${originalIndex}`;
+        let chargeVal = document.getElementById(idCharge)?.value?.trim() || null;
+        if (!chargeVal) {
+            const chargeParts = [];
+            for (let s = 1; s <= setsTotal; s++) {
+                const v = document.getElementById(`charge-${currentSessionId}-${originalIndex}-${s}`)?.value?.trim();
+                if (v) chargeParts.push(v);
+            }
+            if (chargeParts.length) chargeVal = chargeParts.join(' / ');
+        }
         exercises.push({
             name: title,
             setsTotal,
             setsCompleted,
-            charge: document.getElementById(idCharge)?.value?.trim() || null,
+            charge: chargeVal,
             rpe: document.getElementById(idRpe)?.value?.trim() || null,
             note: document.getElementById(idCom)?.value?.trim() || null
         });
@@ -1632,7 +1666,16 @@ function renderProgressionPanel() {
         session.exercises.forEach((exo, idx) => {
             if (exo.type === 'section') return;
             const idCharge = `charge-${currentSessionId}-${idx}`;
-            const val = saved[idCharge];
+            let val = saved[idCharge];
+            if (val == null) {
+                const setsCount = parseInt(exo.sets) || 3;
+                const parts = [];
+                for (let s = 1; s <= setsCount; s++) {
+                    const v = saved[`charge-${currentSessionId}-${idx}-${s}`];
+                    if (v) parts.push(v);
+                }
+                if (parts.length) val = parts.join(', ');
+            }
             const exoHistory = history.filter(h => h.sessionId === currentSessionId && h.exoIdx === idx).slice(-10);
             const hasHistory = exoHistory.length > 0;
             if (val || hasHistory) hasAny = true;
