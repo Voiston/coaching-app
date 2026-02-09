@@ -1,13 +1,23 @@
 // --- CONFIGURATION ---
 const COACH_PHONE_NUMBER = "33662110786"; // TON NUMÉRO
 const COACH_NAME = "David";
-const DEFAULT_RECOVERY_VIDEO_URL = "https://www.youtube.com/watch?v=4BOTvaRaDjI"; // Stretching générique 10min
+const DEFAULT_RECOVERY_VIDEO_URL = null; // Stretching générique 10min
 const APP_VERSION = "2.6";
-const PAST_DAYS = 3;
+const PAST_DAYS = 1;
 const DAYS_AHEAD = 21;
 
 const urlParams = new URLSearchParams(window.location.search);
-const clientID = urlParams.get('client') || 'demo';
+const urlClient = urlParams.get('client');
+// Identifiant client : d'abord le paramètre d'URL, sinon le dernier client utilisé sur cet appareil, sinon "demo"
+const clientID = urlClient || localStorage.getItem('fitapp_last_client') || 'demo';
+// Si un client explicite est passé dans l'URL, on le mémorise pour les prochaines ouvertures (PWA, lien sans ?client=)
+if (urlClient) {
+    try {
+        localStorage.setItem('fitapp_last_client', urlClient);
+    } catch (_) {
+        // ignore
+    }
+}
 
 let globalData = null;
 let currentSessionId = "default";
@@ -639,6 +649,13 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
 
     const restSec = parseInt(String(exo.rest).replace(/\D/g, ''), 10) || 60;
     const supersetRole = supersetRoleNum != null ? String(supersetRoleNum) : '';
+    const supersetChip = supersetRole
+        ? (() => {
+            const letters = { '1': 'A', '2': 'B', '3': 'C', '4': 'D' };
+            const letter = letters[supersetRole] || supersetRole;
+            return `<div class="superset-chip">Superset ${letter}</div>`;
+        })()
+        : '';
     const altData = exo.alternative ? (typeof exo.alternative === 'string' ? { name: exo.alternative } : exo.alternative) : null;
     const altName = altData ? (altData.name || String(exo.alternative)) : '';
     const altIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>`;
@@ -651,6 +668,7 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
                 <div class="exercise-title-row"><span class="exercise-title">${exo.name}</span>${altBtnHtml}</div>
+                ${supersetChip}
                 <div class="rpe-badge-wrap"><span class="rpe-badge" title="RPE = Rate of Perceived Exertion : échelle 1-10 de l'effort ressenti (1=très facile, 10=maximum)">RPE: ${exo.rpe_target || '-'}</span><button type="button" class="btn-rpe-badge" aria-label="Aide échelle RPE">?</button></div>
             </div>
             <div class="toggle-icon">▼</div>
