@@ -1214,6 +1214,19 @@ function getSuiviHeader() {
 function setSuiviHeader(obj) {
     localStorage.setItem(KEY_SUIVI_HEADER, JSON.stringify(obj || {}));
 }
+/** Retourne "Aujourd'hui", "Hier" ou "Il y a X jours" pour une date YYYY-MM-DD. */
+function formatDateRelative(dateStr) {
+    if (!dateStr) return '';
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const d = new Date(dateStr + 'T12:00:00');
+    d.setHours(0, 0, 0, 0);
+    const diffMs = today - d;
+    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+    if (diffDays === 0) return 'Aujourd\'hui';
+    if (diffDays === 1) return 'Hier';
+    return `Il y a ${diffDays} jours`;
+}
 
 const VETEMENT_FEELING_LABELS = {
     trop_petit: 'Trop petit',
@@ -1890,10 +1903,10 @@ function renderProgressionPanel() {
         if (lastM.tour_taille != null) parts.push(`Taille : ${lastM.tour_taille} cm`);
         if (lastM.tour_hanches != null) parts.push(`Hanches : ${lastM.tour_hanches} cm`);
         if (lastM.tour_poitrine != null) parts.push(`Poitrine : ${lastM.tour_poitrine} cm`);
-        if (parts.length) html += `<p class="progression-suivi-line">📏 ${parts.join(' · ')}${lastM.date ? ' <span class="progression-suivi-date">(' + lastM.date + ')</span>' : ''}</p>`;
+        if (parts.length) html += `<p class="progression-suivi-line">📏 ${parts.join(' · ')}${lastM.date ? ' <span class="progression-suivi-date">(' + formatDateRelative(lastM.date) + ')</span>' : ''}</p>`;
     }
-    if (lastP) html += `<p class="progression-suivi-line">⚖️ Poids : ${lastP.poids_kg} kg${lastP.date ? ' <span class="progression-suivi-date">(' + lastP.date + ')</span>' : ''}</p>`;
-    if (vetement.name && lastV) html += `<p class="progression-suivi-line">👕 ${vetement.name} : ${VETEMENT_FEELING_LABELS[lastV.feeling] || lastV.feeling}${lastV.date ? ' <span class="progression-suivi-date">(' + lastV.date + ')</span>' : ''}</p>`;
+    if (lastP) html += `<p class="progression-suivi-line">⚖️ Poids : ${lastP.poids_kg} kg${lastP.date ? ' <span class="progression-suivi-date">(' + formatDateRelative(lastP.date) + ')</span>' : ''}</p>`;
+    if (vetement.name && lastV) html += `<p class="progression-suivi-line">👕 ${vetement.name} : ${VETEMENT_FEELING_LABELS[lastV.feeling] || lastV.feeling}${lastV.date ? ' <span class="progression-suivi-date">(' + formatDateRelative(lastV.date) + ')</span>' : ''}</p>`;
     if (!hasSuivi) html += '<p class="progression-suivi-line progression-suivi-empty">Aucune donnée. Clique sur Editer pour ajouter tes mensurations, ton poids ou un vêtement test.</p>';
     if (hasSuivi) html += '<p class="progression-suivi-hint">Clique sur la zone pour voir l\'historique et tes progrès.</p>';
     html += '<button type="button" class="btn-suivi-editer" id="btn-suivi-editer">Editer</button>';
@@ -2016,7 +2029,7 @@ function openSuiviHistoriqueModal() {
                 const deltaStr = delta > 0 ? ` <span class="suivi-progress">−${delta} cm</span>` : (delta < 0 ? ` <span class="suivi-regress">+${Math.abs(delta)} cm</span>` : '');
                 parts.push(`Poitrine : ${m.tour_poitrine} cm${deltaStr}`);
             }
-            if (parts.length) html += `<p class="suivi-hist-line">${parts.join(' · ')} <span class="progression-suivi-date">${m.date || ''}</span></p>`;
+            if (parts.length) html += `<p class="suivi-hist-line">${parts.join(' · ')} <span class="progression-suivi-date">${formatDateRelative(m.date)}</span></p>`;
         });
         html += '</section>';
     }
@@ -2025,14 +2038,14 @@ function openSuiviHistoriqueModal() {
         poidsArr.slice(0, 15).forEach((p) => {
             const delta = firstP && firstP.poids_kg != null ? (firstP.poids_kg - p.poids_kg) : 0;
             const deltaStr = delta > 0 ? ` <span class="suivi-progress">−${delta} kg</span>` : (delta < 0 ? ` <span class="suivi-regress">+${Math.abs(delta)} kg</span>` : '');
-            html += `<p class="suivi-hist-line">${p.poids_kg} kg${deltaStr} <span class="progression-suivi-date">${p.date || ''}</span></p>`;
+            html += `<p class="suivi-hist-line">${p.poids_kg} kg${deltaStr} <span class="progression-suivi-date">${formatDateRelative(p.date)}</span></p>`;
         });
         html += '</section>';
     }
     if (vetement.entries && vetement.entries.length > 0) {
         html += '<section class="suivi-section"><h3 class="suivi-section-title">👕 ' + (vetement.name ? vetement.name : 'Vêtement test') + '</h3>';
         vetement.entries.slice(0, 15).forEach((e) => {
-            html += `<p class="suivi-hist-line">${VETEMENT_FEELING_LABELS[e.feeling] || e.feeling}${e.note ? ' — ' + e.note : ''} <span class="progression-suivi-date">${e.date || ''}</span></p>`;
+            html += `<p class="suivi-hist-line">${VETEMENT_FEELING_LABELS[e.feeling] || e.feeling}${e.note ? ' — ' + e.note : ''} <span class="progression-suivi-date">${formatDateRelative(e.date)}</span></p>`;
         });
         html += '</section>';
     }
