@@ -9,7 +9,7 @@
       "date": "2026-02-10",
       "name": "Hypertrophie: Courbes & Galbe",
       "session_intro": "Séance axée renforcement musculaire (fessiers en priorité). Objectif : développer la force et la masse musculaire de ces zones.",
-      "nutrition_tip": "Consomme des protéines dans les heures suivant la séance pour optimiser la récupération.",
+      "nutrition_tip": "Pour la perte de poids, ne néglige pas les protéines pendant tes repas, c'est bon pour la satiété et la construction des muscles. Assure toi d'avoir au moins 110gr de protéines par jour",
       "exercises": [
         {
           "type": "section",
@@ -224,6 +224,176 @@
           "check_technique": false,
           "superset_type": "end",
           "note_coach": "Intensité maximale. Vide le réservoir."
+        }
+        
+      ]
+    },
+    {
+      "id": "s_oceane_A",
+      "date": "Séance A",
+      "name": "Legs & Arms Toning ✨",
+      "nutrition_tip": "Hydrate-toi bien pendant la séance, surtout avec la corde à sauter.",
+      "exercises": [
+        { "type": "section", "title": "Échauffement & Cardio" },
+        {
+          "name": "Mobilité + Corde à Sauter",
+          "sets": "5",
+          "reps": "45 sec",
+          "rest": "30s",
+          "rpe_target": "7",
+          "charge": "Poids du corps",
+          "check_technique": false,
+          "note_coach": "Rebondis sur la pointe des pieds. Si douleur, marche rapide inclinée.",
+          "alternative": "Marche Inclinée (Tapis)"
+        },
+        { "type": "section", "title": "Renforcement" },
+        {
+          "name": "Leg Press",
+          "sets": "4",
+          "reps": "12-15",
+          "rest": "90s",
+          "rpe_target": "8",
+          "charge": ["50kg", "55kg", "60kg", "60kg"],
+          "check_technique": true,
+          "note_coach": "Pieds largeur bassin STRICTEMENT. Pas de pieds écartés (Adducteur safe).",
+          "alternative": "Goblet Squat",
+          "warmup_sets": 1
+        },
+        {
+          "name": "Goblet Squat",
+          "sets": "3",
+          "reps": "12",
+          "rest": "75s",
+          "rpe_target": "7",
+          "charge": "12kg",
+          "check_technique": true,
+          "note_coach": "Dos droit, descends contrôlé.",
+          "alternative": "Squat au poids du corps"
+        },
+        {
+          "name": "Tirage Vertical Poitrine",
+          "sets": "3",
+          "reps": "12",
+          "rest": "0s",
+          "rpe_target": "8",
+          "charge": "35kg",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": "Coudes vers le bas.",
+          "alternative": "Tirage Horizontal"
+        },
+        {
+          "name": "Triceps Poulie Haute (Corde)",
+          "sets": "3",
+          "reps": "15",
+          "rest": "60s",
+          "rpe_target": "9",
+          "charge": "10kg",
+          "check_technique": false,
+          "superset_type": "end",
+          "note_coach": "Isole l'arrière du bras. Coudes fixes.",
+          "alternative": "Extension Triceps Haltère"
+        },
+        {
+          "name": "Deadbug",
+          "sets": "3",
+          "reps": "10/côté",
+          "rest": "45s",
+          "rpe_target": "N/A",
+          "charge": "Poids du corps",
+          "check_technique": false,
+          "note_coach": "Lombaires collées au sol. Remplacement sécuritaire des relevés de jambes.",
+          "alternative": "Planche"
+        }
+      ]
+    },
+    {
+      "id": "s_oceane_B",
+      "date": "Séance B",
+      "name": "Glutes & Shoulders 🍑",
+      "nutrition_tip": "Mange un fruit 1h avant la séance pour l'énergie.",
+      "exercises": [
+        { "type": "section", "title": "Échauffement & Cardio" },
+        {
+          "name": "Mobilité + Corde à Sauter",
+          "sets": "5",
+          "reps": "45 sec",
+          "rest": "30s",
+          "rpe_target": "7",
+          "charge": "Poids du corps",
+          "check_technique": false,
+          "note_coach": "Active le cardio.",
+          "alternative": "Elliptique"
+        },
+        { "type": "section", "title": "Renforcement" },
+        {
+          "name": "Hip Thrust",
+          "sets": "4",
+          "reps": "10-12",
+          "rest": "90s",
+          "rpe_target": "9",
+          "charge": ["30kg", "35kg", "40kg", "40kg"],
+          "check_technique": true,
+          "note_coach": "Menton rentré, contraction fessiers en haut.",
+          "alternative": "Glute Bridge Machine",
+          "warmup_sets": 1
+        },
+        {
+          "name": "Fentes Bulgares",
+          "sets": "3",
+          "reps": "10/jambe",
+          "rest": "90s",
+          "rpe_target": "8",
+          "charge": "2x6kg",
+          "check_technique": true,
+          "note_coach": "Poids sur le talon avant. Attention à l'équilibre.",
+          "alternative": "Fentes arrières (plus stable)"
+        },
+        {
+          "name": "Abductions Machine",
+          "sets": "3",
+          "reps": "15-20",
+          "rest": "60s",
+          "rpe_target": "10",
+          "charge": "Max (40-50kg)",
+          "check_technique": false,
+          "note_coach": "Penche le buste en avant. Pousse fort vers l'extérieur.",
+          "alternative": "Abductions élastique"
+        },
+        {
+          "name": "Développé Épaules (Haltères)",
+          "sets": "3",
+          "reps": "12",
+          "rest": "0s",
+          "rpe_target": "8",
+          "charge": "2x6kg",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": "Dos droit, ne cambre pas.",
+          "alternative": "Développé Machine"
+        },
+        {
+          "name": "Élévations Latérales",
+          "sets": "3",
+          "reps": "15",
+          "rest": "60s",
+          "rpe_target": "9",
+          "charge": "2x3kg",
+          "check_technique": false,
+          "superset_type": "end",
+          "note_coach": "Cible le galbe de l'épaule.",
+          "alternative": "Élévations Poulie"
+        },
+        {
+          "name": "Planche Statique",
+          "sets": "3",
+          "reps": "30-45 sec",
+          "rest": "45s",
+          "rpe_target": "N/A",
+          "charge": "Poids du corps",
+          "check_technique": false,
+          "note_coach": "Gainage total.",
+          "alternative": "Planche genoux"
         }
       ]
     }
