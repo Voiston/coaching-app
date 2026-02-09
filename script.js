@@ -990,11 +990,79 @@ function getChargeHistory() {
     } catch { return []; }
 }
 
+/** Volume d'une entrée (kg) = charge × reps × sets. Anciennes entrées sans reps/sets : 1. */
+function entryVolume(h) {
+    const reps = h.reps != null ? h.reps : 1;
+    const sets = h.sets != null ? h.sets : 1;
+    return (h.charge || 0) * Math.max(1, reps) * Math.max(1, sets);
+}
+
+/** Agrège historique : meilleur 1RM et volume par exo, volume total. Une entrée par (sessionId, date, exoIdx) pour le volume. */
+function getProgression1RMAndVolume() {
+    const history = getChargeHistory();
+    const seen = new Set();
+    const byExo = {};
+    let totalVolume = 0;
+    history.forEach(h => {
+        const key = `${h.sessionId}|${h.date}|${h.exoIdx}`;
+        const vol = entryVolume(h);
+        const reps = h.reps != null ? h.reps : 1;
+        const rm = epley1RM(h.charge, reps);
+        const name = h.exoName || `Exo ${h.exoIdx}`;
+        if (!byExo[name]) byExo[name] = { best1RM: 0, volume: 0 };
+        if (rm > byExo[name].best1RM) byExo[name].best1RM = rm;
+        if (!seen.has(key)) {
+            seen.add(key);
+            byExo[name].volume += vol;
+            totalVolume += vol;
+        }
+    });
+    return { byExo, totalVolume };
+}
+
+/** Badges volume (seuils en kg). */
+const VOLUME_BADGE_THRESHOLDS = [1000, 5000, 10000, 50000, 100000];
+
+function getProgressionBadges() {
+    const completed = getCompletedSessions();
+    const totalSessions = completed.length;
+    const sessions = globalData && globalData.sessions ? globalData.sessions : [];
+    const st = sessions.length ? getStats(sessions) : { streakWeeks: 0 };
+    const { byExo, totalVolume } = getProgression1RMAndVolume();
+    const volumeBadges = VOLUME_BADGE_THRESHOLDS.filter(t => totalVolume >= t);
+    const exoVolumes = Object.entries(byExo).map(([name, data]) => ({ name, volume: data.volume }));
+    const exoBadges = exoVolumes.filter(e => e.volume >= 1000).map(e => ({ exo: e.name, volume: e.volume }));
+    return { totalSessions, streakWeeks: st.streakWeeks, totalVolume, volumeBadges, exoBadges };
+}
+
+function parseRepsFromExo(exo) {
+    const r = exo.reps;
+    if (r == null) return 1;
+    const s = String(r).trim();
+    const m = s.match(/\d+/);
+    return m ? Math.max(1, parseInt(m[0], 10)) : 1;
+}
+
+function parseSetsFromExo(exo) {
+    const s = exo.sets;
+    if (s == null) return 1;
+    const n = parseInt(String(s).replace(/\D/g, ''), 10);
+    return isNaN(n) || n < 1 ? 1 : n;
+}
+
+/** 1RM théorique (formule d'Epley) : 1RM = Poids × (1 + 0,0333 × reps) */
+function epley1RM(charge, reps) {
+    if (charge <= 0) return 0;
+    const r = Math.max(1, reps || 1);
+    return Math.round(charge * (1 + 0.0333 * r) * 10) / 10;
+}
+
 function saveChargeHistory() {
     const history = getChargeHistory();
     const session = globalData && globalData.sessions ? globalData.sessions.find(s => (s.id === currentSessionId) || (`session_${globalData.sessions.indexOf(s)}` === currentSessionId)) : null;
     if (!session || !session.exercises) return;
     const dateStr = currentSessionDate || new Date().toISOString().slice(0, 10);
+    const toAdd = [];
     session.exercises.forEach((exo, idx) => {
         if (exo.type === 'section') return;
         const idCharge = `charge-${currentSessionId}-${idx}`;
@@ -1002,11 +1070,16 @@ function saveChargeHistory() {
         const val = chargeEl ? String(chargeEl.value || '').trim() : '';
         const numVal = parseFloat(val.replace(/[^\d.,]/g, '').replace(',', '.'));
         if (val && !isNaN(numVal)) {
-            history.push({ sessionId: currentSessionId, exoIdx: idx, exoName: exo.name, charge: numVal, date: dateStr });
+            const reps = parseRepsFromExo(exo);
+            const sets = parseSetsFromExo(exo);
+            toAdd.push({ sessionId: currentSessionId, exoIdx: idx, exoName: exo.name, charge: numVal, reps: reps || 1, sets: sets || 1, date: dateStr });
         }
     });
-    while (history.length > 100) history.shift();
-    localStorage.setItem(KEY_CHARGE_HISTORY, JSON.stringify(history));
+    const keysToReplace = new Set(toAdd.map(e => `${e.sessionId}|${e.date}|${e.exoIdx}`));
+    const kept = history.filter(h => !keysToReplace.has(`${h.sessionId}|${h.date}|${h.exoIdx}`));
+    const next = [...kept, ...toAdd];
+    while (next.length > 200) next.shift();
+    localStorage.setItem(KEY_CHARGE_HISTORY, JSON.stringify(next));
 }
 
 function loadProgress() {
@@ -1485,31 +1558,69 @@ function renderProgressionPanel() {
     const saved = JSON.parse(localStorage.getItem('fitapp_' + clientID) || '{}');
     const history = getChargeHistory();
     const session = globalData.sessions.find(s => (s.id === currentSessionId) || s.id === currentSessionId);
-    if (!session || !session.exercises) { panel.innerHTML = ''; return; }
-    let html = '<p class="progression-intro">Charges enregistrées pour cette séance :</p><ul class="progression-list">';
-    let hasAny = false;
-    session.exercises.forEach((exo, idx) => {
-        if (exo.type === 'section') return;
-        const idCharge = `charge-${currentSessionId}-${idx}`;
-        const val = saved[idCharge];
-        const exoHistory = history.filter(h => h.sessionId === currentSessionId && h.exoIdx === idx).slice(-10);
-        const hasHistory = exoHistory.length > 0;
-        if (val || hasHistory) hasAny = true;
-        if (!val && !hasHistory) return;
-        const displayVal = val || (hasHistory ? exoHistory[exoHistory.length - 1].charge : '-');
-        const maxCharge = hasHistory ? Math.max(...exoHistory.map(h => h.charge)) : 1;
-        let sparkHtml = '';
-        if (hasHistory && maxCharge > 0) {
-            sparkHtml = '<div class="progression-sparkline">' + exoHistory.map(h => {
-                const pct = Math.round((h.charge / maxCharge) * 100);
-                return `<span class="progression-sparkline-bar" style="height:${Math.max(8, pct)}%" title="${h.date}: ${h.charge}kg"></span>`;
-            }).join('') + '</div>';
+    const { byExo, totalVolume } = getProgression1RMAndVolume();
+    const badges = getProgressionBadges();
+
+    let html = '';
+
+    if (session && session.exercises) {
+        html += '<p class="progression-intro">Charges pour cette séance</p><ul class="progression-list">';
+        let hasAny = false;
+        session.exercises.forEach((exo, idx) => {
+            if (exo.type === 'section') return;
+            const idCharge = `charge-${currentSessionId}-${idx}`;
+            const val = saved[idCharge];
+            const exoHistory = history.filter(h => h.sessionId === currentSessionId && h.exoIdx === idx).slice(-10);
+            const hasHistory = exoHistory.length > 0;
+            if (val || hasHistory) hasAny = true;
+            if (!val && !hasHistory) return;
+            const displayVal = val || (hasHistory ? exoHistory[exoHistory.length - 1].charge : '-');
+            const maxCharge = hasHistory ? Math.max(...exoHistory.map(h => h.charge)) : 1;
+            let sparkHtml = '';
+            if (hasHistory && maxCharge > 0) {
+                sparkHtml = '<div class="progression-sparkline">' + exoHistory.map(h => {
+                    const pct = Math.round((h.charge / maxCharge) * 100);
+                    return `<span class="progression-sparkline-bar" style="height:${Math.max(8, pct)}%" title="${h.date}: ${h.charge}kg"></span>`;
+                }).join('') + '</div>';
+            }
+            html += `<li class="progression-item"><span class="progression-item-name">${exo.name}</span> : ${displayVal} kg${sparkHtml}</li>`;
+        });
+        html += '</ul>';
+        if (!hasAny) html = '<p class="progression-intro">Aucune charge pour cette séance.</p>';
+    }
+
+    const exoNames = Object.keys(byExo);
+    const sortedBy1RM = exoNames.sort((a, b) => (byExo[b].best1RM || 0) - (byExo[a].best1RM || 0)).slice(0, 4);
+    if (sortedBy1RM.length > 0) {
+        html += '<p class="progression-intro progression-section">Records 1RM (théorique)</p><ul class="progression-list progression-1rm-list">';
+        sortedBy1RM.forEach(name => {
+            const data = byExo[name];
+            if (data.best1RM > 0) html += `<li class="progression-1rm-item"><span class="progression-item-name">${name}</span> <span class="progression-1rm-value">${data.best1RM} kg</span></li>`;
+        });
+        html += '</ul>';
+    }
+
+    if (totalVolume > 0 || badges.totalSessions > 0 || badges.streakWeeks > 0) {
+        html += '<p class="progression-intro progression-section">Volume & badges</p>';
+        html += '<div class="progression-meta">';
+        if (totalVolume > 0) html += `<span class="progression-meta-item">Volume total : <strong>${(totalVolume / 1000).toFixed(1)} t</strong></span>`;
+        html += `<span class="progression-meta-item">Séances : <strong>${badges.totalSessions}</strong></span>`;
+        if (badges.streakWeeks > 0) html += `<span class="progression-meta-item">Série : <strong>${badges.streakWeeks} sem.</strong></span>`;
+        html += '</div>';
+        const allBadges = [];
+        badges.volumeBadges.forEach(t => allBadges.push({ type: 'volume', label: t >= 1000 ? (t / 1000) + ' t' : t + ' kg' }));
+        badges.exoBadges.slice(0, 3).forEach(e => allBadges.push({ type: 'exo', label: (e.volume / 1000).toFixed(1) + ' t', exo: e.exo }));
+        if (allBadges.length > 0) {
+            html += '<div class="progression-badges">';
+            allBadges.forEach(b => {
+                const title = b.type === 'exo' ? `${b.exo} : ${b.label}` : `Volume total : ${b.label}`;
+                html += `<span class="progression-badge" title="${title}">${b.type === 'volume' ? '📦' : '💪'} ${b.label}</span>`;
+            });
+            html += '</div>';
         }
-        html += `<li class="progression-item"><span class="progression-item-name">${exo.name}</span> : ${displayVal} kg${sparkHtml}</li>`;
-    });
-    html += '</ul>';
-    if (!hasAny)
-        html = '<p class="progression-intro">Aucune charge enregistrée pour cette séance.</p>';
+    }
+
+    if (!html) html = '<p class="progression-intro">Aucune donnée de progression pour l’instant.</p>';
     panel.innerHTML = html;
 }
 
@@ -1770,6 +1881,7 @@ const BREATHING_PHASES = [
     { label: 'Retiens...', scale: 0.8, beepType: 'hold' },
 ];
 let breathingPhaseIndex = 0;
+let breathingHoldTimeout = null;
 
 function playBreathingBeep(type) {
     if (!getSettingSound()) return;
@@ -1814,7 +1926,7 @@ function openBreathingModal() {
     stepIntro.hidden = false;
     stepExercise.hidden = true;
     if (bubble) {
-        bubble.style.transform = 'scale(1)';
+        bubble.style.transform = 'scale(0.8)';
     }
     if (phaseText) phaseText.textContent = 'Inspire...';
     breathingCountdownSeconds = 300;
@@ -1835,10 +1947,11 @@ function closeBreathingModal() {
     if (stepIntro) stepIntro.hidden = false;
     if (stepExercise) stepExercise.hidden = true;
     if (bubble) {
-        bubble.style.transform = 'scale(1)';
+        bubble.style.transform = 'scale(0.8)';
     }
     if (breathingPhaseInterval) { clearInterval(breathingPhaseInterval); breathingPhaseInterval = null; }
     if (breathingCountdownInterval) { clearInterval(breathingCountdownInterval); breathingCountdownInterval = null; }
+    if (breathingHoldTimeout) { clearTimeout(breathingHoldTimeout); breathingHoldTimeout = null; }
 }
 
 function initBreathingModal() {
@@ -1862,6 +1975,7 @@ function initBreathingModal() {
         stepExercise.hidden = false;
         breathingPhaseIndex = 0;
         if (bubble) {
+            bubble.style.transition = 'transform 4s ease-in-out';
             bubble.style.transform = `scale(${BREATHING_PHASES[breathingPhaseIndex].scale})`;
         }
         if (phaseText) phaseText.textContent = BREATHING_PHASES[breathingPhaseIndex].label;
@@ -1874,7 +1988,23 @@ function initBreathingModal() {
             breathingPhaseIndex = (breathingPhaseIndex + 1) % BREATHING_PHASES.length;
             const phase = BREATHING_PHASES[breathingPhaseIndex];
             if (phaseText) phaseText.textContent = phase.label;
-            if (bubble) bubble.style.transform = `scale(${phase.scale})`;
+            if (breathingHoldTimeout) { clearTimeout(breathingHoldTimeout); breathingHoldTimeout = null; }
+            if (bubble) {
+                if (phase.label.startsWith('Retiens')) {
+                    const base = phase.scale;
+                    bubble.style.transition = 'transform 2s ease-in-out';
+                    // petit gonflement
+                    bubble.style.transform = `scale(${base * 1.04})`;
+                    breathingHoldTimeout = setTimeout(() => {
+                        // petit dégonflement
+                        bubble.style.transform = `scale(${base * 0.96})`;
+                    }, BREATHING_PHASE_DURATION_MS / 2);
+                } else {
+                    // phases Inspire / Expire : grosse variation
+                    bubble.style.transition = 'transform 4s ease-in-out';
+                    bubble.style.transform = `scale(${phase.scale})`;
+                }
+            }
             playBreathingBeep(phase.beepType);
         }, BREATHING_PHASE_DURATION_MS);
         if (breathingCountdownInterval) clearInterval(breathingCountdownInterval);
