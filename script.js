@@ -1206,9 +1206,10 @@ function setVetementTest(obj) {
 function getSuiviHeader() {
     try {
         const v = localStorage.getItem(KEY_SUIVI_HEADER);
-        if (!v) return { show_poids: false, show_taille: false, objectif_poids: null, objectif_taille: null };
-        return JSON.parse(v);
-    } catch { return { show_poids: false, show_taille: false, objectif_poids: null, objectif_taille: null }; }
+        if (!v) return { show_poids: false, show_taille: false, show_hanches: false, show_poitrine: false, show_vetement: false, objectif_poids: null, objectif_taille: null, objectif_hanches: null, objectif_poitrine: null };
+        const o = JSON.parse(v);
+        return { show_poids: !!o.show_poids, show_taille: !!o.show_taille, show_hanches: !!o.show_hanches, show_poitrine: !!o.show_poitrine, show_vetement: !!o.show_vetement, objectif_poids: o.objectif_poids ?? null, objectif_taille: o.objectif_taille ?? null, objectif_hanches: o.objectif_hanches ?? null, objectif_poitrine: o.objectif_poitrine ?? null };
+    } catch { return { show_poids: false, show_taille: false, show_hanches: false, show_poitrine: false, show_vetement: false, objectif_poids: null, objectif_taille: null, objectif_hanches: null, objectif_poitrine: null }; }
 }
 function setSuiviHeader(obj) {
     localStorage.setItem(KEY_SUIVI_HEADER, JSON.stringify(obj || {}));
@@ -1969,11 +1970,6 @@ function closeProgressionModal() {
 }
 
 function openSuiviModal() {
-    const today = new Date().toISOString().slice(0, 10);
-    const el = (id) => document.getElementById(id);
-    if (el('suivi-date')) el('suivi-date').value = today;
-    if (el('suivi-poids-date')) el('suivi-poids-date').value = today;
-    if (el('suivi-vetement-date')) el('suivi-vetement-date').value = today;
     loadSuiviIntoModal();
     const overlay = document.getElementById('suivi-overlay');
     if (overlay) {
@@ -2060,8 +2056,13 @@ function loadSuiviIntoModal() {
     const el = (id) => document.getElementById(id);
     if (el('suivi-show-poids')) el('suivi-show-poids').checked = !!prefs.show_poids;
     if (el('suivi-show-taille')) el('suivi-show-taille').checked = !!prefs.show_taille;
+    if (el('suivi-show-hanches')) el('suivi-show-hanches').checked = !!prefs.show_hanches;
+    if (el('suivi-show-poitrine')) el('suivi-show-poitrine').checked = !!prefs.show_poitrine;
+    if (el('suivi-show-vetement')) el('suivi-show-vetement').checked = !!prefs.show_vetement;
     if (el('suivi-objectif-poids')) el('suivi-objectif-poids').value = prefs.objectif_poids != null ? prefs.objectif_poids : '';
     if (el('suivi-objectif-taille')) el('suivi-objectif-taille').value = prefs.objectif_taille != null ? prefs.objectif_taille : '';
+    if (el('suivi-objectif-hanches')) el('suivi-objectif-hanches').value = prefs.objectif_hanches != null ? prefs.objectif_hanches : '';
+    if (el('suivi-objectif-poitrine')) el('suivi-objectif-poitrine').value = prefs.objectif_poitrine != null ? prefs.objectif_poitrine : '';
     const vet = getVetementTest();
     if (el('suivi-vetement-name')) el('suivi-vetement-name').value = vet.name || '';
 }
@@ -2074,6 +2075,7 @@ function initSuiviModal() {
         }
         if (e.target.closest('.progression-suivi-block') && !e.target.closest('.btn-suivi-editer')) {
             e.preventDefault();
+            closeProgressionModal();
             openSuiviHistoriqueModal();
         }
     });
@@ -2081,7 +2083,7 @@ function initSuiviModal() {
     const closeBtn = overlay?.querySelector('.suivi-close');
     if (closeBtn) closeBtn.addEventListener('click', closeSuiviModal);
     document.getElementById('btn-suivi-save-mensurations')?.addEventListener('click', () => {
-        const date = document.getElementById('suivi-date')?.value || new Date().toISOString().slice(0, 10);
+        const date = new Date().toISOString().slice(0, 10);
         const tour_taille = document.getElementById('suivi-tour-taille')?.value?.trim();
         const tour_hanches = document.getElementById('suivi-tour-hanches')?.value?.trim();
         const tour_poitrine = document.getElementById('suivi-tour-poitrine')?.value?.trim();
@@ -2103,7 +2105,7 @@ function initSuiviModal() {
         showToast('Mensurations enregistrées');
     });
     document.getElementById('btn-suivi-save-poids')?.addEventListener('click', () => {
-        const date = document.getElementById('suivi-poids-date')?.value || new Date().toISOString().slice(0, 10);
+        const date = new Date().toISOString().slice(0, 10);
         const poids = document.getElementById('suivi-poids')?.value?.trim();
         if (!poids) return;
         const kg = parseFloat(poids.replace(',', '.'));
@@ -2120,7 +2122,7 @@ function initSuiviModal() {
     document.getElementById('btn-suivi-save-vetement')?.addEventListener('click', () => {
         const name = document.getElementById('suivi-vetement-name')?.value?.trim();
         const feeling = document.getElementById('suivi-vetement-feeling')?.value?.trim();
-        const date = document.getElementById('suivi-vetement-date')?.value || new Date().toISOString().slice(0, 10);
+        const date = new Date().toISOString().slice(0, 10);
         const note = document.getElementById('suivi-vetement-note')?.value?.trim();
         if (!name || !feeling) return;
         const vet = getVetementTest();
@@ -2132,16 +2134,24 @@ function initSuiviModal() {
         document.getElementById('suivi-vetement-feeling').value = '';
         document.getElementById('suivi-vetement-note').value = '';
         renderProgressionPanel();
+        renderSuiviHeaderBar();
         showToast('Vêtement test enregistré');
     });
     document.getElementById('btn-suivi-save-prefs')?.addEventListener('click', () => {
         const prefs = getSuiviHeader();
         prefs.show_poids = document.getElementById('suivi-show-poids')?.checked ?? false;
         prefs.show_taille = document.getElementById('suivi-show-taille')?.checked ?? false;
+        prefs.show_hanches = document.getElementById('suivi-show-hanches')?.checked ?? false;
+        prefs.show_poitrine = document.getElementById('suivi-show-poitrine')?.checked ?? false;
+        prefs.show_vetement = document.getElementById('suivi-show-vetement')?.checked ?? false;
         const op = document.getElementById('suivi-objectif-poids')?.value?.trim();
         const ot = document.getElementById('suivi-objectif-taille')?.value?.trim();
+        const oh = document.getElementById('suivi-objectif-hanches')?.value?.trim();
+        const opr = document.getElementById('suivi-objectif-poitrine')?.value?.trim();
         prefs.objectif_poids = op ? parseFloat(op.replace(',', '.')) : null;
         prefs.objectif_taille = ot ? parseFloat(ot.replace(',', '.')) : null;
+        prefs.objectif_hanches = oh ? parseFloat(oh.replace(',', '.')) : null;
+        prefs.objectif_poitrine = opr ? parseFloat(opr.replace(',', '.')) : null;
         setSuiviHeader(prefs);
         renderSuiviHeaderBar();
         showToast('Préférences enregistrées');
@@ -2156,30 +2166,57 @@ function initSuiviModal() {
     overlayHist?.querySelector('.suivi-historique-close')?.addEventListener('click', closeSuiviHistoriqueModal);
     overlayHist?.addEventListener('click', (e) => { if (e.target === overlayHist) closeSuiviHistoriqueModal(); });
 }
+function progressPct(start, current, goal) {
+    if (start == null || current == null || goal == null) return 0;
+    if (Math.abs(goal - start) < 1e-6) return current === goal ? 100 : 0;
+    if (goal < start) return Math.min(100, Math.max(0, ((start - current) / (start - goal)) * 100));
+    return Math.min(100, Math.max(0, ((current - start) / (goal - start)) * 100));
+}
+
 function renderSuiviHeaderBar() {
     const bar = document.getElementById('suivi-header-bar');
     if (!bar) return;
     const prefs = getSuiviHeader();
     const mensurations = getMensurations();
     const poidsArr = getPoids();
+    const vetement = getVetementTest();
     const lastM = mensurations.length ? mensurations[0] : null;
     const lastP = poidsArr.length ? poidsArr[0] : null;
     const firstP = poidsArr.length ? poidsArr[poidsArr.length - 1] : null;
     const firstM = mensurations.length ? mensurations[mensurations.length - 1] : null;
+    const lastV = vetement.entries && vetement.entries.length ? vetement.entries[0] : null;
     let html = '';
     if (prefs.show_poids && prefs.objectif_poids != null && lastP != null) {
         const current = lastP.poids_kg;
         const goal = prefs.objectif_poids;
         const start = firstP ? firstP.poids_kg : current;
-        const progress = start > goal ? Math.min(100, Math.max(0, ((start - current) / (start - goal)) * 100)) : (current <= goal ? 100 : 0);
+        const progress = progressPct(start, current, goal);
         html += `<div class="suivi-header-item"><span class="suivi-header-label">⚖️ Poids ${current} kg → ${goal} kg</span><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%"></div></div></div>`;
     }
     if (prefs.show_taille && prefs.objectif_taille != null && lastM != null && lastM.tour_taille != null) {
         const current = lastM.tour_taille;
         const goal = prefs.objectif_taille;
         const start = firstM && firstM.tour_taille != null ? firstM.tour_taille : current;
-        const progress = start > goal ? Math.min(100, Math.max(0, ((start - current) / (start - goal)) * 100)) : (current <= goal ? 100 : 0);
+        const progress = progressPct(start, current, goal);
         html += `<div class="suivi-header-item"><span class="suivi-header-label">📏 Taille ${current} cm → ${goal} cm</span><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%"></div></div></div>`;
+    }
+    if (prefs.show_hanches && prefs.objectif_hanches != null && lastM != null && lastM.tour_hanches != null) {
+        const current = lastM.tour_hanches;
+        const goal = prefs.objectif_hanches;
+        const start = firstM && firstM.tour_hanches != null ? firstM.tour_hanches : current;
+        const progress = progressPct(start, current, goal);
+        html += `<div class="suivi-header-item"><span class="suivi-header-label">📐 Hanches ${current} cm → ${goal} cm</span><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%"></div></div></div>`;
+    }
+    if (prefs.show_poitrine && prefs.objectif_poitrine != null && lastM != null && lastM.tour_poitrine != null) {
+        const current = lastM.tour_poitrine;
+        const goal = prefs.objectif_poitrine;
+        const start = firstM && firstM.tour_poitrine != null ? firstM.tour_poitrine : current;
+        const progress = progressPct(start, current, goal);
+        html += `<div class="suivi-header-item"><span class="suivi-header-label">📐 Poitrine ${current} cm → ${goal} cm</span><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%"></div></div></div>`;
+    }
+    if (prefs.show_vetement && vetement.name && lastV) {
+        const text = lastV.feeling ? `${vetement.name} : ${lastV.feeling}` : vetement.name;
+        html += `<div class="suivi-header-item suivi-header-vetement"><span class="suivi-header-label">👕 ${String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span></div>`;
     }
     if (html) {
         bar.innerHTML = html;

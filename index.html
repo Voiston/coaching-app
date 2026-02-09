@@ -70,10 +70,7 @@
             <div class="suivi-modal-body">
                 <section class="suivi-section">
                     <h3 class="suivi-section-title">📏 Mensurations</h3>
-                    <div class="suivi-form-row">
-                        <label for="suivi-date">Date</label>
-                        <input type="date" id="suivi-date" class="suivi-input">
-                    </div>
+                    <p class="suivi-hint">Enregistré à la date du jour.</p>
                     <div class="suivi-form-row">
                         <label for="suivi-tour-taille">Tour de taille (cm)</label>
                         <input type="number" id="suivi-tour-taille" class="suivi-input" min="0" step="0.5" placeholder="—">
@@ -90,13 +87,10 @@
                 </section>
                 <section class="suivi-section">
                     <h3 class="suivi-section-title">⚖️ Poids corporel</h3>
+                    <p class="suivi-hint">Enregistré à la date du jour.</p>
                     <div class="suivi-form-row">
                         <label for="suivi-poids">Poids (kg)</label>
                         <input type="number" id="suivi-poids" class="suivi-input" min="0" step="0.1" placeholder="—">
-                    </div>
-                    <div class="suivi-form-row">
-                        <label for="suivi-poids-date">Date</label>
-                        <input type="date" id="suivi-poids-date" class="suivi-input">
                     </div>
                     <button type="button" class="btn-suivi-save" id="btn-suivi-save-poids">Enregistrer le poids</button>
                 </section>
@@ -117,10 +111,6 @@
                             <option value="peu_large">Un peu large</option>
                             <option value="trop_grand">Trop grand</option>
                         </select>
-                    </div>
-                    <div class="suivi-form-row">
-                        <label for="suivi-vetement-date">Date</label>
-                        <input type="date" id="suivi-vetement-date" class="suivi-input">
                     </div>
                     <div class="suivi-form-row">
                         <label for="suivi-vetement-note">Note (optionnel)</label>
@@ -144,6 +134,23 @@
                     <div class="suivi-form-row">
                         <label for="suivi-objectif-taille">Objectif tour de taille (cm)</label>
                         <input type="number" id="suivi-objectif-taille" class="suivi-input" min="0" step="0.5" placeholder="Ex : 70">
+                    </div>
+                    <div class="suivi-form-row suivi-check">
+                        <label><input type="checkbox" id="suivi-show-hanches"> Afficher le tour de hanches</label>
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-objectif-hanches">Objectif tour de hanches (cm)</label>
+                        <input type="number" id="suivi-objectif-hanches" class="suivi-input" min="0" step="0.5" placeholder="Ex : 95">
+                    </div>
+                    <div class="suivi-form-row suivi-check">
+                        <label><input type="checkbox" id="suivi-show-poitrine"> Afficher le tour de poitrine</label>
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-objectif-poitrine">Objectif tour de poitrine (cm)</label>
+                        <input type="number" id="suivi-objectif-poitrine" class="suivi-input" min="0" step="0.5" placeholder="Ex : 90">
+                    </div>
+                    <div class="suivi-form-row suivi-check">
+                        <label><input type="checkbox" id="suivi-show-vetement"> Afficher le vêtement test</label>
                     </div>
                     <button type="button" class="btn-suivi-save btn-suivi-save-prefs" id="btn-suivi-save-prefs">Enregistrer les préférences</button>
                 </section>
