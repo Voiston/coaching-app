@@ -1,0 +1,402 @@
+{
+  "clientName": "Océane",
+  "programTitle": "Objectif mariage !",
+  "recovery_url": null,
+  "weeklyGoal": 3,
+  "sessions": [
+    {
+      "id": "s_1jambes",
+      "date": "2026-02-10",
+      "name": "Hypertrophie: Courbes & Galbe",
+      "session_intro": "Séance axée renforcement musculaire (fessiers en priorité). Objectif : développer la force et la masse musculaire de ces zones.",
+      "nutrition_tip": "Pour la perte de poids, ne néglige pas les protéines pendant tes repas, c'est bon pour la satiété et la construction des muscles. Assure toi d'avoir au moins 110gr de protéines par jour",
+      "exercises": [
+        {
+          "type": "section",
+          "title": "Échauffement Spécifique"
+        },
+        {
+          "name": "Rotations articulaires 2min + 10 burpees lent + 15 squats profond lent",
+          "sets": "1",
+          "reps": "Circuit",
+          "rest": "0s",
+          "rpe_target": "3",
+          "check_technique": false,
+          "note_coach": " On monte tranquillement en cardio. Sur les squats, descend bien le plus bas possible."
+        },
+        {
+          "type": "section",
+          "title": "Corps de Séance"
+        },
+        {
+          "name": "Hip Thrust",
+          "sets": "4",
+          "reps": "10-12",
+          "rest": "90s",
+		      "charge": "30",
+          "rpe_target": "8",
+          "warmup_sets": "1",
+          "check_technique": true,
+          "note_coach": "Contraction maximale des fessiers en haut. Pousse plutôt avec l'arrière des pieds."
+        },
+        {
+          "name": "Goblet Squat",
+          "sets": "3",
+          "reps": "12-15",
+          "rest": "75s",
+		  "charge": "12.5",
+          "rpe_target": "7",
+          "check_technique": true,
+          "note_coach": "Dos bien droit. Descend le plus bas possible en gardant les pieds bien à plat."
+        },
+        {
+          "name": "Tirage Vertical Poitrine",
+          "sets": "3",
+          "reps": "12",
+          "rest": "0s",
+          "charge": "30",
+          "rpe_target": "7",
+          "check_technique": true,
+          "warmup_sets": "1",
+          "superset_type": "start",
+          "note_coach": "Sors la poitrine."
+        },
+        {
+          "name": "Élévations Latérales haltères",
+          "sets": "3",
+          "reps": "15-20",
+          "rest": "60s",
+          "rpe_target": "9",
+          "check_technique": false,
+          "superset_type": "end",
+          "note_coach": "Contrôle la descente. Coude très légèrement fléchi, monte les haltères jusqu'aux épaules, pas plus haut."
+        },
+        {
+          "name": "Coude-Genoux croisés",
+          "sets": "3",
+          "reps": "30",
+          "rest": "20s",
+          "rpe_target": "N/A",
+          "check_technique": false,
+          "note_coach": "Lombaires plaquées au sol. Jambes qui frolent le sol."
+        }
+      ]
+    },
+    {
+      "id": "s_2",
+      "date": "2026-02-12",
+      "session_intro": " On est toujours sur une séance plutôt renfo, avec un peu de cardio en début de séance.",
+      "name": "Hybride: Posture & Force",
+      "exercises": [
+        {
+          "type": "section",
+          "title": "Échauffement Spécifique"
+        },
+        {
+          "name": "15 squats profonds lents + 30sec gainage superman +20 fentes avants alternées + 30 pont fessiers",
+          "sets": "1",
+          "reps": "Circuit",
+          "rest": "0s",
+          "rpe_target": "3",
+          "check_technique": false,
+          "note_coach": "Sur les squats, descend bien le plus bas possible."
+        },
+        {
+          "type": "section",
+          "title": "Corps de Séance"
+        },
+        {
+          "name": "Kettlebel swing",
+          "sets": "4",
+          "reps": "45s",
+          "rest": "45s",
+		  "charge": "12",
+          "rpe_target": "8",
+          "check_technique": true, 
+          "warmup_sets": "1",
+          "note_coach": "(Tu peux faire avec une haltère, en la tenant par le haut) Focus chaîne postérieure. Garde le dos bien droit et monte la Kettlebel au moins à hauteur de tes yeux. Contraction des fessiers en fin de mouvement."
+        },
+        {
+          "name": "Fentes Bulgares",
+          "sets": "3",
+          "reps": "10 par jambe",
+          "rest": "0s",
+		  "charge": "10",
+          "rpe_target": "7",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": "Descend bien jusqu'en bas."
+        },
+        {
+          "name": "Développé Incliné Haltères",
+          "sets": "3",
+          "reps": "10-12",
+          "rest": "90s",
+		  "charge": "8",
+          "rpe_target": "7",
+          "check_technique": true, 
+          "warmup_sets": "1",
+          "superset_type": "end",
+          "note_coach": "Avant-bras verticaux. Les pieds bien ancrés au sol pour la stabilité."
+        },
+        {
+          "name": "Tirage bucheron (Rowing unilatéral haltère)",
+          "sets": "3",
+          "reps": "15 par bras",
+          "rest": "60s",
+          "rpe_target": "7",
+          "charge": "8",
+          "check_technique": false,
+          "note_coach": "Dos bien droit, prend appuis sur un banc avec la main libre, tire en essayant de rentrer l'omoplate vers l'intérieur en haut du mouvement."
+        },
+        {
+          "name": "Pallof Press",
+          "sets": "3",
+          "reps": "30s/côté",
+          "rest": "45s",
+          "rpe_target": "6",
+          "check_technique": false,
+          "note_coach": "Anti-rotation. Reste statique, les bras bien horizontaux et tendus. Trouve une charge qui te mets en difficulté sur 30s mais où tu arrives à maintenir une bonne position."
+        }
+      ]
+    },
+    {
+      "id": "s_3",
+      "date": "2026-02-14",
+      "name": "Cardio: Metabolic Fat Burner",
+      "session_intro": " Séance cardio, vas-y à fond !",
+      "nutrition_tip": "N'oublie pas de bien boire, tu peux même utiliser une boisson d'effort où ajouter une pincer de sel à ton eau.",
+      "exercises": [
+        {
+          "type": "section",
+          "title": "Échauffement Spécifique"
+        },
+        {
+          "name": "Corde à sauter 30 tours + 10 burpees",
+          "sets": "2",
+          "reps": "Circuit",
+          "rest": "15s",
+          "rpe_target": "4-5",
+          "check_technique": false,
+          "note_coach": ""
+        },
+        {
+          "type": "section",
+          "title": "Circuit Training (4 Tours)"
+        },
+        {
+          "name": "Thrusters (Deux haltères légers)",
+          "sets": "4",
+          "reps": "14",
+          "rest": "0s",
+		  "charge": "6",
+          "rpe_target": "8",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": "Explosif. Utilise les jambes."
+        },
+        {
+          "name": "Rowing Bûcheron",
+          "sets": "4",
+          "reps": "14/bras",
+          "rest": "0s",
+		  "charge": "6",
+          "rpe_target": "7",
+          "check_technique": true,
+          "superset_type": "middle",
+          "note_coach": "Dos plat, pas de rotation. Rythme soutenu."
+        },
+        {
+          "name": "Squats sautés",
+          "sets": "4",
+          "reps": "14",
+          "rest": "0s",
+          "rpe_target": "8",
+          "check_technique": true,
+          "superset_type": "middle",
+          "note_coach": "Rythme soutenu. Descend bas sur le squat et rebondis bien, comme une grenouille."
+        },
+        {
+          "name": "Mountain Climbers",
+          "sets": "4",
+          "reps": "30 sec",
+          "rest": "60s",
+          "rpe_target": "10",
+          "check_technique": false,
+          "superset_type": "end",
+          "note_coach": "Intensité maximale. Vide le réservoir."
+        }
+        
+      ]
+    },
+    {
+      "id": "s_4",
+      "date": "2026-02-17",
+      "name": "Legs & Arms Toning ✨",
+      "nutrition_tip": "Hydrate-toi bien pendant la séance, surtout avec la corde à sauter.",
+      "exercises": [
+        { "type": "section", "title": "Échauffement & Cardio" },
+        {
+          "name": "Mobilité + Corde à Sauter",
+          "sets": "5",
+          "reps": "45 sec",
+          "rest": "30s",
+          "rpe_target": "7",
+          "charge": "Poids du corps",
+          "check_technique": false,
+          "note_coach": "",
+          "alternative": "Marche Inclinée (Tapis)"
+        },
+        { "type": "section", "title": "Renforcement" },
+        {
+          "name": "Leg Press",
+          "sets": "4",
+          "reps": "12-15",
+          "rest": "90s",
+          "rpe_target": "8",
+          "charge": ["50kg", "55kg", "60kg", "60kg"],
+          "check_technique": true,
+          "note_coach": "Pieds largeur bassin.",
+          "alternative": "Goblet Squat",
+          "warmup_sets": 1
+        },
+        {
+          "name": "Goblet Squat",
+          "sets": "3",
+          "reps": "12",
+          "rest": "75s",
+          "rpe_target": "7",
+          "charge": "12kg",
+          "check_technique": true,
+          "note_coach": "Dos droit, descends contrôlé.",
+          "alternative": "Squat sautés"
+        },
+        {
+          "name": "Tirage Vertical Poitrine",
+          "sets": "3",
+          "reps": "12",
+          "rest": "0s",
+          "rpe_target": "8",
+          "charge": "35kg",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": "Coudes vers le bas.",
+          "alternative": "Tirage Horizontal"
+        },
+        {
+          "name": "Triceps Poulie Haute (Corde)",
+          "sets": "3",
+          "reps": "15",
+          "rest": "60s",
+          "rpe_target": "9",
+          "charge": "10kg",
+          "check_technique": false,
+          "superset_type": "end",
+          "note_coach": "Isole l'arrière du bras. Coudes fixes. Buste légèrement penché vers l'avant. Extension complète des coudes.",
+          "alternative": "Extension Triceps Haltère"
+        },
+        {
+          "name": "Hollow hold",
+          "sets": "3",
+          "reps": "30s",
+          "rest": "30s",
+          "rpe_target": "N/A",
+          "charge": "Poids du corps",
+          "check_technique": false,
+          "note_coach": "Bassin en retroversion, lombaire plaqué au sol.",
+          "alternative": "Planche"
+        }
+      ]
+    },
+    {
+      "id": "s_5",
+      "date": "2026-02-19",
+      "name": "Glutes & Shoulders 🍑",
+      "nutrition_tip": "Mange un fruit 1h avant la séance pour l'énergie.",
+      "exercises": [
+        { "type": "section", "title": "Échauffement & Cardio" },
+        {
+          "name": "Mobilité + Corde à Sauter",
+          "sets": "5",
+          "reps": "45 sec",
+          "rest": "30s",
+          "rpe_target": "7",
+          "charge": "Poids du corps",
+          "check_technique": false,
+          "note_coach": "Active le cardio.",
+          "alternative": "Elliptique"
+        },
+        { "type": "section", "title": "Renforcement" },
+        {
+          "name": "Hip Thrust",
+          "sets": "4",
+          "reps": "10-12",
+          "rest": "90s",
+          "rpe_target": "9",
+          "charge": ["30kg", "35kg", "40kg", "40kg"],
+          "check_technique": true,
+          "note_coach": "Menton rentré, contraction fessiers en haut.",
+          "alternative": "Glute Bridge Machine",
+          "warmup_sets": 1
+        },
+        {
+          "name": "Fentes Bulgares",
+          "sets": "3",
+          "reps": "10/jambe",
+          "rest": "90s",
+          "rpe_target": "8",
+          "charge": "12",
+          "check_technique": true,
+          "note_coach": "Poids sur le talon avant. Attention à l'équilibre.",
+          "alternative": "Fentes arrières"
+        },
+        {
+          "name": "Gainage oblique",
+          "sets": "3",
+          "reps": "45s par côté",
+          "rest": "30s",
+          "rpe_target": "8",
+          "charge": "",
+          "check_technique": false,
+          "note_coach": "",
+          "alternative": "Abductions élastique"
+        },
+        {
+          "name": "Thrusters",
+          "sets": "3",
+          "reps": "12",
+          "rest": "0s",
+          "rpe_target": "9",
+          "charge": "12",
+          "check_technique": true,
+          "superset_type": "start",
+          "note_coach": "Dos droit, ne cambre pas.",
+          "alternative": "Développé Machine"
+        },
+        {
+          "name": "Soulevé de terre jambes tendues haltère",
+          "sets": "3",
+          "reps": "15",
+          "rest": "60s",
+          "rpe_target": "6",
+          "charge": "12",
+          "check_technique": false,
+          "superset_type": "end",
+          "note_coach": "Genoux très légèrement fléchis, essaie de sentir léger étirement sur l'arrière des cuisses.",
+          "alternative": ""
+        },
+        {
+          "name": "Planche Statique",
+          "sets": "3",
+          "reps": "45 sec",
+          "rest": "30s",
+          "rpe_target": "N/A",
+          "charge": "Poids du corps",
+          "check_technique": false,
+          "note_coach": "Gainage total.",
+          "alternative": "Planche genoux"
+        }
+      ]
+    }
+  ]
+}
