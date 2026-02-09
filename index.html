@@ -42,6 +42,7 @@
                 </div>
             </div>
         </div>
+        <div id="suivi-header-bar" class="suivi-header-bar" aria-live="polite" hidden></div>
     </header>
 
     <div id="calendar-wrap" class="calendar-wrap">
@@ -60,6 +61,95 @@
     </div>
     <button type="button" class="btn-progression-toggle" id="btn-progression-toggle" aria-expanded="false">📈 Ma progression</button>
 
+    <!-- Modal Mensurations & Suivi -->
+    <div id="suivi-overlay" class="suivi-overlay" role="dialog" aria-modal="true" aria-labelledby="suivi-modal-title" aria-hidden="true">
+        <div class="suivi-modal">
+            <span class="suivi-close" tabindex="0" role="button" aria-label="Fermer">&times;</span>
+            <h2 id="suivi-modal-title" class="suivi-modal-title">Mensurations & Suivi</h2>
+            <div class="suivi-modal-body">
+                <section class="suivi-section">
+                    <h3 class="suivi-section-title">📏 Mensurations</h3>
+                    <div class="suivi-form-row">
+                        <label for="suivi-date">Date</label>
+                        <input type="date" id="suivi-date" class="suivi-input">
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-tour-taille">Tour de taille (cm)</label>
+                        <input type="number" id="suivi-tour-taille" class="suivi-input" min="0" step="0.5" placeholder="—">
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-tour-hanches">Tour de hanches (cm)</label>
+                        <input type="number" id="suivi-tour-hanches" class="suivi-input" min="0" step="0.5" placeholder="—">
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-tour-poitrine">Tour de poitrine (cm)</label>
+                        <input type="number" id="suivi-tour-poitrine" class="suivi-input" min="0" step="0.5" placeholder="—">
+                    </div>
+                    <button type="button" class="btn-suivi-save" id="btn-suivi-save-mensurations">Enregistrer les mensurations</button>
+                </section>
+                <section class="suivi-section">
+                    <h3 class="suivi-section-title">⚖️ Poids corporel</h3>
+                    <div class="suivi-form-row">
+                        <label for="suivi-poids">Poids (kg)</label>
+                        <input type="number" id="suivi-poids" class="suivi-input" min="0" step="0.1" placeholder="—">
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-poids-date">Date</label>
+                        <input type="date" id="suivi-poids-date" class="suivi-input">
+                    </div>
+                    <button type="button" class="btn-suivi-save" id="btn-suivi-save-poids">Enregistrer le poids</button>
+                </section>
+                <section class="suivi-section">
+                    <h3 class="suivi-section-title">👕 Vêtement test</h3>
+                    <p class="suivi-hint">Un vêtement de référence pour voir l’évolution (jean, robe…). Note comment il te va.</p>
+                    <div class="suivi-form-row">
+                        <label for="suivi-vetement-name">Vêtement</label>
+                        <input type="text" id="suivi-vetement-name" class="suivi-input" placeholder="Ex : Jean taille 38">
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-vetement-feeling">Comment il te va</label>
+                        <select id="suivi-vetement-feeling" class="suivi-input">
+                            <option value="">— Choisir —</option>
+                            <option value="trop_petit">Trop petit</option>
+                            <option value="serre_mais_va">Je me sens serré mais ça va</option>
+                            <option value="pile">Pile à ma taille</option>
+                            <option value="peu_large">Un peu large</option>
+                            <option value="trop_grand">Trop grand</option>
+                        </select>
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-vetement-date">Date</label>
+                        <input type="date" id="suivi-vetement-date" class="suivi-input">
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-vetement-note">Note (optionnel)</label>
+                        <input type="text" id="suivi-vetement-note" class="suivi-input" placeholder="Détails...">
+                    </div>
+                    <button type="button" class="btn-suivi-save" id="btn-suivi-save-vetement">Enregistrer</button>
+                </section>
+                <section class="suivi-section">
+                    <h3 class="suivi-section-title">🎯 Affichage dans le header</h3>
+                    <p class="suivi-hint">Affiche une barre de progression vers ton objectif en haut de l’app.</p>
+                    <div class="suivi-form-row suivi-check">
+                        <label><input type="checkbox" id="suivi-show-poids"> Afficher le poids</label>
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-objectif-poids">Objectif poids (kg)</label>
+                        <input type="number" id="suivi-objectif-poids" class="suivi-input" min="0" step="0.1" placeholder="Ex : 65">
+                    </div>
+                    <div class="suivi-form-row suivi-check">
+                        <label><input type="checkbox" id="suivi-show-taille"> Afficher le tour de taille</label>
+                    </div>
+                    <div class="suivi-form-row">
+                        <label for="suivi-objectif-taille">Objectif tour de taille (cm)</label>
+                        <input type="number" id="suivi-objectif-taille" class="suivi-input" min="0" step="0.5" placeholder="Ex : 70">
+                    </div>
+                    <button type="button" class="btn-suivi-save btn-suivi-save-prefs" id="btn-suivi-save-prefs">Enregistrer les préférences</button>
+                </section>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal progression (clean girl / aesthetics) -->
     <div id="progression-overlay" class="progression-overlay" role="dialog" aria-modal="true" aria-labelledby="progression-title" aria-hidden="true">
         <div class="progression-modal">
@@ -74,7 +164,7 @@
 
     <div class="whatsapp-bottom" id="whatsapp-bottom">
         <button type="button" id="btn-send-whatsapp" aria-label="Terminer la séance et envoyer le rapport au coach par WhatsApp">
-            Terminer & Envoyer au Coach 📤
+            Terminer & Envoyer au Coach 
         </button>
     </div>
 
