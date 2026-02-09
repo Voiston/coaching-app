@@ -45,6 +45,8 @@ const KEY_MENSURATIONS = 'fitapp_mensurations_' + clientID;
 const KEY_POIDS = 'fitapp_poids_' + clientID;
 const KEY_VETEMENT_TEST = 'fitapp_vetement_test_' + clientID;
 const KEY_SUIVI_HEADER = 'fitapp_suivi_header_' + clientID;
+const SUIVI_HISTORY_MAX = 15;
+const SUIVI_HEADER_MAX = 3;
 
 function getSettingSound() { return localStorage.getItem(KEY_SOUND) !== '0'; }
 function setSettingSound(on) { localStorage.setItem(KEY_SOUND, on ? '1' : '0'); }
@@ -1214,7 +1216,15 @@ function getSuiviHeader() {
 function setSuiviHeader(obj) {
     localStorage.setItem(KEY_SUIVI_HEADER, JSON.stringify(obj || {}));
 }
-/** Retourne "Aujourd'hui", "Hier" ou "Il y a X jours" pour une date YYYY-MM-DD. */
+/** Vérifie qu'une valeur de mensuration (cm) ou de poids (kg) est dans une plage raisonnable. */
+function isValidSuiviValue(value, type) {
+    if (value == null || isNaN(value)) return false;
+    if (type === 'poids') return value >= 20 && value <= 300;
+    if (type === 'tour') return value >= 15 && value <= 250;
+    return true;
+}
+
+/** Retourne "Aujourd'hui", "Hier", "Il y a X jours" ou "Dans X jours" pour une date YYYY-MM-DD. */
 function formatDateRelative(dateStr) {
     if (!dateStr) return '';
     const today = new Date();
@@ -1225,7 +1235,10 @@ function formatDateRelative(dateStr) {
     const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
     if (diffDays === 0) return 'Aujourd\'hui';
     if (diffDays === 1) return 'Hier';
-    return `Il y a ${diffDays} jours`;
+    if (diffDays > 1) return `Il y a ${diffDays} jours`;
+    if (diffDays === -1) return 'Demain';
+    if (diffDays < -1) return `Dans ${Math.abs(diffDays)} jours`;
+    return dateStr;
 }
 
 const VETEMENT_FEELING_LABELS = {
@@ -1892,9 +1905,9 @@ function renderProgressionPanel() {
     const mensurations = getMensurations();
     const poidsArr = getPoids();
     const vetement = getVetementTest();
-    const lastM = mensurations.length ? mensurations[0] : null;
-    const lastP = poidsArr.length ? poidsArr[0] : null;
-    const lastV = vetement.entries && vetement.entries.length ? vetement.entries[0] : null;
+    const lastM = latestByDate(mensurations);
+    const lastP = latestByDate(poidsArr);
+    const lastV = vetement.entries && vetement.entries.length ? latestByDate(vetement.entries) : null;
     const hasSuivi = lastM || lastP || (vetement.name && lastV);
     html += '<p class="progression-intro progression-section">Mensurations & Suivi</p>';
     html += '<div class="progression-suivi-block">';
@@ -2010,11 +2023,12 @@ function openSuiviHistoriqueModal() {
     const overlay = document.getElementById('suivi-historique-overlay');
     if (!body || !overlay) return;
     let html = '';
-    const firstM = mensurations.length ? mensurations[mensurations.length - 1] : null;
-    const firstP = poidsArr.length ? poidsArr[poidsArr.length - 1] : null;
+    const firstM = oldestByDate(mensurations);
+    const firstP = oldestByDate(poidsArr);
     if (mensurations.length > 0) {
         html += '<section class="suivi-section"><h3 class="suivi-section-title">📏 Mensurations</h3>';
-        mensurations.slice(0, 15).forEach((m, i) => {
+        const mensurationsSorted = [...mensurations].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        mensurationsSorted.slice(0, SUIVI_HISTORY_MAX).forEach((m, i) => {
             const parts = [];
             if (m.tour_taille != null) {
                 const delta = firstM && firstM.tour_taille != null ? (firstM.tour_taille - m.tour_taille) : 0;
@@ -2047,7 +2061,8 @@ function openSuiviHistoriqueModal() {
     }
     if (poidsArr.length > 0) {
         html += '<section class="suivi-section"><h3 class="suivi-section-title">⚖️ Poids</h3>';
-        poidsArr.slice(0, 15).forEach((p) => {
+        const poidsSorted = [...poidsArr].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        poidsSorted.slice(0, SUIVI_HISTORY_MAX).forEach((p) => {
             const delta = firstP && firstP.poids_kg != null ? (firstP.poids_kg - p.poids_kg) : 0;
             const deltaStr = delta > 0 ? ` <span class="suivi-progress">−${delta} kg</span>` : (delta < 0 ? ` <span class="suivi-regress">+${Math.abs(delta)} kg</span>` : '');
             html += `<p class="suivi-hist-line">${p.poids_kg} kg${deltaStr} <span class="progression-suivi-date">${formatDateRelative(p.date)}</span></p>`;
@@ -2056,7 +2071,8 @@ function openSuiviHistoriqueModal() {
     }
     if (vetement.entries && vetement.entries.length > 0) {
         html += '<section class="suivi-section"><h3 class="suivi-section-title">👕 ' + (vetement.name ? vetement.name : 'Vêtement test') + '</h3>';
-        vetement.entries.slice(0, 15).forEach((e) => {
+        const entriesSorted = [...vetement.entries].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        entriesSorted.slice(0, SUIVI_HISTORY_MAX).forEach((e) => {
             html += `<p class="suivi-hist-line">${VETEMENT_FEELING_LABELS[e.feeling] || e.feeling}${e.note ? ' — ' + e.note : ''} <span class="progression-suivi-date">${formatDateRelative(e.date)}</span></p>`;
         });
         html += '</section>';
@@ -2119,14 +2135,20 @@ function initSuiviModal() {
         const tour_cuisses = document.getElementById('suivi-tour-cuisses')?.value?.trim();
         const tour_bras = document.getElementById('suivi-tour-bras')?.value?.trim();
         if (!tour_taille && !tour_hanches && !tour_poitrine && !tour_cuisses && !tour_bras) return;
+        const parseTour = (v) => v ? parseFloat(v.replace(',', '.')) : null;
+        const vTaille = parseTour(tour_taille), vHanches = parseTour(tour_hanches), vPoitrine = parseTour(tour_poitrine), vCuisses = parseTour(tour_cuisses), vBras = parseTour(tour_bras);
+        if ([vTaille, vHanches, vPoitrine, vCuisses, vBras].some(v => v != null && !isValidSuiviValue(v, 'tour'))) {
+            showToast('Valeur invalide : les mensurations doivent être entre 15 et 250 cm.');
+            return;
+        }
         const arr = getMensurations();
         arr.push({
             date: date,
-            tour_taille: tour_taille ? parseFloat(tour_taille.replace(',', '.')) : null,
-            tour_hanches: tour_hanches ? parseFloat(tour_hanches.replace(',', '.')) : null,
-            tour_poitrine: tour_poitrine ? parseFloat(tour_poitrine.replace(',', '.')) : null,
-            tour_cuisses: tour_cuisses ? parseFloat(tour_cuisses.replace(',', '.')) : null,
-            tour_bras: tour_bras ? parseFloat(tour_bras.replace(',', '.')) : null
+            tour_taille: vTaille,
+            tour_hanches: vHanches,
+            tour_poitrine: vPoitrine,
+            tour_cuisses: vCuisses,
+            tour_bras: vBras
         });
         arr.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
         setMensurations(arr);
@@ -2145,6 +2167,10 @@ function initSuiviModal() {
         if (!poids) return;
         const kg = parseFloat(poids.replace(',', '.'));
         if (isNaN(kg)) return;
+        if (!isValidSuiviValue(kg, 'poids')) {
+            showToast('Valeur invalide : le poids doit être entre 20 et 300 kg.');
+            return;
+        }
         const arr = getPoids();
         arr.push({ date: date, poids_kg: kg });
         arr.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -2252,59 +2278,41 @@ function renderSuiviHeaderBar() {
     const firstP = oldestByDate(poidsArr);
     const firstM = oldestByDate(mensurations);
     const lastV = vetement.entries && vetement.entries.length ? latestByDate(vetement.entries) : null;
-    let html = '';
+    const items = [];
+    const push = (label, progress, state, isVetement = false) => {
+        const pct = Math.round(progress);
+        if (isVetement) items.push(`<div class="suivi-header-item suivi-header-vetement"><span class="suivi-header-label">${label}</span></div>`);
+        else items.push(`<div class="suivi-header-item ${state.class}"><span class="suivi-header-label">${label}</span><div class="suivi-header-track" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="suivi-header-fill" style="width:${pct}%"></div><span class="suivi-header-pct">${pct}%</span></div></div>`);
+    };
     if (prefs.show_poids && prefs.objectif_poids != null && lastP != null) {
-        const current = lastP.poids_kg;
-        const goal = prefs.objectif_poids;
-        const start = firstP ? firstP.poids_kg : current;
-        const progress = progressPct(start, current, goal);
-        const state = suiviProgressState(progress);
-        html += `<div class="suivi-header-item ${state.class}"><span class="suivi-header-label">⚖️ Poids ${current} kg → ${goal} kg</span><span class="suivi-header-pct">${Math.round(progress)}%</span><p class="suivi-header-message">${state.message}</p><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%" role="progressbar" aria-valuenow="${Math.round(progress)}" aria-valuemin="0" aria-valuemax="100"></div></div></div>`;
+        const current = lastP.poids_kg, goal = prefs.objectif_poids, start = firstP ? firstP.poids_kg : current;
+        push(`⚖️ Poids ${current} kg → ${goal} kg`, progressPct(start, current, goal), suiviProgressState(progressPct(start, current, goal)));
     }
     if (prefs.show_taille && prefs.objectif_taille != null && lastM != null && lastM.tour_taille != null) {
-        const current = lastM.tour_taille;
-        const goal = prefs.objectif_taille;
-        const start = firstM && firstM.tour_taille != null ? firstM.tour_taille : current;
-        const progress = progressPct(start, current, goal);
-        const state = suiviProgressState(progress);
-        html += `<div class="suivi-header-item ${state.class}"><span class="suivi-header-label">📏 Taille ${current} cm → ${goal} cm</span><span class="suivi-header-pct">${Math.round(progress)}%</span><p class="suivi-header-message">${state.message}</p><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%" role="progressbar" aria-valuenow="${Math.round(progress)}" aria-valuemin="0" aria-valuemax="100"></div></div></div>`;
+        const current = lastM.tour_taille, goal = prefs.objectif_taille, start = firstM && firstM.tour_taille != null ? firstM.tour_taille : current;
+        push(`📏 Taille ${current} cm → ${goal} cm`, progressPct(start, current, goal), suiviProgressState(progressPct(start, current, goal)));
     }
     if (prefs.show_hanches && prefs.objectif_hanches != null && lastM != null && lastM.tour_hanches != null) {
-        const current = lastM.tour_hanches;
-        const goal = prefs.objectif_hanches;
-        const start = firstM && firstM.tour_hanches != null ? firstM.tour_hanches : current;
-        const progress = progressPct(start, current, goal);
-        const state = suiviProgressState(progress);
-        html += `<div class="suivi-header-item ${state.class}"><span class="suivi-header-label">📐 Hanches ${current} cm → ${goal} cm</span><span class="suivi-header-pct">${Math.round(progress)}%</span><p class="suivi-header-message">${state.message}</p><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%" role="progressbar" aria-valuenow="${Math.round(progress)}" aria-valuemin="0" aria-valuemax="100"></div></div></div>`;
+        const current = lastM.tour_hanches, goal = prefs.objectif_hanches, start = firstM && firstM.tour_hanches != null ? firstM.tour_hanches : current;
+        push(`📐 Hanches ${current} cm → ${goal} cm`, progressPct(start, current, goal), suiviProgressState(progressPct(start, current, goal)));
     }
     if (prefs.show_poitrine && prefs.objectif_poitrine != null && lastM != null && lastM.tour_poitrine != null) {
-        const current = lastM.tour_poitrine;
-        const goal = prefs.objectif_poitrine;
-        const start = firstM && firstM.tour_poitrine != null ? firstM.tour_poitrine : current;
-        const progress = progressPct(start, current, goal);
-        const state = suiviProgressState(progress);
-        html += `<div class="suivi-header-item ${state.class}"><span class="suivi-header-label">📐 Poitrine ${current} cm → ${goal} cm</span><span class="suivi-header-pct">${Math.round(progress)}%</span><p class="suivi-header-message">${state.message}</p><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%" role="progressbar" aria-valuenow="${Math.round(progress)}" aria-valuemin="0" aria-valuemax="100"></div></div></div>`;
+        const current = lastM.tour_poitrine, goal = prefs.objectif_poitrine, start = firstM && firstM.tour_poitrine != null ? firstM.tour_poitrine : current;
+        push(`📐 Poitrine ${current} cm → ${goal} cm`, progressPct(start, current, goal), suiviProgressState(progressPct(start, current, goal)));
     }
     if (prefs.show_cuisses && prefs.objectif_cuisses != null && lastM != null && lastM.tour_cuisses != null) {
-        const current = lastM.tour_cuisses;
-        const goal = prefs.objectif_cuisses;
-        const start = firstM && firstM.tour_cuisses != null ? firstM.tour_cuisses : current;
-        const progress = progressPct(start, current, goal);
-        const state = suiviProgressState(progress);
-        html += `<div class="suivi-header-item ${state.class}"><span class="suivi-header-label">🦵 Cuisses ${current} cm → ${goal} cm</span><span class="suivi-header-pct">${Math.round(progress)}%</span><p class="suivi-header-message">${state.message}</p><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%" role="progressbar" aria-valuenow="${Math.round(progress)}" aria-valuemin="0" aria-valuemax="100"></div></div></div>`;
+        const current = lastM.tour_cuisses, goal = prefs.objectif_cuisses, start = firstM && firstM.tour_cuisses != null ? firstM.tour_cuisses : current;
+        push(`🦵 Cuisses ${current} cm → ${goal} cm`, progressPct(start, current, goal), suiviProgressState(progressPct(start, current, goal)));
     }
     if (prefs.show_bras && prefs.objectif_bras != null && lastM != null && lastM.tour_bras != null) {
-        const current = lastM.tour_bras;
-        const goal = prefs.objectif_bras;
-        const start = firstM && firstM.tour_bras != null ? firstM.tour_bras : current;
-        const progress = progressPct(start, current, goal);
-        const state = suiviProgressState(progress);
-        html += `<div class="suivi-header-item ${state.class}"><span class="suivi-header-label">💪 Bras ${current} cm → ${goal} cm</span><span class="suivi-header-pct">${Math.round(progress)}%</span><p class="suivi-header-message">${state.message}</p><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%" role="progressbar" aria-valuenow="${Math.round(progress)}" aria-valuemin="0" aria-valuemax="100"></div></div></div>`;
+        const current = lastM.tour_bras, goal = prefs.objectif_bras, start = firstM && firstM.tour_bras != null ? firstM.tour_bras : current;
+        push(`💪 Bras ${current} cm → ${goal} cm`, progressPct(start, current, goal), suiviProgressState(progressPct(start, current, goal)));
     }
     if (prefs.show_vetement && vetement.name && lastV) {
         const text = lastV.feeling ? `${vetement.name} : ${lastV.feeling}` : vetement.name;
-        html += `<div class="suivi-header-item suivi-header-vetement"><span class="suivi-header-label">👕 ${String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span></div>`;
+        items.push(`<div class="suivi-header-item suivi-header-vetement"><span class="suivi-header-label">👕 ${String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span></div>`);
     }
+    const html = items.slice(0, SUIVI_HEADER_MAX).join('');
     if (html) {
         bar.innerHTML = html;
         bar.hidden = false;
