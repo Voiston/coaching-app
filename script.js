@@ -41,6 +41,10 @@ const KEY_SESSION_DATE_OVERRIDES = 'fitapp_session_dates_' + clientID;
 const KEY_COUNTERS = 'fitapp_counters_' + clientID;
 const KEY_MILESTONES = 'fitapp_milestones_' + clientID;
 const KEY_TRAINING_SECONDS = 'fitapp_training_seconds_' + clientID;
+const KEY_MENSURATIONS = 'fitapp_mensurations_' + clientID;
+const KEY_POIDS = 'fitapp_poids_' + clientID;
+const KEY_VETEMENT_TEST = 'fitapp_vetement_test_' + clientID;
+const KEY_SUIVI_HEADER = 'fitapp_suivi_header_' + clientID;
 
 function getSettingSound() { return localStorage.getItem(KEY_SOUND) !== '0'; }
 function setSettingSound(on) { localStorage.setItem(KEY_SOUND, on ? '1' : '0'); }
@@ -313,6 +317,8 @@ function initApp(data) {
     initFocusMode();
     initSettings();
     initProgressionToggle();
+    initSuiviModal();
+    renderSuiviHeaderBar();
     initInstallPrompt();
     maybeShowNotification(globalData && globalData.sessions ? globalData.sessions : []);
 }
@@ -662,6 +668,7 @@ function renderSession(sessionIndex, dateStr) {
 
     loadProgress();
     renderProgressionPanel();
+    renderSuiviHeaderBar();
     updateSupersetHighlight();
     updateAllExerciseDetails();
     if (document.body.classList.contains('guided-mode')) {
@@ -1170,6 +1177,50 @@ function addTrainingSeconds(sec) {
     const current = getTrainingSeconds();
     localStorage.setItem(KEY_TRAINING_SECONDS, String(current + Math.round(sec)));
 }
+
+function getMensurations() {
+    try { return JSON.parse(localStorage.getItem(KEY_MENSURATIONS) || '[]'); }
+    catch { return []; }
+}
+function setMensurations(arr) {
+    localStorage.setItem(KEY_MENSURATIONS, JSON.stringify(arr || []));
+}
+function getPoids() {
+    try { return JSON.parse(localStorage.getItem(KEY_POIDS) || '[]'); }
+    catch { return []; }
+}
+function setPoids(arr) {
+    localStorage.setItem(KEY_POIDS, JSON.stringify(arr || []));
+}
+function getVetementTest() {
+    try {
+        const v = localStorage.getItem(KEY_VETEMENT_TEST);
+        if (!v) return { name: '', entries: [] };
+        const o = JSON.parse(v);
+        return { name: o.name || '', entries: o.entries || [] };
+    } catch { return { name: '', entries: [] }; }
+}
+function setVetementTest(obj) {
+    localStorage.setItem(KEY_VETEMENT_TEST, JSON.stringify(obj || { name: '', entries: [] }));
+}
+function getSuiviHeader() {
+    try {
+        const v = localStorage.getItem(KEY_SUIVI_HEADER);
+        if (!v) return { show_poids: false, show_taille: false, objectif_poids: null, objectif_taille: null };
+        return JSON.parse(v);
+    } catch { return { show_poids: false, show_taille: false, objectif_poids: null, objectif_taille: null }; }
+}
+function setSuiviHeader(obj) {
+    localStorage.setItem(KEY_SUIVI_HEADER, JSON.stringify(obj || {}));
+}
+
+const VETEMENT_FEELING_LABELS = {
+    trop_petit: 'Trop petit',
+    serre_mais_va: 'Je me sens serré mais ça va',
+    pile: 'Pile à ma taille',
+    peu_large: 'Un peu large',
+    trop_grand: 'Trop grand'
+};
 
 /** Compteurs (burpees, squats, gainage_seconds, pompes, fentes). */
 function getCounters() {
@@ -1824,6 +1875,28 @@ function renderProgressionPanel() {
 
     let html = '';
 
+    const mensurations = getMensurations();
+    const poidsArr = getPoids();
+    const vetement = getVetementTest();
+    const lastM = mensurations.length ? mensurations[0] : null;
+    const lastP = poidsArr.length ? poidsArr[0] : null;
+    const lastV = vetement.entries && vetement.entries.length ? vetement.entries[0] : null;
+    const hasSuivi = lastM || lastP || (vetement.name && lastV);
+    html += '<p class="progression-intro progression-section">Mensurations & Suivi</p>';
+    html += '<div class="progression-suivi-block">';
+    if (lastM) {
+        const parts = [];
+        if (lastM.tour_taille != null) parts.push(`Taille : ${lastM.tour_taille} cm`);
+        if (lastM.tour_hanches != null) parts.push(`Hanches : ${lastM.tour_hanches} cm`);
+        if (lastM.tour_poitrine != null) parts.push(`Poitrine : ${lastM.tour_poitrine} cm`);
+        if (parts.length) html += `<p class="progression-suivi-line">📏 ${parts.join(' · ')}${lastM.date ? ' <span class="progression-suivi-date">(' + lastM.date + ')</span>' : ''}</p>`;
+    }
+    if (lastP) html += `<p class="progression-suivi-line">⚖️ Poids : ${lastP.poids_kg} kg${lastP.date ? ' <span class="progression-suivi-date">(' + lastP.date + ')</span>' : ''}</p>`;
+    if (vetement.name && lastV) html += `<p class="progression-suivi-line">👕 ${vetement.name} : ${VETEMENT_FEELING_LABELS[lastV.feeling] || lastV.feeling}${lastV.date ? ' <span class="progression-suivi-date">(' + lastV.date + ')</span>' : ''}</p>`;
+    if (!hasSuivi) html += '<p class="progression-suivi-line progression-suivi-empty">Aucune donnée. Clique sur Editer pour ajouter tes mensurations, ton poids ou un vêtement test.</p>';
+    html += '<button type="button" class="btn-suivi-editer" id="btn-suivi-editer">Editer</button>';
+    html += '</div>';
+
     const exoNames1RM = Object.keys(byExo).filter(name => is1RMTrackedExercise(name) && (byExo[name].best1RM || 0) > 0);
     const sortedBy1RM = exoNames1RM.sort((a, b) => (byExo[b].best1RM || 0) - (byExo[a].best1RM || 0));
     if (sortedBy1RM.length > 0) {
@@ -1848,7 +1921,6 @@ function renderProgressionPanel() {
     html += '<p class="progression-intro progression-section">Temps à l\'entraînement</p>';
     const trainingHours = (trainingSec / 3600).toFixed(1).replace(/\.0$/, '');
     html += `<div class="progression-meta"><span class="progression-meta-item">Temps passé à l'entraînement : <strong>${trainingHours} h</strong></span></div>`;
-    html += '<p class="progression-objective">Objectif : 5 h / 15 h / 35 h / 70 h / 100 h</p>';
 
     const counters = getCounters();
     const counterLabels = { burpees: 'Burpees', squats: 'Squats', gainage_seconds: 'Temps en gainage', pompes: 'Pompes', fentes: 'Fentes', escalier_seconds: 'Temps sur escalier' };
@@ -1868,6 +1940,7 @@ function renderProgressionPanel() {
 
     if (!html) html = '<p class="progression-intro">Aucune donnée de progression pour l’instant.</p>';
     panel.innerHTML = html;
+    document.getElementById('btn-suivi-editer')?.addEventListener('click', openSuiviModal);
 }
 
 function initProgressionToggle() {
@@ -1893,6 +1966,145 @@ function closeProgressionModal() {
     overlay.classList.remove('active');
     overlay.setAttribute('aria-hidden', 'true');
     if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function openSuiviModal() {
+    const today = new Date().toISOString().slice(0, 10);
+    const el = (id) => document.getElementById(id);
+    if (el('suivi-date')) el('suivi-date').value = today;
+    if (el('suivi-poids-date')) el('suivi-poids-date').value = today;
+    if (el('suivi-vetement-date')) el('suivi-vetement-date').value = today;
+    loadSuiviIntoModal();
+    const overlay = document.getElementById('suivi-overlay');
+    if (overlay) {
+        overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+    }
+}
+function closeSuiviModal() {
+    const overlay = document.getElementById('suivi-overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+    }
+}
+function loadSuiviIntoModal() {
+    const prefs = getSuiviHeader();
+    const el = (id) => document.getElementById(id);
+    if (el('suivi-show-poids')) el('suivi-show-poids').checked = !!prefs.show_poids;
+    if (el('suivi-show-taille')) el('suivi-show-taille').checked = !!prefs.show_taille;
+    if (el('suivi-objectif-poids')) el('suivi-objectif-poids').value = prefs.objectif_poids != null ? prefs.objectif_poids : '';
+    if (el('suivi-objectif-taille')) el('suivi-objectif-taille').value = prefs.objectif_taille != null ? prefs.objectif_taille : '';
+    const vet = getVetementTest();
+    if (el('suivi-vetement-name')) el('suivi-vetement-name').value = vet.name || '';
+}
+function initSuiviModal() {
+    const overlay = document.getElementById('suivi-overlay');
+    const closeBtn = overlay?.querySelector('.suivi-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeSuiviModal);
+    document.getElementById('btn-suivi-save-mensurations')?.addEventListener('click', () => {
+        const date = document.getElementById('suivi-date')?.value || new Date().toISOString().slice(0, 10);
+        const tour_taille = document.getElementById('suivi-tour-taille')?.value?.trim();
+        const tour_hanches = document.getElementById('suivi-tour-hanches')?.value?.trim();
+        const tour_poitrine = document.getElementById('suivi-tour-poitrine')?.value?.trim();
+        if (!tour_taille && !tour_hanches && !tour_poitrine) return;
+        const arr = getMensurations();
+        arr.push({
+            date: date,
+            tour_taille: tour_taille ? parseFloat(tour_taille.replace(',', '.')) : null,
+            tour_hanches: tour_hanches ? parseFloat(tour_hanches.replace(',', '.')) : null,
+            tour_poitrine: tour_poitrine ? parseFloat(tour_poitrine.replace(',', '.')) : null
+        });
+        arr.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        setMensurations(arr);
+        document.getElementById('suivi-tour-taille').value = '';
+        document.getElementById('suivi-tour-hanches').value = '';
+        document.getElementById('suivi-tour-poitrine').value = '';
+        renderProgressionPanel();
+        renderSuiviHeaderBar();
+        showToast('Mensurations enregistrées');
+    });
+    document.getElementById('btn-suivi-save-poids')?.addEventListener('click', () => {
+        const date = document.getElementById('suivi-poids-date')?.value || new Date().toISOString().slice(0, 10);
+        const poids = document.getElementById('suivi-poids')?.value?.trim();
+        if (!poids) return;
+        const kg = parseFloat(poids.replace(',', '.'));
+        if (isNaN(kg)) return;
+        const arr = getPoids();
+        arr.push({ date: date, poids_kg: kg });
+        arr.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        setPoids(arr);
+        document.getElementById('suivi-poids').value = '';
+        renderProgressionPanel();
+        renderSuiviHeaderBar();
+        showToast('Poids enregistré');
+    });
+    document.getElementById('btn-suivi-save-vetement')?.addEventListener('click', () => {
+        const name = document.getElementById('suivi-vetement-name')?.value?.trim();
+        const feeling = document.getElementById('suivi-vetement-feeling')?.value?.trim();
+        const date = document.getElementById('suivi-vetement-date')?.value || new Date().toISOString().slice(0, 10);
+        const note = document.getElementById('suivi-vetement-note')?.value?.trim();
+        if (!name || !feeling) return;
+        const vet = getVetementTest();
+        if (!vet.name) vet.name = name;
+        vet.entries = vet.entries || [];
+        vet.entries.push({ date: date, feeling: feeling, note: note || null });
+        vet.entries.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        setVetementTest(vet);
+        document.getElementById('suivi-vetement-feeling').value = '';
+        document.getElementById('suivi-vetement-note').value = '';
+        renderProgressionPanel();
+        showToast('Vêtement test enregistré');
+    });
+    document.getElementById('btn-suivi-save-prefs')?.addEventListener('click', () => {
+        const prefs = getSuiviHeader();
+        prefs.show_poids = document.getElementById('suivi-show-poids')?.checked ?? false;
+        prefs.show_taille = document.getElementById('suivi-show-taille')?.checked ?? false;
+        const op = document.getElementById('suivi-objectif-poids')?.value?.trim();
+        const ot = document.getElementById('suivi-objectif-taille')?.value?.trim();
+        prefs.objectif_poids = op ? parseFloat(op.replace(',', '.')) : null;
+        prefs.objectif_taille = ot ? parseFloat(ot.replace(',', '.')) : null;
+        setSuiviHeader(prefs);
+        renderSuiviHeaderBar();
+        showToast('Préférences enregistrées');
+    });
+    overlay?.addEventListener('click', (e) => { if (e.target === overlay) closeSuiviModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay?.classList.contains('active')) closeSuiviModal(); });
+}
+function renderSuiviHeaderBar() {
+    const bar = document.getElementById('suivi-header-bar');
+    if (!bar) return;
+    const prefs = getSuiviHeader();
+    const mensurations = getMensurations();
+    const poidsArr = getPoids();
+    const lastM = mensurations.length ? mensurations[0] : null;
+    const lastP = poidsArr.length ? poidsArr[0] : null;
+    const firstP = poidsArr.length ? poidsArr[poidsArr.length - 1] : null;
+    const firstM = mensurations.length ? mensurations[mensurations.length - 1] : null;
+    let html = '';
+    if (prefs.show_poids && prefs.objectif_poids != null && lastP != null) {
+        const current = lastP.poids_kg;
+        const goal = prefs.objectif_poids;
+        const start = firstP ? firstP.poids_kg : current;
+        const progress = start > goal ? Math.min(100, Math.max(0, ((start - current) / (start - goal)) * 100)) : (current <= goal ? 100 : 0);
+        html += `<div class="suivi-header-item"><span class="suivi-header-label">⚖️ Poids ${current} kg → ${goal} kg</span><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%"></div></div></div>`;
+    }
+    if (prefs.show_taille && prefs.objectif_taille != null && lastM != null && lastM.tour_taille != null) {
+        const current = lastM.tour_taille;
+        const goal = prefs.objectif_taille;
+        const start = firstM && firstM.tour_taille != null ? firstM.tour_taille : current;
+        const progress = start > goal ? Math.min(100, Math.max(0, ((start - current) / (start - goal)) * 100)) : (current <= goal ? 100 : 0);
+        html += `<div class="suivi-header-item"><span class="suivi-header-label">📏 Taille ${current} cm → ${goal} cm</span><div class="suivi-header-track"><div class="suivi-header-fill" style="width:${Math.round(progress)}%"></div></div></div>`;
+    }
+    if (html) {
+        bar.innerHTML = html;
+        bar.hidden = false;
+    } else {
+        bar.innerHTML = '';
+        bar.hidden = true;
+    }
 }
 
 function initFocusMode() {
