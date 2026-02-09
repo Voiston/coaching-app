@@ -27,7 +27,9 @@
 
     <header class="header-main">
         <div class="header-top">
-            <div class="header-spacer" aria-hidden="true"></div>
+            <div class="header-left">
+                <div id="suivi-header-bar" class="suivi-header-bar" aria-live="polite" hidden></div>
+            </div>
             <div class="header-center">
                 <h1 id="client-name" class="loading-skeleton">Chargement...</h1>
                 <p id="program-title" class="subtitle loading-skeleton">...</p>
@@ -42,7 +44,6 @@
                 </div>
             </div>
         </div>
-        <div id="suivi-header-bar" class="suivi-header-bar" aria-live="polite" hidden></div>
     </header>
 
     <div id="calendar-wrap" class="calendar-wrap">
@@ -147,6 +148,15 @@
                     <button type="button" class="btn-suivi-save btn-suivi-save-prefs" id="btn-suivi-save-prefs">Enregistrer les préférences</button>
                 </section>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Historique du suivi -->
+    <div id="suivi-historique-overlay" class="suivi-overlay" role="dialog" aria-modal="true" aria-labelledby="suivi-historique-title" aria-hidden="true">
+        <div class="suivi-modal suivi-historique-modal">
+            <span class="suivi-close suivi-historique-close" tabindex="0" role="button" aria-label="Fermer">&times;</span>
+            <h2 id="suivi-historique-title" class="suivi-modal-title">Historique & progrès</h2>
+            <div id="suivi-historique-body" class="suivi-modal-body"></div>
         </div>
     </div>
 

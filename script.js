@@ -1894,6 +1894,7 @@ function renderProgressionPanel() {
     if (lastP) html += `<p class="progression-suivi-line">⚖️ Poids : ${lastP.poids_kg} kg${lastP.date ? ' <span class="progression-suivi-date">(' + lastP.date + ')</span>' : ''}</p>`;
     if (vetement.name && lastV) html += `<p class="progression-suivi-line">👕 ${vetement.name} : ${VETEMENT_FEELING_LABELS[lastV.feeling] || lastV.feeling}${lastV.date ? ' <span class="progression-suivi-date">(' + lastV.date + ')</span>' : ''}</p>`;
     if (!hasSuivi) html += '<p class="progression-suivi-line progression-suivi-empty">Aucune donnée. Clique sur Editer pour ajouter tes mensurations, ton poids ou un vêtement test.</p>';
+    if (hasSuivi) html += '<p class="progression-suivi-hint">Clique sur la zone pour voir l\'historique et tes progrès.</p>';
     html += '<button type="button" class="btn-suivi-editer" id="btn-suivi-editer">Editer</button>';
     html += '</div>';
 
@@ -1989,6 +1990,71 @@ function closeSuiviModal() {
         document.body.classList.remove('modal-open');
     }
 }
+
+function openSuiviHistoriqueModal() {
+    const mensurations = getMensurations();
+    const poidsArr = getPoids();
+    const vetement = getVetementTest();
+    const body = document.getElementById('suivi-historique-body');
+    const overlay = document.getElementById('suivi-historique-overlay');
+    if (!body || !overlay) return;
+    let html = '';
+    const firstM = mensurations.length ? mensurations[mensurations.length - 1] : null;
+    const firstP = poidsArr.length ? poidsArr[poidsArr.length - 1] : null;
+    if (mensurations.length > 0) {
+        html += '<section class="suivi-section"><h3 class="suivi-section-title">📏 Mensurations</h3>';
+        mensurations.slice(0, 15).forEach((m, i) => {
+            const parts = [];
+            if (m.tour_taille != null) {
+                const delta = firstM && firstM.tour_taille != null ? (firstM.tour_taille - m.tour_taille) : 0;
+                const deltaStr = delta > 0 ? ` <span class="suivi-progress">−${delta} cm</span>` : (delta < 0 ? ` <span class="suivi-regress">+${Math.abs(delta)} cm</span>` : '');
+                parts.push(`Taille : ${m.tour_taille} cm${deltaStr}`);
+            }
+            if (m.tour_hanches != null) {
+                const delta = firstM && firstM.tour_hanches != null ? (firstM.tour_hanches - m.tour_hanches) : 0;
+                const deltaStr = delta > 0 ? ` <span class="suivi-progress">−${delta} cm</span>` : (delta < 0 ? ` <span class="suivi-regress">+${Math.abs(delta)} cm</span>` : '');
+                parts.push(`Hanches : ${m.tour_hanches} cm${deltaStr}`);
+            }
+            if (m.tour_poitrine != null) {
+                const delta = firstM && firstM.tour_poitrine != null ? (firstM.tour_poitrine - m.tour_poitrine) : 0;
+                const deltaStr = delta > 0 ? ` <span class="suivi-progress">−${delta} cm</span>` : (delta < 0 ? ` <span class="suivi-regress">+${Math.abs(delta)} cm</span>` : '');
+                parts.push(`Poitrine : ${m.tour_poitrine} cm${deltaStr}`);
+            }
+            if (parts.length) html += `<p class="suivi-hist-line">${parts.join(' · ')} <span class="progression-suivi-date">${m.date || ''}</span></p>`;
+        });
+        html += '</section>';
+    }
+    if (poidsArr.length > 0) {
+        html += '<section class="suivi-section"><h3 class="suivi-section-title">⚖️ Poids</h3>';
+        poidsArr.slice(0, 15).forEach((p) => {
+            const delta = firstP && firstP.poids_kg != null ? (firstP.poids_kg - p.poids_kg) : 0;
+            const deltaStr = delta > 0 ? ` <span class="suivi-progress">−${delta} kg</span>` : (delta < 0 ? ` <span class="suivi-regress">+${Math.abs(delta)} kg</span>` : '');
+            html += `<p class="suivi-hist-line">${p.poids_kg} kg${deltaStr} <span class="progression-suivi-date">${p.date || ''}</span></p>`;
+        });
+        html += '</section>';
+    }
+    if (vetement.entries && vetement.entries.length > 0) {
+        html += '<section class="suivi-section"><h3 class="suivi-section-title">👕 ' + (vetement.name ? vetement.name : 'Vêtement test') + '</h3>';
+        vetement.entries.slice(0, 15).forEach((e) => {
+            html += `<p class="suivi-hist-line">${VETEMENT_FEELING_LABELS[e.feeling] || e.feeling}${e.note ? ' — ' + e.note : ''} <span class="progression-suivi-date">${e.date || ''}</span></p>`;
+        });
+        html += '</section>';
+    }
+    if (!html) html = '<p class="progression-intro">Aucun historique pour l’instant.</p>';
+    body.innerHTML = html;
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+}
+function closeSuiviHistoriqueModal() {
+    const overlay = document.getElementById('suivi-historique-overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+    }
+}
+
 function loadSuiviIntoModal() {
     const prefs = getSuiviHeader();
     const el = (id) => document.getElementById(id);
@@ -2003,7 +2069,12 @@ function initSuiviModal() {
     document.body.addEventListener('click', (e) => {
         if (e.target.closest('.btn-suivi-editer')) {
             e.preventDefault();
+            closeProgressionModal();
             openSuiviModal();
+        }
+        if (e.target.closest('.progression-suivi-block') && !e.target.closest('.btn-suivi-editer')) {
+            e.preventDefault();
+            openSuiviHistoriqueModal();
         }
     });
     const overlay = document.getElementById('suivi-overlay');
@@ -2076,7 +2147,14 @@ function initSuiviModal() {
         showToast('Préférences enregistrées');
     });
     overlay?.addEventListener('click', (e) => { if (e.target === overlay) closeSuiviModal(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay?.classList.contains('active')) closeSuiviModal(); });
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (document.getElementById('suivi-historique-overlay')?.classList.contains('active')) closeSuiviHistoriqueModal();
+        else if (overlay?.classList.contains('active')) closeSuiviModal();
+    });
+    const overlayHist = document.getElementById('suivi-historique-overlay');
+    overlayHist?.querySelector('.suivi-historique-close')?.addEventListener('click', closeSuiviHistoriqueModal);
+    overlayHist?.addEventListener('click', (e) => { if (e.target === overlayHist) closeSuiviHistoriqueModal(); });
 }
 function renderSuiviHeaderBar() {
     const bar = document.getElementById('suivi-header-bar');

@@ -525,7 +525,7 @@ body {
     gap: 12px;
     margin-bottom: 14px;
 }
-.header-spacer { grid-column: 1; }
+.header-left { grid-column: 1; justify-self: start; min-width: 0; }
 .header-center {
     grid-column: 2;
     justify-self: center;
@@ -1807,27 +1807,28 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     box-shadow: 0 8px 20px rgba(183, 110, 121, 0.4);
 }
 
-/* --- SUIVI HEADER BAR (objectifs) --- */
+/* --- SUIVI HEADER BAR (objectifs, discret à gauche) --- */
 .suivi-header-bar {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 12px 16px;
+    gap: 6px;
+    padding: 6px 10px;
     background: var(--primary-soft);
-    border-bottom: 1px solid rgba(183, 110, 121, 0.15);
+    border-radius: 10px;
+    max-width: 140px;
 }
-.suivi-header-item { font-size: 0.8rem; }
-.suivi-header-label { display: block; margin-bottom: 4px; color: var(--primary-dark); font-weight: 600; }
+.suivi-header-item { font-size: 0.7rem; }
+.suivi-header-label { display: block; margin-bottom: 2px; color: var(--primary-dark); font-weight: 600; }
 .suivi-header-track {
-    height: 8px;
+    height: 6px;
     background: rgba(183, 110, 121, 0.2);
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
 }
 .suivi-header-fill {
     height: 100%;
     background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
-    border-radius: 4px;
+    border-radius: 3px;
     transition: width 0.4s ease;
 }
 
@@ -1900,17 +1901,20 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
 .btn-suivi-save:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(183, 110, 121, 0.35); }
 .btn-suivi-save-prefs { background: var(--primary-dark); }
 
-/* --- PROGRESSION : bloc Mensurations & Suivi --- */
+/* --- PROGRESSION : bloc Mensurations & Suivi (zone cliquable = historique) --- */
 .progression-suivi-block {
     background: var(--primary-soft);
     border-radius: var(--radius-sm);
     padding: 14px 16px;
     margin-top: 8px;
+    cursor: pointer;
 }
+.progression-suivi-block:hover { background: rgba(183, 110, 121, 0.18); }
 .progression-suivi-line { margin: 0 0 6px 0; font-size: 0.9rem; color: var(--text-main); }
 .progression-suivi-line:last-of-type { margin-bottom: 12px; }
 .progression-suivi-date { font-size: 0.8rem; color: var(--text-light); }
 .progression-suivi-empty { font-size: 0.85rem; color: var(--text-light); font-style: italic; }
+.progression-suivi-hint { font-size: 0.75rem; color: var(--text-light); margin: 0 0 10px 0; }
 .btn-suivi-editer {
     padding: 8px 18px;
     background: var(--primary);
@@ -1923,6 +1927,12 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     transition: transform 0.2s, box-shadow 0.2s;
 }
 .btn-suivi-editer:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(183, 110, 121, 0.35); }
+
+/* --- Historique suivi : progrès en vert --- */
+.suivi-progress { color: #16a34a; font-weight: 700; }
+.suivi-regress { color: var(--text-light); font-size: 0.9em; }
+.suivi-hist-line { margin: 0 0 8px 0; font-size: 0.9rem; color: var(--text-main); }
+.suivi-historique-modal .suivi-section { border-bottom: 1px solid rgba(183, 110, 121, 0.2); }
 
 .completion-overlay {
     position: fixed;
