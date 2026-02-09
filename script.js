@@ -2362,11 +2362,14 @@ function initSettings() {
     if (closeBtn) closeBtn.addEventListener('click', closeSettings);
     if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSettings(); });
     if (resetBtn) resetBtn.addEventListener('click', () => {
-        if (!confirm('Effacer toutes les données de ce programme (séances terminées, charges, notes) ? Cette action est irréversible.')) return;
+        if (!confirm('Effacer toutes les données de ce programme (séances terminées, charges, notes, mensurations, poids, vêtement test) ? Cette action est irréversible.')) return;
         localStorage.removeItem('fitapp_' + clientID);
         localStorage.removeItem(COMPLETED_KEY);
         localStorage.removeItem(KEY_CHARGE_HISTORY);
         setCoachNote('');
+        setMensurations([]);
+        setPoids([]);
+        setVetementTest({ name: '', entries: [] });
         showToast('Données effacées.');
         closeSettings();
         if (globalData && globalData.sessions && globalData.sessions.length) {
@@ -2380,6 +2383,7 @@ function initSettings() {
         }
         loadProgress();
         renderProgressionPanel();
+        renderSuiviHeaderBar();
     });
 }
 
