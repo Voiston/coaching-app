@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -277,6 +277,13 @@
                     <label><input type="radio" name="theme" value="dark"> Sombre</label>
                     <label><input type="radio" name="theme" value="auto"> Auto</label>
                 </div>
+            </div>
+            <div class="settings-item">
+                <button type="button" class="btn-export-data" id="btn-export-data">Exporter mes données</button>
+            </div>
+            <div class="settings-item">
+                <button type="button" class="btn-import-data" id="btn-import-data">Importer une sauvegarde</button>
+                <input type="file" id="input-import-data" accept=".json,application/json" hidden>
             </div>
             <div class="settings-item">
                 <button type="button" class="btn-reset-data" id="btn-reset-data">Effacer toutes mes données (ce programme)</button>

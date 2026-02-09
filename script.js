@@ -76,6 +76,18 @@ function setSessionDateOverride(sessionId, dateStr) {
     setSessionDateOverrides(map);
 }
 
+/** Échappe les caractères HTML pour afficher du texte sans risque XSS dans innerHTML. */
+function escapeHtml(str) {
+    if (str == null) return '';
+    const s = String(str);
+    return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // --- VALIDATION JSON ---
 function validateProgram(data) {
     if (!data || typeof data !== 'object') return { ok: false, error: "Fichier programme invalide." };
@@ -280,7 +292,7 @@ function showLoadError(message) {
     document.getElementById('program-title').textContent = "";
     document.getElementById('client-name').classList.remove('loading-skeleton');
     document.getElementById('program-title').classList.remove('loading-skeleton');
-    document.getElementById('workout-container').innerHTML = `<div class="error-message" role="alert"><p>${message}</p></div>`;
+    document.getElementById('workout-container').innerHTML = `<div class="error-message" role="alert"><p>${escapeHtml(message)}</p></div>`;
     document.getElementById('calendar-strip').innerHTML = "";
     const wrap = document.getElementById('calendar-wrap');
     if (wrap) wrap.classList.remove('collapsed');
@@ -395,7 +407,7 @@ function updateWeekAndNextSession(sessions) {
     if (weekEl) weekEl.textContent = getWeekLabel();
     const next = getNextSessionInfo(sessions);
     if (nextEl) {
-        if (next) nextEl.innerHTML = `Prochaine séance : <strong>${next.dayName} ${next.dateNum}</strong> — ${next.name}`;
+        if (next) nextEl.innerHTML = `Prochaine séance : <strong>${escapeHtml(next.dayName)} ${escapeHtml(next.dateNum)}</strong> — ${escapeHtml(next.name)}`;
         else nextEl.innerHTML = "";
     }
     if (goalEl && globalData && globalData.weeklyGoal) {
@@ -473,7 +485,7 @@ function renderCalendar(sessions, skipAutoSelect) {
         if (completed) classes += " is-completed";
         dayEl.className = classes;
         dayEl.setAttribute('role', 'button');
-        dayEl.setAttribute('aria-label', hasSession ? `Séance du ${dayNameFR} ${dateNum} : ${sessionShortName || session.name}` : `Repos le ${dayNameFR} ${dateNum}`);
+        dayEl.setAttribute('aria-label', hasSession ? `Séance du ${escapeHtml(dayNameFR)} ${escapeHtml(dateNum)} : ${escapeHtml(sessionShortName || session.name)}` : `Repos le ${escapeHtml(dayNameFR)} ${escapeHtml(dateNum)}`);
         dayEl.dataset.sessionIndex = hasSession ? String(sessionIndex) : '';
         dayEl.dataset.dateString = dateString;
         dayEl.dataset.dayName = dayNameFR + " " + dateNum;
@@ -482,7 +494,7 @@ function renderCalendar(sessions, skipAutoSelect) {
         dayEl.innerHTML = `
             <span class="day-name">${dayNameFR.substring(0, 3).toUpperCase()}</span>
             <span class="day-date">${dateNum}</span>
-            ${sessionShortName ? `<span class="day-session-name" title="${(session && session.name) || ''}">${sessionShortName}</span>` : ""}
+            ${sessionShortName ? `<span class="day-session-name" title="${escapeHtml((session && session.name) || '')}">${escapeHtml(sessionShortName)}</span>` : ""}
         `;
 
         dayEl.addEventListener('click', () => {
@@ -552,7 +564,7 @@ function showRestDay(dayName) {
     container.innerHTML = `
         <div class="rest-day-message">
             <span class="rest-icon" aria-hidden="true">🧘‍♀️</span>
-            <h2>Jour de récup' — ${(dayName || '').replace(/"/g, '&quot;')}</h2>
+            <h2>Jour de récup' — ${escapeHtml(dayName || '')}</h2>
             <p class="rest-lead">Pas de séance aujourd'hui, la récupération fait partie de la progression. Tes résultats se contruisent pendant le repos.</p>
             <p class="rest-tip">Hydrate-toi bien, mange équilibré et dors au mieux. La prochaine séance t'attend ! 💪</p>
             <button type="button" class="btn-pause-respiration" id="btn-pause-respiration" aria-label="Ouvrir la pause respiration (cohérence cardiaque)">🌬️ Pause Respiration</button>
@@ -604,8 +616,7 @@ function renderSession(sessionIndex, dateStr) {
 
     const sessionIntro = (session.session_intro || session.objectives || session.coach_notes || '').toString().trim();
     if (sessionIntro) {
-        const safe = sessionIntro.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><div class="coach-notes-text">${safe}</div></div>`);
+        container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><div class="coach-notes-text">${escapeHtml(sessionIntro)}</div></div>`);
     }
 
     session.exercises.forEach((exo, index) => {
@@ -622,11 +633,10 @@ function renderSession(sessionIndex, dateStr) {
             if (exo.coach_notes) {
                 const notes = String(exo.coach_notes).trim();
                 if (notes) {
-                    const safe = notes.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-                    container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><div class="coach-notes-text">${safe}</div></div>`);
+                    container.insertAdjacentHTML('beforeend', `<div class="coach-notes-intro"><div class="coach-notes-text">${escapeHtml(notes)}</div></div>`);
                 }
             }
-            container.insertAdjacentHTML('beforeend', `<h2 class="${sectionClass}">${exo.title}</h2>`);
+            container.insertAdjacentHTML('beforeend', `<h2 class="${sectionClass}">${escapeHtml(exo.title)}</h2>`);
             inWarmupSection = isWarmupSection;
             inFinishersSection = isFinishersSection;
             return;
@@ -764,7 +774,7 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
     const altData = exo.alternative ? (typeof exo.alternative === 'string' ? { name: exo.alternative } : exo.alternative) : null;
     const altName = altData ? (altData.name || String(exo.alternative)) : '';
     const altIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>`;
-    const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${(exo.name || '').replace(/"/g, '&quot;')}" data-alt-name="${altName.replace(/"/g, '&quot;')}" title="Remplacer par : ${altName}" aria-label="Remplacer par ${altName}">${altIconSvg}</button>` : '';
+    const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${escapeHtml(exo.name || '')}" data-alt-name="${escapeHtml(altName)}" title="Remplacer par : ${escapeHtml(altName)}" aria-label="Remplacer par ${escapeHtml(altName)}">${altIconSvg}</button>` : '';
     const activeTimerHtml = isTimeBased ? `<button type="button" class="active-timer-btn" data-target-seconds="${targetSeconds}" aria-label="Lancer le chrono d'effort"><span class="active-timer-text">▶ Go</span></button>` : '';
     const warmupClass = isWarmupExercise ? ' exercise-warmup' : '';
     const finishersClass = isFinishersExercise ? ' exercise-finishers' : '';
@@ -775,7 +785,7 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
     <div class="exercise-card open${warmupClass}${finishersClass}" id="card-${index}" data-index="${index}"${warmupSectionAttr}${circuitAttr}${circuitStartAttr}${supersetRole ? ` data-superset-role="${supersetRole}"` : ''}>
         <div class="exercise-header" role="button" tabindex="0" aria-expanded="true" aria-label="Afficher ou masquer les détails de l'exercice">
             <div>
-                <div class="exercise-title-row"><span class="exercise-title">${exo.name}</span>${altBtnHtml}</div>
+                <div class="exercise-title-row"><span class="exercise-title">${escapeHtml(exo.name)}</span>${altBtnHtml}</div>
                 ${supersetChip}
                 <div class="rpe-badge-wrap"><span class="rpe-badge" title="RPE = Rate of Perceived Exertion : échelle 1-10 de l'effort ressenti (1=très facile, 10=maximum)">RPE: ${exo.rpe_target || '-'}</span><button type="button" class="btn-rpe-badge" aria-label="Aide échelle RPE">?</button></div>
             </div>
@@ -798,7 +808,7 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
                     ${activeTimerHtml}
                 </div>
                 ${checkboxesHtml}
-                ${exo.note_coach ? `<div class="coach-note">"${exo.note_coach}"</div>` : ''}
+                ${exo.note_coach ? `<div class="coach-note">"${escapeHtml(exo.note_coach)}"</div>` : ''}
                 <div class="client-input-zone">
                     <div class="input-row">
                         ${chargePerSet
@@ -1100,7 +1110,7 @@ function showMilestoneModalIfNeeded(thenOpenCompletion) {
         thenOpenCompletion();
         return;
     }
-    body.innerHTML = achieved.map(a => `<p class="milestone-item">${a.emoji} ${a.label}</p>`).join('') +
+    body.innerHTML = achieved.map(a => `<p class="milestone-item">${escapeHtml(a.emoji)} ${escapeHtml(a.label)}</p>`).join('') +
         '<button type="button" class="btn-milestone-continue" id="btn-milestone-continue">Continuer</button>';
     overlay.classList.add('active');
     overlay.setAttribute('aria-hidden', 'false');
@@ -1577,7 +1587,7 @@ function showWarmupGenerator(chargeId, exoName) {
         el.onclick = (e) => { if (e.target === el) el.classList.remove('active'); };
     }
     el.querySelector('h3').textContent = `Échauffement ${exoName}`;
-    el.querySelector('.warmup-list').innerHTML = lines.map((l, i) => `<li class="${i === 0 ? 'warmup-intro' : ''}">${l}</li>`).join('');
+    el.querySelector('.warmup-list').innerHTML = lines.map((l, i) => `<li class="${i === 0 ? 'warmup-intro' : ''}">${escapeHtml(l)}</li>`).join('');
     el.classList.add('active');
 }
 
@@ -1828,7 +1838,7 @@ function injectNutritionCard() {
     if (session && session.nutrition_tip && String(session.nutrition_tip).trim()) {
         const card = document.createElement('div');
         card.className = 'nutrition-card';
-        card.innerHTML = `<span class="nutrition-icon" aria-hidden="true">🥑</span><p>${String(session.nutrition_tip).trim()}</p>`;
+        card.innerHTML = `<span class="nutrition-icon" aria-hidden="true">🥑</span><p>${escapeHtml(String(session.nutrition_tip).trim())}</p>`;
         slot.appendChild(card);
     }
 }
@@ -1891,7 +1901,7 @@ function showToast(message) {
 function renderCoachSignature() {
     const footer = document.getElementById('coach-signature');
     if (!footer) return;
-    footer.innerHTML = (COACH_NAME ? `Programme par ${COACH_NAME}` : '') + ` <span class="app-version">· v${APP_VERSION}</span>`;
+    footer.innerHTML = (COACH_NAME ? `Programme par ${escapeHtml(COACH_NAME)}` : '') + ` <span class="app-version">· v${escapeHtml(APP_VERSION)}</span>`;
 }
 
 function renderProgressionPanel() {
@@ -1933,7 +1943,7 @@ function renderProgressionPanel() {
         html += '<p class="progression-intro progression-section">Records 1RM (théorique)</p><ul class="progression-list progression-1rm-list">';
         sortedBy1RM.forEach(name => {
             const data = byExo[name];
-            if (data.best1RM > 0) html += `<li class="progression-1rm-item"><span class="progression-item-name">${name}</span> <span class="progression-1rm-value">${data.best1RM} kg</span></li>`;
+            if (data.best1RM > 0) html += `<li class="progression-1rm-item"><span class="progression-item-name">${escapeHtml(name)}</span> <span class="progression-1rm-value">${data.best1RM} kg</span></li>`;
         });
         html += '</ul>';
     }
@@ -2144,13 +2154,14 @@ function initSuiviModal() {
         const arr = getMensurations();
         arr.push({
             date: date,
+            recordedAt: new Date().toISOString(),
             tour_taille: vTaille,
             tour_hanches: vHanches,
             tour_poitrine: vPoitrine,
             tour_cuisses: vCuisses,
             tour_bras: vBras
         });
-        arr.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        arr.sort((a, b) => (b.recordedAt || b.date || '').localeCompare(a.recordedAt || a.date || ''));
         setMensurations(arr);
         document.getElementById('suivi-tour-taille').value = '';
         document.getElementById('suivi-tour-hanches').value = '';
@@ -2172,8 +2183,8 @@ function initSuiviModal() {
             return;
         }
         const arr = getPoids();
-        arr.push({ date: date, poids_kg: kg });
-        arr.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        arr.push({ date: date, recordedAt: new Date().toISOString(), poids_kg: kg });
+        arr.sort((a, b) => (b.recordedAt || b.date || '').localeCompare(a.recordedAt || a.date || ''));
         setPoids(arr);
         document.getElementById('suivi-poids').value = '';
         renderProgressionPanel();
@@ -2189,8 +2200,8 @@ function initSuiviModal() {
         const vet = getVetementTest();
         if (!vet.name) vet.name = name;
         vet.entries = vet.entries || [];
-        vet.entries.push({ date: date, feeling: feeling, note: note || null });
-        vet.entries.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        vet.entries.push({ date: date, recordedAt: new Date().toISOString(), feeling: feeling, note: note || null });
+        vet.entries.sort((a, b) => (b.recordedAt || b.date || '').localeCompare(a.recordedAt || a.date || ''));
         setVetementTest(vet);
         document.getElementById('suivi-vetement-feeling').value = '';
         document.getElementById('suivi-vetement-note').value = '';
@@ -2257,6 +2268,16 @@ function latestByDate(arr, dateKey) {
         return (!best || (curDate || '').localeCompare(best[dateKey] || '') > 0) ? cur : best;
     }, null);
 }
+/** Retourne l'entrée la plus récente (par recordedAt si présent, sinon par date). Plusieurs valeurs le même jour = la dernière enregistrée. */
+function latestByRecordedAt(arr, dateKey) {
+    if (!arr || !arr.length) return null;
+    dateKey = dateKey || 'date';
+    return arr.reduce((best, cur) => {
+        const curTs = cur.recordedAt || (cur[dateKey] ? cur[dateKey] + 'T00:00:00.000Z' : '');
+        const bestTs = best ? (best.recordedAt || (best[dateKey] ? best[dateKey] + 'T00:00:00.000Z' : '')) : '';
+        return (!best || (curTs || '').localeCompare(bestTs || '') > 0) ? cur : best;
+    }, null);
+}
 function oldestByDate(arr, dateKey) {
     if (!arr || !arr.length) return null;
     dateKey = dateKey || 'date';
@@ -2273,11 +2294,11 @@ function renderSuiviHeaderBar() {
     const mensurations = getMensurations();
     const poidsArr = getPoids();
     const vetement = getVetementTest();
-    const lastM = latestByDate(mensurations);
-    const lastP = latestByDate(poidsArr);
+    const lastM = latestByRecordedAt(mensurations);
+    const lastP = latestByRecordedAt(poidsArr);
     const firstP = oldestByDate(poidsArr);
     const firstM = oldestByDate(mensurations);
-    const lastV = vetement.entries && vetement.entries.length ? latestByDate(vetement.entries) : null;
+    const lastV = vetement.entries && vetement.entries.length ? latestByRecordedAt(vetement.entries) : null;
     const items = [];
     const push = (label, progress, state, isVetement = false) => {
         const pct = Math.round(progress);
@@ -2310,7 +2331,7 @@ function renderSuiviHeaderBar() {
     }
     if (prefs.show_vetement && vetement.name && lastV) {
         const text = lastV.feeling ? `${vetement.name} : ${lastV.feeling}` : vetement.name;
-        items.push(`<div class="suivi-header-item suivi-header-vetement"><span class="suivi-header-label">👕 ${String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span></div>`);
+        items.push(`<div class="suivi-header-item suivi-header-vetement"><span class="suivi-header-label">👕 ${escapeHtml(text)}</span></div>`);
     }
     const html = items.slice(0, SUIVI_HEADER_MAX).join('');
     if (html) {
@@ -2449,6 +2470,83 @@ function initSettings() {
         loadProgress();
         renderProgressionPanel();
         renderSuiviHeaderBar();
+    });
+    const exportBtn = document.getElementById('btn-export-data');
+    const importBtn = document.getElementById('btn-import-data');
+    const inputImport = document.getElementById('input-import-data');
+    if (exportBtn) exportBtn.addEventListener('click', exportClientData);
+    if (importBtn && inputImport) {
+        importBtn.addEventListener('click', () => inputImport.click());
+        inputImport.addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            e.target.value = '';
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (!data || typeof data !== 'object') throw new Error('Fichier invalide');
+                    if (!confirm('Écraser les données actuelles ? Les données importées remplaceront tout pour ce programme.')) return;
+                    importClientData(data);
+                    closeSettings();
+                    showToast('Données importées. Rechargement…');
+                    setTimeout(() => location.reload(), 800);
+                } catch (err) {
+                    showToast('Fichier invalide ou corrompu.');
+                }
+            };
+            reader.readAsText(file, 'utf-8');
+        });
+    }
+}
+
+function getExportKeys() {
+    return [
+        'fitapp_' + clientID,
+        COMPLETED_KEY,
+        KEY_CHARGE_HISTORY,
+        KEY_SESSION_DATE_OVERRIDES,
+        KEY_COUNTERS,
+        KEY_MILESTONES,
+        KEY_TRAINING_SECONDS,
+        KEY_MENSURATIONS,
+        KEY_POIDS,
+        KEY_VETEMENT_TEST,
+        KEY_SUIVI_HEADER,
+        KEY_SOUND,
+        KEY_THEME,
+        KEY_COACH_NOTE,
+        KEY_NOTIF_DAY,
+        KEY_NOTIF_ENABLED,
+        KEY_INSTALL_DISMISSED,
+        KEY_GUIDED_MODE
+    ];
+}
+
+function exportClientData() {
+    const keys = getExportKeys();
+    const data = { meta: { clientID, exportDate: new Date().toISOString() } };
+    keys.forEach(k => {
+        const v = localStorage.getItem(k);
+        if (v != null) data[k] = v;
+    });
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `coaching-backup-${clientID}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Sauvegarde téléchargée.');
+}
+
+function importClientData(data) {
+    const keys = getExportKeys();
+    keys.forEach(k => {
+        if (data[k] != null && typeof data[k] === 'string') {
+            try {
+                localStorage.setItem(k, data[k]);
+            } catch (_) { /* quota or other */ }
+            }
     });
 }
 
