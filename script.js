@@ -1551,15 +1551,16 @@ function startActiveTimer(btn) {
         const ratio = Math.max(0, Math.min(1, remaining / targetSec));
         if (progressEl) {
             progressEl.style.transform = `scaleX(${ratio})`;
+            // La barre interne passe de bleu foncé à bleu clair en se vidant,
+            // mais le fond du bouton (couleur de base) reste inchangé.
+            const dark = { r: 30, g: 64, b: 175 };   // #1e40af
+            const light = { r: 96, g: 165, b: 250 }; // #60a5fa
+            const t = 1 - ratio; // 0 = départ (foncé), 1 = fin (clair)
+            const r = Math.round(dark.r + (light.r - dark.r) * t);
+            const g = Math.round(dark.g + (light.g - dark.g) * t);
+            const b = Math.round(dark.b + (light.b - dark.b) * t);
+            progressEl.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
         }
-        // Fond qui passe de bleu foncé à bleu plus clair à l’approche de 0
-        const dark = { r: 30, g: 64, b: 175 };   // #1e40af
-        const light = { r: 96, g: 165, b: 250 }; // #60a5fa
-        const t = 1 - ratio; // 0 = départ (foncé), 1 = fin (clair)
-        const r = Math.round(dark.r + (light.r - dark.r) * t);
-        const g = Math.round(dark.g + (light.g - dark.g) * t);
-        const b = Math.round(dark.b + (light.b - dark.b) * t);
-        btn.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
     };
     const interval = setInterval(() => {
         elapsed++;
