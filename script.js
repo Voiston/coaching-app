@@ -310,8 +310,7 @@ function showLoadError(message) {
     if (wrap) wrap.classList.remove('collapsed');
     document.getElementById('next-session').innerHTML = "";
     const goalEl = document.getElementById('weekly-goal-banner');
-    if (statsEl) statsEl.innerHTML = "";
-    document.getElementById('coach-signature').innerHTML = "";
+    if (goalEl) goalEl.innerHTML = "";
     const pan = document.getElementById('progression-panel');
     if (pan) { pan.innerHTML = ""; pan.hidden = true; }
     const btnProg = document.getElementById('btn-progression-toggle');
