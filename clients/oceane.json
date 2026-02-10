@@ -32,7 +32,7 @@
           "name": "Hip Thrust",
           "sets": "4",
           "reps": "10-12",
-          "rest": "90s",
+          "rest": "120s",
 		      "charge": "25",
           "rpe_target": "8",
           "warmup_sets": "1",
@@ -41,7 +41,7 @@
         },
         {
           "name": "Goblet Squat",
-          "sets": "3",
+          "sets": "4",
           "reps": "12-15",
           "rest": "75s",
 		  "charge": "12.5",
@@ -74,16 +74,16 @@
         },
         {
           "name": "Coude-Genoux croisés",
-          "sets": "3",
+          "sets": "4",
           "reps": "30",
-          "rest": "20s",
+          "rest": "30s",
           "rpe_target": "N/A",
           "check_technique": false,
           "note_coach": "Lombaires plaquées au sol. Jambes qui frolent le sol."
         },
         {
           "type": "section",
-          "title": "Finishers optionnel"
+          "title": "Finisher optionnel"
         },
         {
           "name": "Escalier",
@@ -132,10 +132,10 @@
         },
         {
           "name": "Fentes Bulgares",
-          "sets": "3",
+          "sets": "4",
           "reps": "10 par jambe",
           "rest": "0s",
-		  "charge": "10",
+		      "charge": "10",
           "rpe_target": "7",
           "check_technique": true,
           "superset_type": "start",
@@ -143,7 +143,7 @@
         },
         {
           "name": "Développé Incliné Haltères",
-          "sets": "3",
+          "sets": "4",
           "reps": "10-12",
           "rest": "90s",
 		  "charge": "8",
@@ -174,12 +174,12 @@
         },
         {
           "type": "section",
-          "title": "Finishers optionnel"
+          "title": "Finisher optionnel"
         },
         {
           "name": "Escalier",
           "sets": "1",
-          "reps": "6min",
+          "reps": "6min 30sec",
           "rest": "0s",
           "rpe_target": "6",
           "check_technique": false,
@@ -255,12 +255,12 @@
         },
         {
           "type": "section",
-          "title": "Finishers optionnel"
+          "title": "Finisher optionnel"
         },
         {
           "name": "Escalier",
           "sets": "1",
-          "reps": "6min",
+          "reps": "7min",
           "rest": "0s",
           "rpe_target": "6",
           "check_technique": false,
@@ -338,7 +338,7 @@
         },
         {
           "name": "Hollow hold",
-          "sets": "3",
+          "sets": "4",
           "reps": "30s",
           "rest": "30s",
           "rpe_target": "N/A",
@@ -349,12 +349,12 @@
         },
         {
           "type": "section",
-          "title": "Finishers optionnel"
+          "title": "Finisher optionnel"
         },
         {
           "name": "Escalier",
           "sets": "1",
-          "reps": "6min",
+          "reps": "7min 30sec",
           "rest": "0s",
           "rpe_target": "6",
           "check_technique": false,
@@ -385,7 +385,7 @@
           "name": "Hip Thrust",
           "sets": "4",
           "reps": "8-10",
-          "rest": "90s",
+          "rest": "120s",
           "rpe_target": "9",
           "charge": "30",
           "check_technique": true,
@@ -452,12 +452,12 @@
         },
         {
           "type": "section",
-          "title": "Finishers optionnel"
+          "title": "Finisher optionnel"
         },
         {
           "name": "Escalier",
           "sets": "1",
-          "reps": "6min",
+          "reps": "8min",
           "rest": "0s",
           "rpe_target": "6",
           "check_technique": false,
