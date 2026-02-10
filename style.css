@@ -1432,6 +1432,7 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     transform: scaleX(1);
     pointer-events: none;
     z-index: 0;
+    opacity: 1 !important;
 }
 
 .active-timer-text {
