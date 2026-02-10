@@ -762,7 +762,10 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
         })()
         : '';
 
-    const restSec = parseInt(String(exo.rest).replace(/\D/g, ''), 10) || 60;
+    const restSec = (() => {
+        const n = parseInt(String(exo.rest).replace(/\D/g, ''), 10);
+        return (Number.isFinite(n) && n >= 0) ? n : 60;
+    })();
     const supersetRole = supersetRoleNum != null ? String(supersetRoleNum) : '';
     const supersetChip = supersetRole
         ? (() => {
@@ -775,7 +778,9 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
     const altName = altData ? (altData.name || String(exo.alternative)) : '';
     const altIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>`;
     const altBtnHtml = altData ? `<button type="button" class="btn-alternative" data-original-name="${escapeHtml(exo.name || '')}" data-alt-name="${escapeHtml(altName)}" title="Remplacer par : ${escapeHtml(altName)}" aria-label="Remplacer par ${escapeHtml(altName)}">${altIconSvg}</button>` : '';
-    const activeTimerHtml = isTimeBased ? `<button type="button" class="active-timer-btn" data-target-seconds="${targetSeconds}" aria-label="Lancer le chrono d'effort"><span class="active-timer-text">▶ Go</span></button>` : '';
+    const activeTimerHtml = isTimeBased
+        ? `<button type="button" class="active-timer-btn" data-target-seconds="${targetSeconds}" aria-label="Lancer le chrono d'effort"><span class="active-timer-progress"></span><span class="active-timer-text">▶ Go</span></button>`
+        : '';
     const warmupClass = isWarmupExercise ? ' exercise-warmup' : '';
     const finishersClass = isFinishersExercise ? ' exercise-finishers' : '';
     const warmupSectionAttr = isWarmupExercise ? ' data-warmup-section="1"' : '';
@@ -802,6 +807,7 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
                     <div class="detail-box"><span class="detail-label">Repos</span><span class="detail-value detail-rest">${restDisplayInit}</span></div>
                     ${tempoHtml}
                     <button type="button" class="timer-btn" data-rest="${restSec}" aria-label="Chronomètre de repos (déclenché par les séries)">
+                        <span class="timer-progress"></span>
                         <span class="timer-icon">⏱️</span><span class="timer-text">Repos</span>
                         <span class="timer-close" aria-label="Arrêter le chronomètre">×</span>
                     </button>
@@ -874,7 +880,10 @@ function updateExerciseDetails(card) {
             if (restEl) restEl.textContent = restDisplay;
         } catch (_) { if (restEl) restEl.textContent = '60s'; }
     }
-    const restSec = parseInt(String(restDisplay).replace(/\D/g, ''), 10) || 60;
+    const restSec = (() => {
+        const n = parseInt(String(restDisplay).replace(/\D/g, ''), 10);
+        return (Number.isFinite(n) && n >= 0) ? n : 60;
+    })();
     const timerBtn = card.querySelector('.timer-btn');
     if (timerBtn) timerBtn.dataset.rest = restSec;
 }
@@ -1441,10 +1450,11 @@ function playBeep() {
         gain.connect(ctx.destination);
         osc.frequency.value = 800;
         osc.type = 'sine';
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        // Bip un peu plus fort et légèrement plus long
+        gain.gain.setValueAtTime(0.6, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
         osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.3);
+        osc.stop(ctx.currentTime + 0.35);
     } catch (_) {}
 }
 
@@ -1467,14 +1477,28 @@ function fireConfetti() {
 function startTimer(btn, seconds) {
     if (btn.classList.contains('active') && !btn.dataset.timerPaused) return;
     let timeLeft = parseInt(btn.dataset.timerPaused, 10) || seconds;
+    // Mémoriser la durée totale pour pouvoir animer la barre de repos
+    if (!btn.dataset.totalSeconds) {
+        btn.dataset.totalSeconds = String(seconds);
+    }
+    const totalSeconds = parseInt(btn.dataset.totalSeconds, 10) || seconds;
     btn.removeAttribute('data-timer-paused');
     btn.classList.add('active');
     btn.classList.add('timer-floating');
     const timerText = btn.querySelector('.timer-text');
     timerText.textContent = `Repos : ${timeLeft}s`;
+    const progressEl = btn.querySelector('.timer-progress');
+    if (progressEl && totalSeconds > 0) {
+        const ratio = Math.max(0, Math.min(1, timeLeft / totalSeconds));
+        progressEl.style.transform = `scaleX(${ratio})`;
+    }
     const interval = setInterval(() => {
         timeLeft--;
         timerText.textContent = `Repos : ${timeLeft}s`;
+        if (progressEl && totalSeconds > 0) {
+            const ratio = Math.max(0, Math.min(1, timeLeft / totalSeconds));
+            progressEl.style.transform = `scaleX(${ratio})`;
+        }
         if (timeLeft > 0 && timeLeft <= 3) playBeep();
         if (timeLeft <= 0) {
             clearInterval(interval);
@@ -1511,6 +1535,8 @@ function stopTimer(btn) {
     btn.classList.remove('timer-floating');
     const timerText = btn.querySelector('.timer-text');
     if (timerText) timerText.textContent = "Lancer le repos";
+    const progressEl = btn.querySelector('.timer-progress');
+    if (progressEl) progressEl.style.transform = 'scaleX(0)';
 }
 
 function startActiveTimer(btn) {
@@ -1520,10 +1546,26 @@ function startActiveTimer(btn) {
     btn.removeAttribute('data-active-timer-paused');
     btn.classList.add('active');
     const textEl = btn.querySelector('.active-timer-text');
+    const progressEl = btn.querySelector('.active-timer-progress');
+    const updateVisual = (remaining) => {
+        const ratio = Math.max(0, Math.min(1, remaining / targetSec));
+        if (progressEl) {
+            progressEl.style.transform = `scaleX(${ratio})`;
+        }
+        // Fond qui passe de bleu foncé à bleu plus clair à l’approche de 0
+        const dark = { r: 30, g: 64, b: 175 };   // #1e40af
+        const light = { r: 96, g: 165, b: 250 }; // #60a5fa
+        const t = 1 - ratio; // 0 = départ (foncé), 1 = fin (clair)
+        const r = Math.round(dark.r + (light.r - dark.r) * t);
+        const g = Math.round(dark.g + (light.g - dark.g) * t);
+        const b = Math.round(dark.b + (light.b - dark.b) * t);
+        btn.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+    };
     const interval = setInterval(() => {
         elapsed++;
         const remaining = targetSec - elapsed;
         if (textEl) textEl.textContent = remaining > 0 ? `${remaining}s` : 'Terminé !';
+        updateVisual(Math.max(remaining, 0));
         if (remaining > 0 && remaining <= 3) playBeep();
         if (elapsed >= targetSec) {
             clearInterval(interval);
@@ -1533,7 +1575,9 @@ function startActiveTimer(btn) {
         }
     }, 1000);
     btn.dataset.activeTimerInterval = interval;
-    if (textEl) textEl.textContent = (targetSec - elapsed) > 0 ? `${targetSec - elapsed}s` : `${targetSec}s`;
+    const initialRemaining = targetSec - elapsed;
+    if (textEl) textEl.textContent = initialRemaining > 0 ? `${initialRemaining}s` : `${targetSec}s`;
+    updateVisual(Math.max(initialRemaining, 0));
 }
 
 function toggleActiveTimerPause(btn) {
@@ -1556,6 +1600,8 @@ function stopActiveTimer(btn) {
     btn.classList.remove('active');
     const textEl = btn.querySelector('.active-timer-text');
     if (textEl) textEl.textContent = '▶ Go';
+    const progressEl = btn.querySelector('.active-timer-progress');
+    if (progressEl) progressEl.style.transform = 'scaleX(0)';
 }
 
 function showWarmupGenerator(chargeId, exoName) {
@@ -2945,7 +2991,8 @@ document.body.addEventListener('click', (e) => {
             if (timerBtn.dataset.timerPaused) startTimer(timerBtn, parseInt(timerBtn.dataset.timerPaused, 10) || 60);
             else toggleTimerPause(timerBtn);
         } else {
-            startTimer(timerBtn, parseInt(timerBtn.dataset.rest, 10) || 60);
+            const n = parseInt(timerBtn.dataset.rest, 10);
+            startTimer(timerBtn, (Number.isFinite(n) && n >= 0) ? n : 60);
         }
     }
 });
@@ -2971,7 +3018,8 @@ document.getElementById('workout-container').addEventListener('change', (e) => {
         const card = document.getElementById('card-' + cardIndex);
         const timerBtn = card && card.querySelector('.timer-btn');
         if (timerBtn && timerBtn.dataset.rest && !timerBtn.classList.contains('active')) {
-            startTimer(timerBtn, parseInt(timerBtn.dataset.rest, 10) || 60);
+            const n = parseInt(timerBtn.dataset.rest, 10);
+            startTimer(timerBtn, (Number.isFinite(n) && n >= 0) ? n : 60);
         }
     }
 });

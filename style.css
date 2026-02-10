@@ -1192,6 +1192,21 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
 .timer-btn { grid-column: span 3; display: none; background: #333; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-family: 'Poppins', sans-serif; justify-content: center; align-items: center; gap: 10px; margin-top:5px; position: relative; }
 .timer-btn.timer-floating { display: flex !important; }
 .timer-btn.active { background: var(--primary); }
+.timer-btn {
+    position: relative;
+    overflow: hidden;
+}
+.timer-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.18);
+    transform-origin: left center;
+    transform: scaleX(1);
+    pointer-events: none;
+}
 .timer-close {
     display: none;
     position: absolute;
@@ -1229,6 +1244,12 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     top: 50%;
     right: 8px;
     transform: translateY(-50%);
+}
+.timer-icon,
+.timer-text,
+.timer-close {
+    position: relative;
+    z-index: 1;
 }
 
 /* --- CHECKBOXES SÉRIES (Design SVG) --- */
@@ -1372,10 +1393,24 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
     margin-top: 5px;
+    position: relative;
+    overflow: hidden;
+    transition: background-color 0.3s linear;
 }
 .active-timer-btn:hover { background: #1d4ed8; }
 .active-timer-btn.active {
     background: #1e40af;
+}
+.active-timer-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    transform-origin: left center;
+    transform: scaleX(1);
+    pointer-events: none;
 }
 
 /* --- BOUTONS INPUT --- */
