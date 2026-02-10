@@ -1069,11 +1069,11 @@ const MILESTONE_CONFIG = [
     { key: 'hipthrust2500', type: 'volume_hipthrust', threshold: 2500, label: '2500 kg en hip-thrust', emoji: '🏋️' },
     { key: 'hipthrust5000', type: 'volume_hipthrust', threshold: 5000, label: '5000 kg en hip-thrust', emoji: '🏋️' },
     { key: 'hipthrust10000', type: 'volume_hipthrust', threshold: 10000, label: '10 000 kg en hip-thrust', emoji: '🏋️' },
-    { key: 'volume5000', type: 'volume_total', threshold: 5000, label: '5000 kg soulevé au total', emoji: '📦' },
-    { key: 'volume10000', type: 'volume_total', threshold: 10000, label: '10 000 kg soulevé au total', emoji: '📦' },
-    { key: 'volume25000', type: 'volume_total', threshold: 25000, label: '25 000 kg soulevé au total', emoji: '📦' },
-    { key: 'volume50000', type: 'volume_total', threshold: 50000, label: '50 000 kg soulevé au total', emoji: '📦' },
-    { key: 'volume100000', type: 'volume_total', threshold: 100000, label: '100 000 kg soulevé au total', emoji: '📦' },
+    { key: 'volume5000', type: 'volume_total', threshold: 5000, label: '5000 kg soulevé au total', emoji: '' },
+    { key: 'volume10000', type: 'volume_total', threshold: 10000, label: '10 000 kg soulevé au total', emoji: '' },
+    { key: 'volume25000', type: 'volume_total', threshold: 25000, label: '25 000 kg soulevé au total', emoji: '' },
+    { key: 'volume50000', type: 'volume_total', threshold: 50000, label: '50 000 kg soulevé au total', emoji: '' },
+    { key: 'volume100000', type: 'volume_total', threshold: 100000, label: '100 000 kg soulevé au total', emoji: '' },
     { key: 'training5h', type: 'training_seconds', threshold: 5 * 3600, label: '5 h d\'entraînement', emoji: '⏱️' },
     { key: 'training15h', type: 'training_seconds', threshold: 15 * 3600, label: '15 h d\'entraînement', emoji: '⏱️' },
     { key: 'training35h', type: 'training_seconds', threshold: 35 * 3600, label: '35 h d\'entraînement', emoji: '⏱️' },
@@ -2467,10 +2467,14 @@ function initSettings() {
     if (closeBtn) closeBtn.addEventListener('click', closeSettings);
     if (overlay) overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSettings(); });
     if (resetBtn) resetBtn.addEventListener('click', () => {
-        if (!confirm('Effacer toutes les données de ce programme (séances terminées, charges, notes, mensurations, poids, vêtement test) ? Cette action est irréversible.')) return;
+        if (!confirm('Effacer toutes les données de ce programme (séances terminées, charges, notes, mensurations, poids, vêtement test, compteurs et objectifs débloqués) ? Cette action est irréversible.')) return;
         localStorage.removeItem('fitapp_' + clientID);
         localStorage.removeItem(COMPLETED_KEY);
         localStorage.removeItem(KEY_CHARGE_HISTORY);
+        // Remettre à zéro les compteurs (burpees, squats, etc.) et milestones pour pouvoir les redéclencher
+        localStorage.removeItem(KEY_COUNTERS);
+        localStorage.removeItem(KEY_MILESTONES);
+        localStorage.removeItem(KEY_TRAINING_SECONDS);
         setCoachNote('');
         setMensurations([]);
         setPoids([]);
