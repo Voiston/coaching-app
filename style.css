@@ -1417,7 +1417,7 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     overflow: hidden;
     transition: background-color 0.3s linear;
 }
-.active-timer-btn:hover { background: #98a9d5; }
+.active-timer-btn:hover { background: #4466bd; }
 .active-timer-btn.active {
     background: #1e40af;
 }
@@ -1427,7 +1427,7 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     top: 0;
     bottom: 0;
     width: 100%;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.75);
     transform-origin: left center;
     transform: scaleX(1);
     pointer-events: none;
