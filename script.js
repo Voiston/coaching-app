@@ -410,7 +410,6 @@ function getStats(sessions) {
 function updateWeekAndNextSession(sessions) {
     const nextEl = document.getElementById('next-session');
     const goalEl = document.getElementById('weekly-goal-banner');
-    if (weekEl) weekEl.textContent = getWeekLabel();
     const next = getNextSessionInfo(sessions);
     if (nextEl) {
         if (next) nextEl.innerHTML = `Prochaine séance : <strong>${escapeHtml(next.dayName)} ${escapeHtml(next.dateNum)}</strong> — ${escapeHtml(next.name)}`;
