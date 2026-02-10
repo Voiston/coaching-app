@@ -434,13 +434,6 @@ function updateWeekAndNextSession(sessions) {
         goalEl.innerHTML = `Objectif semaine : ${thisWeekCount}/${goal} séance${goal > 1 ? 's' : ''}`;
         goalEl.classList.add('show');
     } else if (goalEl) goalEl.innerHTML = '';
-    if (statsEl && sessions && sessions.length) {
-        const st = getStats(sessions);
-        let html = `<span>${st.sessionsThisMonth} séance${st.sessionsThisMonth !== 1 ? 's' : ''} ce mois</span>`;
-        if (st.streakWeeks > 0) html += ` · <span>Série : ${st.streakWeeks} sem.</span>`;
-        if (st.nextInDays != null) html += ` · <span>Prochaine dans ${st.nextInDays} j</span>`;
-        statsEl.innerHTML = html;
-    }
 }
 
 // --- CALENDRIER ---
