@@ -953,8 +953,28 @@ body.guided-mode .guided-nav {
 .btn-import-data:hover { background: rgba(183, 110, 121, 0.2); }
 
 /* --- MESSAGE COACH (modale fin) --- */
-.coach-note-free-wrap { margin-top: 12px; }
-.coach-note-input { min-height: 60px; resize: vertical; }
+.coach-note-free-wrap { margin-top: 16px; }
+.coach-note-free-wrap label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 6px;
+}
+.coach-note-input {
+    min-height: 80px;
+    resize: vertical;
+    border-radius: 16px;
+    border: 1px solid rgba(183, 110, 121, 0.25);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(183, 110, 121, 0.12);
+}
+.coach-note-input::placeholder {
+    color: var(--text-light);
+    font-style: italic;
+}
 
 /* --- EXERCICE : TEMPO / VARIANTE --- */
 .exercise-variation {
@@ -1411,6 +1431,12 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     transform-origin: left center;
     transform: scaleX(1);
     pointer-events: none;
+    z-index: 0;
+}
+
+.active-timer-text {
+    position: relative;
+    z-index: 1;
 }
 
 /* --- BOUTONS INPUT --- */
@@ -2181,6 +2207,29 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     box-shadow: 0 8px 22px rgba(183, 110, 121, 0.12);
 }
 
+/* Bouton de fin de séance (WhatsApp déplacé dans la modale) */
+#modal-btn-container button {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 22px rgba(183, 110, 121, 0.35);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+#modal-btn-container button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(183, 110, 121, 0.45);
+}
+#modal-btn-container button:focus-visible {
+    outline: none;
+    box-shadow: 0 8px 22px rgba(183, 110, 121, 0.35), var(--focus-ring);
+}
+
 .feedback-item {
     margin-bottom: 15px;
     border-bottom: 1px dashed #e0e0e0;
@@ -2271,9 +2320,44 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
 
 /* --- SLIDERS BILAN (0-10) --- */
 .score-slider {
-    width: 120px;
+    width: 160px;
     flex-shrink: 0;
     accent-color: var(--primary);
+    /* meilleure ergonomie tactile */
+    height: 26px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+}
+.score-slider::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--primary-soft), rgba(183, 110, 121, 0.35));
+}
+.score-slider::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--primary-soft), rgba(183, 110, 121, 0.35));
+}
+.score-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--primary);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    cursor: pointer;
+    margin-top: -9px; /* centrer sur la piste */
+}
+.score-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--primary);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    cursor: pointer;
 }
 .score-value {
     font-weight: 700;

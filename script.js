@@ -1300,7 +1300,10 @@ function getCounterTypeAndValue(exoName, repsForSet) {
         ? (matchSec[2] && matchSec[2].toLowerCase().startsWith('min') ? parseInt(matchSec[1], 10) * 60 : parseInt(matchSec[1], 10))
         : (isGainageLike ? num : 0);
     if (/burpee/i.test(name)) {
-        if (num <= 0) {
+        // Cas particulier burpees :
+        // - si aucun chiffre explicite dans les reps (échauffement "10 burpees")
+        //   on va chercher le nombre dans le NOM de l'exercice.
+        if (!matchNum || num <= 0) {
             const nameMatch = (exoName || '').match(/(\d+)\s*burpee/i);
             num = nameMatch ? parseInt(nameMatch[1], 10) : 1;
         }
@@ -1553,12 +1556,13 @@ function startActiveTimer(btn) {
             progressEl.style.transform = `scaleX(${ratio})`;
             // La barre interne passe de bleu foncé à bleu clair en se vidant,
             // mais le fond du bouton (couleur de base) reste inchangé.
-            const dark = { r: 30, g: 64, b: 175 };   // #1e40af
+            // Inversé : barre foncée au début, plus claire à l’approche de 0
             const light = { r: 96, g: 165, b: 250 }; // #60a5fa
-            const t = 1 - ratio; // 0 = départ (foncé), 1 = fin (clair)
-            const r = Math.round(dark.r + (light.r - dark.r) * t);
-            const g = Math.round(dark.g + (light.g - dark.g) * t);
-            const b = Math.round(dark.b + (light.b - dark.b) * t);
+            const dark = { r: 30, g: 64, b: 175 };   // #1e40af
+            const t = 1 - ratio; // 0 = départ (clair), 1 = fin (foncé)
+            const r = Math.round(light.r + (dark.r - light.r) * t);
+            const g = Math.round(light.g + (dark.g - light.g) * t);
+            const b = Math.round(light.b + (dark.b - light.b) * t);
             progressEl.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
         }
     };
