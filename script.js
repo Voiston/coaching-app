@@ -189,6 +189,10 @@ function getIcsContent(sessionName, dateStr, details, durationMinutes) {
     ].filter(Boolean).join('\r\n');
 }
 
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent || '') && !window.MSStream;
+}
+
 function downloadIcsFile(sessionName, dateStr, details) {
     const ics = getIcsContent(sessionName, dateStr, details, 60);
     const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
@@ -213,8 +217,16 @@ function openAddToCalendarGoogle() {
 function openAddToCalendarApple() {
     const data = getCurrentSessionCalendarData();
     if (!data) { showToast('Ouvre une séance pour l\'ajouter à ton agenda.'); return; }
-    downloadIcsFile(data.name, data.dateStr, data.details);
-    showToast('Fichier .ics téléchargé. Ouvre-le pour l\'ajouter à Apple Calendrier ou un autre agenda.');
+    const ics = getIcsContent(data.name, data.dateStr, data.details, 60);
+    if (isIOS()) {
+        // Sur iOS, ouvrir directement le contenu ICS pour déclencher la feuille "Ajouter à Calendrier"
+        const url = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+        window.location.href = url;
+    } else {
+        // Comportement classique : téléchargement du fichier .ics
+        downloadIcsFile(data.name, data.dateStr, data.details);
+        showToast('Fichier .ics téléchargé. Ouvre-le pour l\'ajouter à ton agenda.');
+    }
 }
 
 function showAddToCalendarMenu(anchorEl) {
@@ -1274,6 +1286,26 @@ function getCounters() {
         return JSON.parse(localStorage.getItem(KEY_COUNTERS) || '{}');
     } catch { return {}; }
 }
+
+/** Couleur commune pour sliders (0 → 1) : vert → jaune → orange → rouge. */
+function sliderColorForRatio(ratio) {
+    const x = Math.max(0, Math.min(1, ratio || 0));
+    const stops = [
+        { r: 34, g: 197, b: 94 },   // #22c55e vert
+        { r: 234, g: 179, b: 8 },   // #eab308 jaune
+        { r: 249, g: 115, b: 22 },  // #f97316 orange
+        { r: 239, g: 68, b: 68 }    // #ef4444 rouge
+    ];
+    const seg = x * 3; // 0–1, 1–2, 2–3
+    const i = Math.floor(seg);
+    const t = seg - i;
+    const a = stops[i] || stops[0];
+    const b = stops[i + 1] || stops[stops.length - 1];
+    const r = Math.round(a.r + (b.r - a.r) * t);
+    const g = Math.round(a.g + (b.g - a.g) * t);
+    const bch = Math.round(a.b + (b.b - a.b) * t);
+    return `rgb(${r}, ${g}, ${bch})`;
+}
 function setCounters(obj) {
     localStorage.setItem(KEY_COUNTERS, JSON.stringify(obj));
 }
@@ -1556,13 +1588,13 @@ function startActiveTimer(btn) {
             progressEl.style.transform = `scaleX(${ratio})`;
             // La barre interne passe de bleu foncé à bleu clair en se vidant,
             // mais le fond du bouton (couleur de base) reste inchangé.
-            // Inversé : barre foncée au début, plus claire à l’approche de 0
-            const light = { r: 96, g: 165, b: 250 }; // #60a5fa
+            // Barre foncée quand pleine, de plus en plus claire en se vidant
             const dark = { r: 30, g: 64, b: 175 };   // #1e40af
-            const t = 1 - ratio; // 0 = départ (clair), 1 = fin (foncé)
-            const r = Math.round(light.r + (dark.r - light.r) * t);
-            const g = Math.round(light.g + (dark.g - light.g) * t);
-            const b = Math.round(light.b + (dark.b - light.b) * t);
+            const light = { r: 96, g: 165, b: 250 }; // #60a5fa
+            const t = 1 - ratio; // 0 = pleine (foncé), 1 = presque vide (clair)
+            const r = Math.round(dark.r + (light.r - dark.r) * t);
+            const g = Math.round(dark.g + (light.g - dark.g) * t);
+            const b = Math.round(dark.b + (light.b - dark.b) * t);
             progressEl.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
         }
     };
@@ -1678,7 +1710,14 @@ function showRpeModal(cardIndex, sessionId, exoName, onConfirm) {
         el.querySelector('.rpe-modal-close').onclick = closeRpeModal;
         el.onclick = (e) => { if (e.target === el) closeRpeModal(); };
         el.querySelector('.rpe-modal-slider').addEventListener('input', (e) => {
-            el.querySelector('.rpe-modal-value').textContent = e.target.value;
+            const val = parseInt(e.target.value, 10) || 1;
+            el.querySelector('.rpe-modal-value').textContent = String(val);
+            // mettre à jour la couleur du thumb en fonction de la position (vert → jaune → orange → rouge)
+            const min = parseInt(e.target.min, 10) || 1;
+            const max = parseInt(e.target.max, 10) || 10;
+            const ratio = (val - min) / (max - min || 1);
+            const color = sliderColorForRatio(ratio);
+            e.target.style.setProperty('--slider-thumb-color', color);
         });
         el.querySelector('.rpe-modal-confirm').onclick = () => {
             const id = el._currentRpeId;
@@ -1696,8 +1735,23 @@ function showRpeModal(cardIndex, sessionId, exoName, onConfirm) {
     const existingVal = document.getElementById(idRpe)?.value || '';
     const slider = el.querySelector('.rpe-modal-slider');
     const valueSpan = el.querySelector('.rpe-modal-value');
-    if (slider) { slider.value = existingVal || '7'; slider.dispatchEvent(new Event('input')); }
-    if (valueSpan) valueSpan.textContent = slider?.value || '7';
+    // Récupérer le RPE cible du coach pour cet exercice (si défini)
+    let targetRpe = null;
+    const sessions = globalData && globalData.sessions ? globalData.sessions : [];
+    const session = sessions.find(s => (s.id || '') === sessionId);
+    if (session && Array.isArray(session.exercises)) {
+        const exo = session.exercises[cardIndex];
+        if (exo && exo.rpe_target != null) {
+            const n = parseInt(exo.rpe_target, 10);
+            if (!isNaN(n) && n >= 1 && n <= 10) targetRpe = String(n);
+        }
+    }
+    const initial = existingVal || targetRpe || '7';
+    if (slider) {
+        slider.value = initial;
+        slider.dispatchEvent(new Event('input'));
+    }
+    if (valueSpan) valueSpan.textContent = slider?.value || initial;
     el.querySelector('.rpe-modal-exo').textContent = exoName || 'Exercice';
     el._onConfirm = onConfirm;
     el.classList.add('active');
@@ -3035,6 +3089,16 @@ document.body.addEventListener('input', (e) => {
     if (e.target.classList.contains('score-slider')) {
         const span = document.querySelector('.score-value[data-for="' + e.target.id + '"]');
         if (span) span.textContent = e.target.value;
+        // synchroniser la couleur du thumb avec la position (0–10)
+        const min = parseInt(e.target.min, 10);
+        const max = parseInt(e.target.max, 10);
+        const val = parseInt(e.target.value, 10);
+        const lo = isNaN(min) ? 0 : min;
+        const hi = isNaN(max) || max === lo ? lo + 10 : max;
+        const v = isNaN(val) ? (lo + hi) / 2 : val;
+        const ratio = (v - lo) / (hi - lo || 1);
+        const color = sliderColorForRatio(ratio);
+        e.target.style.setProperty('--slider-thumb-color', color);
     }
     if (e.target.id === 'coach-note-free') setCoachNote(e.target.value);
 });
