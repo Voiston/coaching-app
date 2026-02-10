@@ -1891,8 +1891,8 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     .suivi-header-bar {
         flex-direction: row;
         align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
+        gap: 4px;
+        padding: 3px 8px;
         border-radius: 999px;
         max-width: 100%;
     }
@@ -1906,11 +1906,20 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     .suivi-header-item:nth-child(n + 2) {
         display: none;
     }
+    /* Sur mobile : pastille ultra-compacte = uniquement barre + % */
+    .suivi-header-label {
+        display: none;
+    }
     .suivi-header-track {
-        height: 6px;
+        height: 8px;
+        overflow: visible; /* ne pas couper le texte du % */
     }
     .suivi-header-pct {
         font-size: 0.55rem;
+    }
+    .suivi-header-icon {
+        padding: 2px 6px;
+        font-size: 0.6rem;
     }
 }
 /* Couleurs selon la progression */
