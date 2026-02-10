@@ -2425,8 +2425,20 @@ function renderSuiviHeaderBar() {
         else items.push(`<div class="suivi-header-item ${state.class}"><span class="suivi-header-label">${label}</span><div class="suivi-header-track" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><div class="suivi-header-fill" style="width:${pct}%"></div><span class="suivi-header-pct">${pct}%</span></div></div>`);
     };
     if (prefs.show_poids && prefs.objectif_poids != null && lastP != null) {
-        const current = lastP.poids_kg, goal = prefs.objectif_poids, start = firstP ? firstP.poids_kg : current;
-        push(`⚖️ Poids ${current} kg → ${goal} kg`, progressPct(start, current, goal), suiviProgressState(progressPct(start, current, goal)));
+        const current = lastP.poids_kg;
+        const goal = prefs.objectif_poids;
+        let start = current;
+        // Si un poids de base est défini dans la fiche client, on l'utilise comme point de départ
+        const base = globalData && typeof globalData.baseline_weight_kg === 'number'
+            ? globalData.baseline_weight_kg
+            : null;
+        if (base != null && !isNaN(base) && base > 0) {
+            start = base;
+        } else if (firstP && firstP.poids_kg != null) {
+            start = firstP.poids_kg;
+        }
+        const pct = progressPct(start, current, goal);
+        push(`⚖️ Poids ${current} kg → ${goal} kg`, pct, suiviProgressState(pct));
     }
     if (prefs.show_taille && prefs.objectif_taille != null && lastM != null && lastM.tour_taille != null) {
         const current = lastM.tour_taille, goal = prefs.objectif_taille, start = firstM && firstM.tour_taille != null ? firstM.tour_taille : current;
