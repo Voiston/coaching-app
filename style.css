@@ -1865,6 +1865,54 @@ input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); 
     pointer-events: none;
     white-space: nowrap;
 }
+
+/* Icône compacte pour ouvrir le panneau de suivi depuis le header (mobile-friendly) */
+.suivi-header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    padding: 4px 6px;
+    border-radius: 999px;
+    border: 1px solid rgba(183, 110, 121, 0.4);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--primary-dark);
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.suivi-header-icon:hover {
+    background: #fff;
+}
+
+/* Version compacte sur smartphone : pill minimaliste, un objectif visible, accès au détail via l’icône */
+@media (max-width: 600px) {
+    .suivi-header-bar {
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        max-width: 100%;
+    }
+    .suivi-header-item {
+        flex: 1;
+        font-size: 0.65rem;
+        padding: 0;
+        border-bottom: none;
+    }
+    /* Ne garder que le premier objectif visible en haut sur mobile pour rester épuré */
+    .suivi-header-item:nth-child(n + 2) {
+        display: none;
+    }
+    .suivi-header-track {
+        height: 6px;
+    }
+    .suivi-header-pct {
+        font-size: 0.55rem;
+    }
+}
 /* Couleurs selon la progression */
 .suivi-header-item--start .suivi-header-fill {
     background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);

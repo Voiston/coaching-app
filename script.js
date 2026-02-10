@@ -997,7 +997,7 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
                 setTimeout(() => {
                     const supersetBlock = nextCard.closest('.superset-block');
                     const scrollTarget = supersetBlock || nextCard;
-                    scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'header' });
                 }, 300);
             }
         };
@@ -2335,8 +2335,27 @@ function renderSuiviHeaderBar() {
     }
     const html = items.slice(0, SUIVI_HEADER_MAX).join('');
     if (html) {
-        bar.innerHTML = html;
+        // Contenu principal (objectif compact) + petite icône d’accès au panneau détaillé
+        bar.innerHTML = html + '<button type="button" class="suivi-header-icon" aria-label="Voir le détail de mon suivi">i</button>';
         bar.hidden = false;
+        // Rendre tout le bandeau cliquable / accessible pour ouvrir le suivi
+        bar.setAttribute('role', 'button');
+        bar.setAttribute('tabindex', '0');
+        bar.setAttribute('aria-label', 'Voir mon suivi détaillé (mensurations, poids, vêtement test)');
+        if (!bar.dataset.suiviBound) {
+            bar.addEventListener('click', (e) => {
+                // Si on clique n’importe où dans le bandeau, on ouvre le panneau de suivi
+                e.preventDefault();
+                openSuiviModal();
+            });
+            bar.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openSuiviModal();
+                }
+            });
+            bar.dataset.suiviBound = '1';
+        }
     } else {
         bar.innerHTML = '';
         bar.hidden = true;
