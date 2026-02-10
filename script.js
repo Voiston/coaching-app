@@ -1603,8 +1603,8 @@ function startActiveTimer(btn) {
             // La barre interne passe de bleu foncé à bleu clair en se vidant,
             // mais le fond du bouton (couleur de base) reste inchangé.
             // Barre foncée quand pleine, de plus en plus claire en se vidant
-            const dark = { r: 30, g: 64, b: 175 };   // #1e40af
-            const light = { r: 96, g: 165, b: 250 }; // #60a5fa
+            const dark = { r: 39, g: 71, b: 177 };   //rgb(39, 71, 177)
+            const light = { r: 39, g: 71, b: 177 }; // #60a5fa
             const t = 1 - ratio; // 0 = pleine (foncé), 1 = presque vide (clair)
             const r = Math.round(dark.r + (light.r - dark.r) * t);
             const g = Math.round(dark.g + (light.g - dark.g) * t);
