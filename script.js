@@ -1306,6 +1306,20 @@ function sliderColorForRatio(ratio) {
     const bch = Math.round(a.b + (b.b - a.b) * t);
     return `rgb(${r}, ${g}, ${bch})`;
 }
+
+function initScoreSliderColors() {
+    document.querySelectorAll('.score-slider').forEach(slider => {
+        const min = parseInt(slider.min, 10);
+        const max = parseInt(slider.max, 10);
+        const val = parseInt(slider.value, 10);
+        const lo = isNaN(min) ? 0 : min;
+        const hi = isNaN(max) || max === lo ? lo + 10 : max;
+        const v = isNaN(val) ? (lo + hi) / 2 : val;
+        const ratio = (v - lo) / (hi - lo || 1);
+        const color = sliderColorForRatio(ratio);
+        slider.style.setProperty('--slider-thumb-color', color);
+    });
+}
 function setCounters(obj) {
     localStorage.setItem(KEY_COUNTERS, JSON.stringify(obj));
 }
@@ -3130,8 +3144,13 @@ function initHeaderMenu() {
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { initDarkMode(); initHeaderMenu(); });
+    document.addEventListener('DOMContentLoaded', () => {
+        initDarkMode();
+        initHeaderMenu();
+        initScoreSliderColors();
+    });
 } else {
     initDarkMode();
     initHeaderMenu();
+    initScoreSliderColors();
 }
