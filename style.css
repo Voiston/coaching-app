@@ -1416,6 +1416,7 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     position: relative;
     overflow: hidden;
     transition: background-color 0.3s linear;
+    opacity: 1 !important;
 }
 .active-timer-btn:hover { background: #3053ac; }
 .active-timer-btn.active {
