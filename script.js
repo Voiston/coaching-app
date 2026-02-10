@@ -308,11 +308,8 @@ function showLoadError(message) {
     document.getElementById('calendar-strip').innerHTML = "";
     const wrap = document.getElementById('calendar-wrap');
     if (wrap) wrap.classList.remove('collapsed');
-    document.getElementById('week-context').innerHTML = "";
     document.getElementById('next-session').innerHTML = "";
     const goalEl = document.getElementById('weekly-goal-banner');
-    if (goalEl) goalEl.innerHTML = "";
-    const statsEl = document.getElementById('stats-bar');
     if (statsEl) statsEl.innerHTML = "";
     document.getElementById('coach-signature').innerHTML = "";
     const pan = document.getElementById('progression-panel');
@@ -412,10 +409,8 @@ function getStats(sessions) {
 }
 
 function updateWeekAndNextSession(sessions) {
-    const weekEl = document.getElementById('week-context');
     const nextEl = document.getElementById('next-session');
     const goalEl = document.getElementById('weekly-goal-banner');
-    const statsEl = document.getElementById('stats-bar');
     if (weekEl) weekEl.textContent = getWeekLabel();
     const next = getNextSessionInfo(sessions);
     if (nextEl) {
