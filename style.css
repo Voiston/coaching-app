@@ -1404,7 +1404,7 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
 /* --- CHRONO EFFORT (Active Timer) --- */
 .active-timer-btn {
     grid-column: span 3;
-    background: #2256c5;
+    background: #1d4db4;
     color: white;
     border: none;
     padding: 10px;
@@ -1417,9 +1417,9 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     overflow: hidden;
     transition: background-color 0.3s linear;
 }
-.active-timer-btn:hover { background: #4466bd; }
+.active-timer-btn:hover { background: #204298; }
 .active-timer-btn.active {
-    background: #1e40af;
+    background: #1d1f23;
 }
 .active-timer-progress {
     position: absolute;
@@ -1427,7 +1427,7 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     top: 0;
     bottom: 0;
     width: 100%;
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(208, 40, 40, 0.75);
     transform-origin: left center;
     transform: scaleX(1);
     pointer-events: none;
