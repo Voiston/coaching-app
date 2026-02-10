@@ -1,12 +1,14 @@
-// Mettre à jour ce nom à chaque release (ex: v2.5) pour invalider l’ancien cache
-const CACHE_NAME = 'coaching-v2.4';
+// Mettre à jour ce nom à chaque release (ex: v2.7) pour invalider l’ancien cache
+const CACHE_NAME = 'coaching-v2.7';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
   './script.js',
   './manifest.json',
-  './favicon.svg'
+  './favicon.svg',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (e) => {
@@ -23,21 +25,40 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Réseau d'abord pour l'app (fraîcheur) ; cache pour offline. JSON (clients/) jamais mis en cache.
+// Stratégie de cache :
+// - JSON (programmes) : Network First avec fallback cache (pour garder le dernier programme si le réseau est KO)
+// - Assets statiques (HTML/CSS/JS/icônes) : Cache First avec fallback réseau
 self.addEventListener('fetch', (e) => {
   const url = e.request.url;
   if (!url.startsWith(self.location.origin)) return;
-  if (url.includes('clients/') || url.includes('.json?')) return; // Ne jamais cacher les programmes
 
+  // 1. Programmes JSON : network first -> cache fallback
+  if (url.includes('clients/') || url.endsWith('.json') || url.includes('.json?')) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          const clone = res.clone();
+          if (res.ok) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // 2. Assets statiques : cache first -> network fallback
   e.respondWith(
-    fetch(e.request)
-      .then((res) => {
+    caches.match(e.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(e.request).then((res) => {
         const clone = res.clone();
-        if (res.ok && !e.request.url.includes('.json')) {
-          caches.open(CACHE_NAME).then((c) => c.put(e.request, clone));
+        if (res.ok) {
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
         }
         return res;
-      })
-      .catch(() => caches.match(e.request))
+      });
+    })
   );
 });

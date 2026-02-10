@@ -2,7 +2,7 @@
 const COACH_PHONE_NUMBER = "33662110786"; // TON NUMÉRO
 const COACH_NAME = "David";
 const DEFAULT_RECOVERY_VIDEO_URL = null; // Stretching générique 10min
-const APP_VERSION = "2.6";
+const APP_VERSION = "2.7";
 const PAST_DAYS = 1;
 const DAYS_AHEAD = 21;
 
@@ -2696,7 +2696,27 @@ function initInstallPrompt() {
     const btnInstall = document.getElementById('btn-install-app');
     const btnDismiss = document.getElementById('btn-dismiss-install');
     if (!banner || !btnInstall || !btnDismiss) return;
-    if (isInstallDismissed() || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) return;
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+    // Cas iOS : pas de beforeinstallprompt, on affiche une bannière pédagogique spécifique
+    if (isIOS() && !isStandalone && !isInstallDismissed()) {
+        const textSpan = banner.querySelector('.install-banner span:nth-of-type(2)') || banner.querySelector('span:nth-of-type(2)');
+        if (textSpan) {
+            textSpan.innerHTML = `Pour installer sur iPhone : ouvre <strong>Partager</strong> puis choisis <strong>“Sur l'écran d'accueil”</strong>.`;
+        }
+        // On masque le bouton "Installer" impossible à déclencher sur iOS
+        btnInstall.style.display = 'none';
+        btnDismiss.textContent = 'Compris';
+        banner.hidden = false;
+        btnDismiss.addEventListener('click', () => {
+            setInstallDismissed();
+            banner.hidden = true;
+        });
+        return;
+    }
+
+    if (isInstallDismissed() || isStandalone) return;
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredInstallPrompt = e;
