@@ -27,6 +27,25 @@ let sessionEndTime = null;
 let moveSessionMode = false;
 let moveSessionSourceId = null;
 let moveSessionSourceIndex = -1;
+// Flags en mémoire pour ne pas spammer la bannière d'encouragement
+let encouragementShown75 = false;
+
+// Petits messages d'encouragement possibles (un sera choisi au hasard)
+const ENCOURAGEMENT_MESSAGES = [
+    "Tu es quasiment au bout, reste dans le mouvement.",
+    "Belle constance, termine cette séance comme tu l’as commencée.",
+    "Encore quelques séries et tu valides une vraie victoire.",
+    "Reste focus sur tes répétitions, tout compte.",
+    "Tu construis des habitudes solides à chaque série que tu termines."
+];
+
+function getRandomEncouragementMessage() {
+    if (!Array.isArray(ENCOURAGEMENT_MESSAGES) || ENCOURAGEMENT_MESSAGES.length === 0) {
+        return "Tu es quasiment au bout, reste dans le mouvement.";
+    }
+    const index = Math.floor(Math.random() * ENCOURAGEMENT_MESSAGES.length);
+    return ENCOURAGEMENT_MESSAGES[index];
+}
 
 // --- PARAMÈTRES (localStorage) ---
 const KEY_SOUND = 'fitapp_sound_' + clientID;
@@ -1178,6 +1197,12 @@ function updateProgress(shouldOpenModal = false) {
     
     document.getElementById('progress-bar').style.width = percent + "%";
 
+    // Micro encouragement visuel unique en fin de séance, sans interaction
+    if (percent >= 80 && percent < 100 && !encouragementShown75) {
+        encouragementShown75 = true;
+        showEncouragementBanner(getRandomEncouragementMessage());
+    }
+
     if (percent === 100 && shouldOpenModal) {
         saveChargeHistory();
         showMilestoneModalIfNeeded(openCompletionOverlay);
@@ -1514,34 +1539,6 @@ function playBeep() {
     } catch (_) {}
 }
 
-// Micro-feedback pour la validation d'une série : petit "pop" + vibration très courte
-function playSetValidationFeedback() {
-    if (getSettingSound()) {
-        try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            const now = ctx.currentTime;
-            // Son très court et doux, plus "pop" que le bip du chrono
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(650, now);
-            osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
-            gain.gain.setValueAtTime(0.25, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-            osc.start(now);
-            osc.stop(now + 0.14);
-        } catch (_) {}
-    }
-    // Retour haptique très léger pour ne pas être agressif
-    try {
-        if ("vibrate" in navigator) navigator.vibrate(20);
-    } catch (_) {
-        // ignore
-    }
-}
-
 function fireConfetti() {
     const colors = ['#B76E79', '#965A62', '#fff', '#FFE4E1'];
     const container = document.body;
@@ -1556,6 +1553,25 @@ function fireConfetti() {
         container.appendChild(el);
         setTimeout(() => el.remove(), 3500);
     }
+}
+
+// Bannière discrète qui descend du haut de l'écran puis disparaît seule
+function showEncouragementBanner(message) {
+    const el = document.getElementById('encouragement-banner');
+    if (!el) return;
+    el.textContent = message || '';
+
+    // Annuler un éventuel timer précédent
+    if (el.dataset.hideTimeoutId) {
+        clearTimeout(parseInt(el.dataset.hideTimeoutId, 10));
+    }
+
+    el.classList.add('show');
+    const timeoutId = setTimeout(() => {
+        el.classList.remove('show');
+        el.dataset.hideTimeoutId = '';
+    }, 3500);
+    el.dataset.hideTimeoutId = String(timeoutId);
 }
 
 function startTimer(btn, seconds) {
@@ -3159,8 +3175,6 @@ document.getElementById('workout-container').addEventListener('change', (e) => {
     const totalSets = parseInt(e.target.dataset.totalSets, 10);
     checkSetAndCollapse(e.target, cardIndex, setNum, totalSets);
     if (e.target.checked) {
-        // Feedback sensoriel "gratifiant" pour chaque série validée
-        playSetValidationFeedback();
         const card = document.getElementById('card-' + cardIndex);
         const timerBtn = card && card.querySelector('.timer-btn');
         if (timerBtn && timerBtn.dataset.rest && !timerBtn.classList.contains('active')) {
