@@ -1514,6 +1514,34 @@ function playBeep() {
     } catch (_) {}
 }
 
+// Micro-feedback pour la validation d'une série : petit "pop" + vibration très courte
+function playSetValidationFeedback() {
+    if (getSettingSound()) {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            const now = ctx.currentTime;
+            // Son très court et doux, plus "pop" que le bip du chrono
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(650, now);
+            osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+            osc.start(now);
+            osc.stop(now + 0.14);
+        } catch (_) {}
+    }
+    // Retour haptique très léger pour ne pas être agressif
+    try {
+        if ("vibrate" in navigator) navigator.vibrate(20);
+    } catch (_) {
+        // ignore
+    }
+}
+
 function fireConfetti() {
     const colors = ['#B76E79', '#965A62', '#fff', '#FFE4E1'];
     const container = document.body;
@@ -3131,6 +3159,8 @@ document.getElementById('workout-container').addEventListener('change', (e) => {
     const totalSets = parseInt(e.target.dataset.totalSets, 10);
     checkSetAndCollapse(e.target, cardIndex, setNum, totalSets);
     if (e.target.checked) {
+        // Feedback sensoriel "gratifiant" pour chaque série validée
+        playSetValidationFeedback();
         const card = document.getElementById('card-' + cardIndex);
         const timerBtn = card && card.querySelector('.timer-btn');
         if (timerBtn && timerBtn.dataset.rest && !timerBtn.classList.contains('active')) {
