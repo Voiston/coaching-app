@@ -1847,7 +1847,7 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     border-color: var(--primary);
     color: var(--text-main);
 }
-input { width: 100%; padding: 10px;  background: var(--card-bg); border-radius: var(--radius-sm); font-family: 'Poppins', sans-serif; outline: none; }
+input { width: 100%; padding: 10px; border: 1px solid rgba(0,0,0,0.1); background: var(--card-bg); border-radius: var(--radius-sm); font-family: 'Poppins', sans-serif; outline: none; }
 input:focus { border-color: var(--primary); }
 input:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--primary-soft); }
 
