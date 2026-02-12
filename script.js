@@ -832,8 +832,8 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
                     </button>
                     ${activeTimerHtml}
                 </div>
-                ${checkboxesHtml}
                 ${exo.note_coach ? `<div class="coach-note">"${escapeHtml(exo.note_coach)}"</div>` : ''}
+                ${checkboxesHtml}
                 <div class="client-input-zone">
                     <div class="input-row">
                         ${chargePerSet
