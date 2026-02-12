@@ -1701,6 +1701,7 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
+    border: none;
     border-radius: 999px;
     outline: none;
 }
