@@ -844,15 +844,23 @@ function createExerciseCard(exo, index, sessionId, supersetRoleNum, isWarmupExer
                                         const setId = i + 1;
                                         const id = `charge-${sessionId}-${index}-${setId}`;
                                         const val = (chargeArr[i] != null ? chargeArr[i] : '').replace(/"/g, '&quot;');
-                                        return `<span class="charge-set-wrap"><label for="${id}" class="charge-set-label">S${setId}</label><input type="text" id="${id}" placeholder="—" value="${val}" aria-label="Charge série ${setId} en kg"><span class="charge-suffix">kg</span></span>`;
+                                        return `<span class="charge-set-wrap">
+                                            <button type="button" class="charge-step-btn charge-step-btn-dec" data-target-id="${id}" data-step="-1" aria-label="Retirer 1 kg à la série ${setId}">−1</button>
+                                            <label for="${id}" class="charge-set-label">S${setId}</label>
+                                            <input type="text" id="${id}" placeholder="—" value="${val}" aria-label="Charge série ${setId} en kg">
+                                            <span class="charge-suffix">kg</span>
+                                            <button type="button" class="charge-step-btn charge-step-btn-inc" data-target-id="${id}" data-step="1" aria-label="Ajouter 1 kg à la série ${setId}">+1</button>
+                                        </span>`;
                                     }).join('')}
                                 </span>
                             </span>`
                             : `<span class="input-with-btn charge-input-wrap">
                                 <label for="${idCharge}" class="charge-input-label">Charge (kg)</label>
                                 <span class="charge-input-row">
+                                    <button type="button" class="charge-step-btn charge-step-btn-dec" data-target-id="${idCharge}" data-step="-1" aria-label="Retirer 1 kg">−1</button>
                                     <input type="text" id="${idCharge}" placeholder="—" value="${(exo.charge || exo.default_charge || '').toString().replace(/"/g, '&quot;')}" aria-label="Charge en kg">
                                     <span class="charge-suffix">kg</span>
+                                    <button type="button" class="charge-step-btn charge-step-btn-inc" data-target-id="${idCharge}" data-step="1" aria-label="Ajouter 1 kg">+1</button>
                                 </span>
                             </span>`
                         }
@@ -3201,6 +3209,23 @@ document.getElementById('workout-container').addEventListener('change', (e) => {
 });
 document.getElementById('workout-container').addEventListener('input', (e) => {
     if (e.target.matches('input[id^="charge-"], input[id^="rpe-"], input[id^="comment-"]')) saveAndProgress();
+});
+// Boutons +/-1 kg autour des champs de charge
+document.getElementById('workout-container').addEventListener('click', (e) => {
+    const btn = e.target.closest('.charge-step-btn');
+    if (!btn) return;
+    const targetId = btn.dataset.targetId;
+    if (!targetId) return;
+    const step = parseFloat(btn.dataset.step || '1');
+    const input = document.getElementById(targetId);
+    if (!input) return;
+    const raw = String(input.value || '').replace(',', '.').replace(/[^\d.-]/g, '');
+    let val = parseFloat(raw);
+    if (isNaN(val)) val = 0;
+    let next = val + step;
+    if (next < 0) next = 0;
+    input.value = String(next);
+    saveAndProgress();
 });
 document.body.addEventListener('input', (e) => {
     if (e.target.classList.contains('score-slider')) {

@@ -1473,6 +1473,26 @@ body.guided-mode .superset-row .exercise-card:not(.superset-current) {
 .charge-input-row input { flex: 1; min-width: 0; }
 .charge-suffix { font-size: 0.8rem; font-weight: 600; color: var(--primary); flex-shrink: 0; }
 .charge-input-per-set .charge-input-label { margin-bottom: 2px; }
+.charge-step-btn {
+    border: 1px solid rgba(183, 110, 121, 0.35);
+    background: var(--card-bg);
+    color: var(--primary-dark);
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+}
+.charge-step-btn:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+.charge-step-btn:active {
+    transform: translateY(0);
+}
 .charge-inputs-row { flex-wrap: wrap; gap: 8px; }
 .charge-set-wrap { display: inline-flex; align-items: center; gap: 4px; }
 .charge-set-wrap input { width: 3rem; min-width: 2.5rem; text-align: center; }
