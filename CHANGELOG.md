@@ -1,3 +1,13 @@
+## [v2.7.3] - Supersets, timers & icônes PWA
+- **Repos superset :** Dans un superset, seules les dernières séries du **dernier exercice** déclenchent le repos global (60s par défaut). Les exercices intermédiaires déclenchent un repos à `0s`, pour enchaîner sans pause longue.
+- **Affichage repos superset :** Le dernier exercice d’un superset n’est plus estompé (opacity 1) afin que le temps de repos global reste lisible.
+- **Auto-scroll :** Quand tu termines un exercice simple, l’auto‑scroll centre le prochain exercice ; si le suivant est un superset, le scroll aligne le **haut du bloc superset**. Le scroll est déclenché uniquement une fois le repli visuel de l’exercice précédent terminé.
+- **Boutons de séries :** Légère augmentation de la taille des pastilles de séries (`.set-label`) pour un clic plus confortable, surtout sur mobile.
+- **Barre de progression globale :** Progress‑bar en haut de l’app encore un peu plus épaisse pour une meilleure lisibilité.
+- **Bips de fin de chrono :** Nouveau réglage dans les Paramètres pour activer des **bips plus forts** (volume + durée augmentés, fréquence un peu plus haute) sur les 3 dernières secondes.
+- **PWA / icônes :** Utilisation de vraies icônes `icon-192.png` / `icon-512.png` dérivées du logo coach pour l’icône d’app (Android, desktop, iOS via `apple-touch-icon`).
+- **Versioning cache :** Passage au format de version `2.7.X` (constante `APP_VERSION` + `CACHE_NAME` dans `sw.js`) pour forcer proprement l’invalidation du cache PWA à chaque mise à jour.
+
 ## [v2.11] - PWA iOS, offline programmes & RPE UX
 - **PWA / icônes :** Remplacement de l’icône inline du manifest par de vraies icônes `icon-192.png` / `icon-512.png` + ajout de `apple-touch-icon` pour un rendu propre sur l’écran d’accueil iOS.
 - **Offline programmes :** Nouvelle stratégie de cache pour les fichiers `clients/*.json` dans `sw.js` : **Network First avec fallback cache** (les programmes restent disponibles hors ligne une fois chargés).

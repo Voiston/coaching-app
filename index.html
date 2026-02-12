@@ -8,7 +8,7 @@
     <meta property="og:title" content="Mon Programme Coaching">
     <meta property="og:description" content="Programme d'entraînement personnalisé — séances, suivi et bilan coach.">
     <meta property="og:type" content="website">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="icon-192.png">
     <link rel="manifest" href="manifest.json">
     <!-- Icône pour l'écran d'accueil iOS -->
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -269,6 +269,9 @@
             <h2 id="settings-title" class="settings-title">Paramètres</h2>
             <div class="settings-item">
                 <label><input type="checkbox" id="setting-sound" checked> Bips sur les 3 dernières secondes du chrono</label>
+                <div class="settings-item-sub">
+                    <label><input type="checkbox" id="setting-sound-loud"> Bips plus forts (volume et durée augmentés)</label>
+                </div>
             </div>
             <div class="settings-item">
                 <span class="settings-label">Thème</span>
@@ -327,7 +330,22 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('./sw.js').catch(function () {});
+          navigator.serviceWorker
+            .register('./sw.js')
+            .then(function (reg) {
+              // Force une vérification de mise à jour du SW à chaque chargement
+              if (reg && typeof reg.update === 'function') {
+                reg.update().catch(function () {});
+              }
+            })
+            .catch(function () {});
+        });
+        // Quand un nouveau Service Worker prend le contrôle, on force un seul refresh
+        let swRefreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (swRefreshing) return;
+          swRefreshing = true;
+          window.location.reload();
         });
       }
     </script>

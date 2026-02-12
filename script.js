@@ -2,7 +2,7 @@
 const COACH_PHONE_NUMBER = "33662110786"; // TON NUMÉRO
 const COACH_NAME = "David";
 const DEFAULT_RECOVERY_VIDEO_URL = null; // Stretching générique 10min
-const APP_VERSION = "2.7";
+const APP_VERSION = "2.7.3";
 const PAST_DAYS = 1;
 const DAYS_AHEAD = 21;
 
@@ -49,7 +49,9 @@ const SUIVI_HISTORY_MAX = 15;
 const SUIVI_HEADER_MAX = 3;
 
 function getSettingSound() { return localStorage.getItem(KEY_SOUND) !== '0'; }
+function getSettingLoudBeep() { return localStorage.getItem('fitapp_loud_beep_' + clientID) === '1'; }
 function setSettingSound(on) { localStorage.setItem(KEY_SOUND, on ? '1' : '0'); }
+function setSettingLoudBeep(on) { localStorage.setItem('fitapp_loud_beep_' + clientID, on ? '1' : '0'); }
 function getSettingTheme() { return localStorage.getItem(KEY_THEME) || 'light'; }
 function setSettingTheme(v) { localStorage.setItem(KEY_THEME, v); }
 function getCoachNote() { return localStorage.getItem(KEY_COACH_NOTE) || ''; }
@@ -861,6 +863,8 @@ function updateExerciseDetails(card) {
     const serieNum = grid.querySelector('.detail-serie-num');
     const repsEl = grid.querySelector('.detail-reps');
     const restEl = grid.querySelector('.detail-rest');
+    const inSuperset = !!card.closest('.superset-block');
+    const isLastInSuperset = card ? isLastCardOfSuperset(card) : true;
     if (serieNum) serieNum.textContent = currentSetIndex < total ? `${currentSetIndex + 1}/${total}` : `${total}/${total}`;
     if (currentSetIndex >= total && repsEl) repsEl.textContent = isFailure ? "Jusqu'à échec" : '-';
     else if (repsEl && repsData) {
@@ -870,8 +874,18 @@ function updateExerciseDetails(card) {
         } catch (_) { repsEl.textContent = '-'; }
     }
     let restDisplay = '60s';
-    if (currentSetIndex >= total) { if (restEl) restEl.textContent = '-'; }
-    else if (restData) {
+    if (currentSetIndex >= total) {
+        if (restEl) {
+            if (inSuperset && !isLastInSuperset) {
+                // Dans un superset, les exercices intermédiaires n'ajoutent pas de repos "global" : on force 0s.
+                restDisplay = '0s';
+                restEl.textContent = restDisplay;
+            } else {
+                // Exercice simple ou dernier exercice du superset : on garde l'affichage neutre.
+                restEl.textContent = '-';
+            }
+        }
+    } else if (restData) {
         try {
             const arr = JSON.parse(restData);
             restDisplay = arr[currentSetIndex] || arr[arr.length - 1] || '60s';
@@ -907,6 +921,7 @@ function updateSupersetHighlight(shouldScrollToCurrent) {
             if (currentCard) {
                 currentCard.classList.add('superset-current');
                 if (shouldScrollToCurrent && totalChecked >= 1) {
+                    // À l'intérieur d'un superset, on garde un scroll centré pour bien voir l'exercice courant.
                     currentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
                 // En mode Focus, aligner la carte guidée sur l'exercice courant du superset
@@ -967,21 +982,24 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
         const card = document.getElementById(`card-${cardIndex}`);
         const supersetBlock = card ? card.closest('.superset-block') : null;
         const inSuperset = !!supersetBlock;
+        let collapseDelay = 0;
 
         if (!inSuperset && card && card.classList.contains('open')) {
+            collapseDelay = 300;
             setTimeout(() => { 
                 const header = card.querySelector('.exercise-header');
-                if(header) toggleCard(header); 
-            }, 300);
+                if (header) toggleCard(header); 
+            }, collapseDelay);
         } else if (inSuperset && supersetBlock) {
             const allDone = (() => {
                 const cbs = Array.from(supersetBlock.querySelectorAll('.set-checkbox'));
                 return cbs.length > 0 && cbs.every(cb => cb.checked);
             })();
             if (allDone) {
+                collapseDelay = 500;
                 setTimeout(() => {
                     supersetBlock.querySelectorAll('.exercise-card.open .exercise-header').forEach(h => toggleCard(h));
-                }, 500);
+                }, collapseDelay);
             }
         }
         const exoName = card?.querySelector('.exercise-title')?.textContent?.trim() || 'Exercice';
@@ -1001,21 +1019,21 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
                 return;
             }
             if (nextCard) {
-                setTimeout(() => {
-                    const supersetBlock = nextCard.closest('.superset-block');
-                    const scrollTarget = supersetBlock || nextCard;
-                    scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 300);
+                const supersetBlock = nextCard.closest('.superset-block');
+                const scrollTarget = supersetBlock || nextCard;
+                const blockMode = supersetBlock ? 'start' : 'center';
+                scrollTarget.scrollIntoView({ behavior: 'smooth', block: blockMode });
             }
         };
         const isWarmupSection = card?.dataset.warmupSection === '1';
+        const scrollDelay = collapseDelay + 550; // on laisse le temps au repli de finir avant de scroller
         const showRpe = !isWarmupSection && isLastCardOfSuperset(card);
         if (showRpe) {
             setTimeout(() => {
                 showRpeModal(cardIndex, currentSessionId, exoName, doScroll);
-            }, 400);
+            }, scrollDelay);
         } else {
-            setTimeout(doScroll, 400);
+            setTimeout(doScroll, scrollDelay);
         }
     }
 }
@@ -1483,13 +1501,16 @@ function playBeep() {
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
-        osc.frequency.value = 800;
+        const loud = getSettingLoudBeep();
+        osc.frequency.value = loud ? 950 : 800;
         osc.type = 'sine';
-        // Bip un peu plus fort et légèrement plus long
-        gain.gain.setValueAtTime(0.6, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        // Bip normal vs bip plus fort et légèrement plus long
+        const startGain = loud ? 0.9 : 0.6;
+        const duration = loud ? 0.45 : 0.35;
+        gain.gain.setValueAtTime(startGain, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
         osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.35);
+        osc.stop(ctx.currentTime + duration);
     } catch (_) {}
 }
 
@@ -2548,6 +2569,8 @@ function openSettings() {
     overlay.classList.add('active');
     overlay.setAttribute('aria-hidden', 'false');
     document.getElementById('setting-sound').checked = getSettingSound();
+    const loudCheckbox = document.getElementById('setting-sound-loud');
+    if (loudCheckbox) loudCheckbox.checked = getSettingLoudBeep();
     const theme = getSettingTheme();
     document.querySelectorAll('input[name="theme"]').forEach(r => { r.checked = r.value === theme; });
     document.getElementById('setting-notifications').checked = isNotificationEnabled();
@@ -2558,6 +2581,8 @@ function closeSettings() {
     overlay.classList.remove('active');
     overlay.setAttribute('aria-hidden', 'true');
     setSettingSound(document.getElementById('setting-sound').checked);
+    const loudCheckbox = document.getElementById('setting-sound-loud');
+    if (loudCheckbox) setSettingLoudBeep(loudCheckbox.checked);
     const themeRadio = document.querySelector('input[name="theme"]:checked');
     if (themeRadio) {
         setSettingTheme(themeRadio.value);
