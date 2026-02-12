@@ -968,7 +968,7 @@ function updateSupersetHighlight(shouldScrollToCurrent) {
 
 function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
     if (sessionStartTime === null) sessionStartTime = Date.now();
-    updateProgress(true); 
+    updateProgress(); 
     saveData(); 
     updateSupersetHighlight(true);
     if (checkbox.checked) {
@@ -1022,6 +1022,11 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
             }
         }
         const exoName = card?.querySelector('.exercise-title')?.textContent?.trim() || 'Exercice';
+        const allSetsDoneGlobally = (() => {
+            const all = document.querySelectorAll('.set-checkbox');
+            const checkedAll = document.querySelectorAll('.set-checkbox:checked');
+            return all.length > 0 && checkedAll.length === all.length;
+        })();
         const doScroll = () => {
             if (!card) return;
             const shouldScroll = isLastCardOfSuperset(card);
@@ -1049,10 +1054,23 @@ function checkSetAndCollapse(checkbox, cardIndex, setNumber, totalSets) {
         const showRpe = !isWarmupSection && isLastCardOfSuperset(card);
         if (showRpe) {
             setTimeout(() => {
-                showRpeModal(cardIndex, currentSessionId, exoName, doScroll);
+                const onConfirm = () => {
+                    doScroll();
+                    if (allSetsDoneGlobally) {
+                        saveChargeHistory();
+                        showMilestoneModalIfNeeded(openCompletionOverlay);
+                    }
+                };
+                showRpeModal(cardIndex, currentSessionId, exoName, onConfirm);
             }, scrollDelay);
         } else {
-            setTimeout(doScroll, scrollDelay);
+            setTimeout(() => {
+                doScroll();
+                if (allSetsDoneGlobally) {
+                    saveChargeHistory();
+                    showMilestoneModalIfNeeded(openCompletionOverlay);
+                }
+            }, scrollDelay);
         }
     }
 }
@@ -1190,7 +1208,7 @@ function openCompletionOverlay() {
     document.addEventListener('keydown', handleModalEscape);
 }
 
-function updateProgress(shouldOpenModal = false) {
+function updateProgress() {
     const total = document.querySelectorAll('.set-checkbox').length;
     const checked = document.querySelectorAll('.set-checkbox:checked').length;
     const percent = (total === 0) ? 0 : (checked / total) * 100;
@@ -1203,10 +1221,8 @@ function updateProgress(shouldOpenModal = false) {
         showEncouragementBanner(getRandomEncouragementMessage());
     }
 
-    if (percent === 100 && shouldOpenModal) {
-        saveChargeHistory();
-        showMilestoneModalIfNeeded(openCompletionOverlay);
-    }
+    // La logique d'ouverture de la modale de fin est gérée
+    // dans checkSetAndCollapse, pour pouvoir attendre le dernier RPE.
 }
 
 function saveData() {
